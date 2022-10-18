@@ -1,0 +1,92 @@
+{
+  "name": "pxt-vscode-web",
+  "displayName": "pxt-vscode-web",
+  "description": "Run MakeCode inside vscode",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.72.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:makecode.create",
+    "workspaceContains:./pxt.json"
+  ],
+  "browser": "./dist/web/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "makecode.build",
+        "title": "Build MakeCode modules"
+      },
+      {
+        "command": "makecode.simulate",
+        "title": "Simulate MakeCode project"
+      },
+      {
+        "command": "makecode.create",
+        "title": "Create an empty MakeCode project"
+      },
+      {
+        "command": "makecode.choosehw",
+        "title": "Choose MakeCode hardware board"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "makecode.assetEditor",
+        "displayName": "MakeCode Asset Editor",
+        "selector": [
+          {
+            "filenamePattern": "*.jres"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "typescript"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "resourceLangId == typescript",
+          "command": "makecode.simulate",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
+    "pretest": "yarn run compile-web",
+    "vscode:prepublish": "yarn run package-web",
+    "compile-web": "webpack",
+    "watch-web": "webpack --watch",
+    "package-web": "webpack --mode production --devtool hidden-source-map",
+    "lint": "eslint src --ext ts",
+    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=."
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.0",
+    "@types/vscode": "^1.72.0",
+    "@types/webpack-env": "^1.18.0",
+    "@typescript-eslint/eslint-plugin": "^5.38.1",
+    "@typescript-eslint/parser": "^5.38.1",
+    "@vscode/test-web": "^0.0.30",
+    "assert": "^2.0.0",
+    "eslint": "^8.24.0",
+    "mocha": "^10.0.0",
+    "process": "^0.11.10",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.8.4",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  },
+  "dependencies": {
+    "path-browserify": "^1.0.1"
+  }
+}
