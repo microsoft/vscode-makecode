@@ -21,7 +21,7 @@ export function createVsCodeHost(): Host {
             throw new Error(`Exit with status ${code}`)
         },
         bufferToString: buffer => new TextDecoder().decode(buffer),
-        stringToBuffer: (str, encoding) => new TextEncoder().encode(encoding === "base64" ? atob(str) : str)
+        stringToBuffer
     }
 }
 
@@ -145,4 +145,8 @@ function httpRequestCoreAsync(options: HttpRequestOptions) {
 
 function resolvePath(path: string) {
     return vscode.Uri.joinPath(vscode.Uri.file(vscode.workspace.rootPath!), path);
+}
+
+export function stringToBuffer(str: string, encoding?: string){
+    return new TextEncoder().encode(encoding === "base64" ? atob(str) : str);
 }

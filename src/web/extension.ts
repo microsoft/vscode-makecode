@@ -2,11 +2,12 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 
-import { createVsCodeHost, readFileAsync } from './host';
+import { createVsCodeHost, readFileAsync, stringToBuffer } from './host';
 import { setHost } from 'makecode-core/built/host';
 
-import { initCommand, buildCommandOnce } from "makecode-core/built/commands";
+import { initCommand, buildCommandOnce, BuildOptions } from "makecode-core/built/commands";
 import { Simulator } from './simulator';
+import { delay, throttle } from './util';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -46,17 +47,80 @@ export function activate(context: vscode.ExtensionContext) {
 async function buildCommand() {
     console.log("Build command");
 
-    await buildCommandOnce({})
+    await buildCommandOnce({ watch: true });
 }
 
 async function simulateCommand(context: vscode.ExtensionContext) {
-    console.log("Simulate command")
-    try {
-        await buildCommandOnce({ javaScript: true });
+    console.log("Simulate command");
+
+    const opts: BuildOptions = {
+        javaScript: true,
+        update: true,
+        watch: true
+    };
+
+    let building = false
+    let buildPending = false
+    const buildAsync = async (ev?: string, filename?: string) => {
+        if (ev) console.log(`detected ${ev} ${filename}`)
+
+        buildPending = true
+
+        await delay(100) // wait for other change events, that might have piled-up to arrive
+
+        // don't trigger 2 build, wait and do it again
+        if (building) {
+            console.log(` build in progress, waiting...`)
+            return
+        }
+
+        // start a build
+        try {
+            building = true
+            while (buildPending) {
+                buildPending = false
+                const opts0 = {
+                    ...opts
+                }
+                if (ev) {
+                    // if not first time, don't update
+                    opts0.update = false
+                }
+
+                await buildCommandOnce(opts0);
+
+                Simulator.createOrShow(context);
+                Simulator.currentSimulator?.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
+            }
+        } catch (e) {
+            showError(e + "");
+        } finally {
+            building = false
+        }
     }
-    catch (e) {}
-    Simulator.createOrShow(context);
-    Simulator.currentSimulator?.simulateAsync(await readFileAsync("built/binary.js", "utf8"), )
+
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Building project...",
+        cancellable: false
+    }, () => {
+
+        vscode.workspace.onDidSaveTextDocument( // auto-compile simulator
+            throttle(
+                (doc: vscode.TextDocument) => {
+                    if (!Simulator.currentSimulator) return;
+
+                    // skip node_modules, pxt_modules, built, .git
+                    if (/\/?((node|pxt)_modules|built|\.git)/i.test(doc.fileName)) return;
+                    // only watch for source files
+                    if (!/\.(json|ts|asm|cpp|c|h|hpp)$/i.test(doc.fileName)) return;
+                    buildAsync("save", doc.fileName);
+                },
+            500, true)
+        )
+
+        return buildAsync();
+    })
 }
 
 async function choosehwCommand() {
@@ -87,3 +151,8 @@ async function createCommand()  {
 
 // This method is called when your extension is deactivated
 export function deactivate() {}
+
+
+function showError(message: string) {
+    vscode.window.showErrorMessage(message);
+}

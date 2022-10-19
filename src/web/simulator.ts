@@ -31,7 +31,7 @@ export class Simulator {
             return;
         }
 
-        const panel = vscode.window.createWebviewPanel(Simulator.viewType, "MakeCode Arcade Simulator", {
+        const panel = vscode.window.createWebviewPanel(Simulator.viewType, "Microsoft MakeCode Simulator", {
             viewColumn: vscode.ViewColumn.Beside,
             preserveFocus: true,
         }, {
@@ -87,7 +87,6 @@ export class Simulator {
             })
         }
     }
-
 
     postMessage(msg: any) {
         this.panel.webview.postMessage(msg);
