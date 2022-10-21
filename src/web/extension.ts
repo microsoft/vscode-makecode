@@ -8,6 +8,8 @@ import { setHost } from 'makecode-core/built/host';
 import { initCommand, buildCommandOnce, BuildOptions } from "makecode-core/built/commands";
 import { Simulator } from './simulator';
 import { delay, throttle } from './util';
+import { JresTreeProvider } from './jres';
+import { AssetEditor } from './assetEditor';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -17,18 +19,6 @@ export function activate(context: vscode.ExtensionContext) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, your extension "pxt-vscode-web" is now active in the web extension host!');
-
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with registerCommand
-    // The commandId parameter must match the command field in package.json
-    let disposable = vscode.commands.registerCommand('pxt-vscode-web.helloWorld', () => {
-        // The code you place here will be executed every time your command is executed
-
-        // Display a message box to the user
-        vscode.window.showInformationMessage('Hello World asdfasdf!');
-    });
-
-    context.subscriptions.push(disposable);
 
     const addCmd = (id: string, fn: () => Promise<void>) => {
         const cmd = vscode.commands.registerCommand(id, () => fn()
@@ -42,6 +32,16 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd('makecode.simulate', () => simulateCommand(context))
     addCmd('makecode.choosehw', choosehwCommand)
     addCmd('makecode.create', createCommand)
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('makecode.openAsset', uri => {
+            openAssetEditor(context, uri);
+        })
+    );
+
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider("assetExplorer", new JresTreeProvider())
+    );
 }
 
 async function buildCommand() {
@@ -147,6 +147,11 @@ async function createCommand()  {
     })
 
     qp.show();
+}
+
+async function openAssetEditor(context: vscode.ExtensionContext, uri: vscode.Uri) {
+    AssetEditor.createOrShow(context);
+    AssetEditor.currentSimulator?.openURIAsync(uri);
 }
 
 // This method is called when your extension is deactivated

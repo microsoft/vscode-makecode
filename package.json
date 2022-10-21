@@ -45,6 +45,25 @@
         "priority": "default"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "asset-explorer",
+          "title": "Asset Explorer",
+          "icon": "media/logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "asset-explorer": [
+        {
+          "id": "assetExplorer",
+          "name": "Asset Explorer",
+          "icon": "media/logo.svg",
+          "contextualTitle": "Asset Explorer"
+        }
+      ]
+    },
     "breakpoints": [
       {
         "language": "typescript"
