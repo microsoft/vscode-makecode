@@ -8,7 +8,7 @@ import { setHost } from 'makecode-core/built/host';
 import { initCommand, buildCommandOnce, BuildOptions } from "makecode-core/built/commands";
 import { Simulator } from './simulator';
 import { delay, throttle } from './util';
-import { JresTreeProvider } from './jres';
+import { JResTreeProvider, JResTreeNode } from './jres';
 import { AssetEditor } from './assetEditor';
 
 // This method is called when your extension is activated
@@ -33,6 +33,19 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd('makecode.choosehw', choosehwCommand)
     addCmd('makecode.create', createCommand)
 
+    addCmd('makecode.createImage', () => createAssetCommand("image"))
+    addCmd('makecode.createTile', () => createAssetCommand("tile"))
+    addCmd('makecode.createTilemap', () => createAssetCommand("tilemap"))
+    addCmd('makecode.createAnimation', () => createAssetCommand("animation"))
+    addCmd('makecode.createSong', () => createAssetCommand("song"))
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand("makecode.duplicateAsset", duplicateAssetCommand)
+    )
+    context.subscriptions.push(
+        vscode.commands.registerCommand("makecode.deleteAsset", deleteAssetCommand)
+    )
+
     context.subscriptions.push(
         vscode.commands.registerCommand('makecode.openAsset', uri => {
             openAssetEditor(context, uri);
@@ -40,7 +53,19 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.window.registerTreeDataProvider("assetExplorer", new JresTreeProvider())
+        vscode.window.registerTreeDataProvider("imageExplorer", new JResTreeProvider("image"))
+    );
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider("animationExplorer", new JResTreeProvider("animation"))
+    );
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider("tileExplorer", new JResTreeProvider("tile"))
+    );
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider("tilemapExplorer", new JResTreeProvider("tilemap"))
+    );
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider("songExplorer", new JResTreeProvider("song"))
     );
 }
 
@@ -123,6 +148,18 @@ async function simulateCommand(context: vscode.ExtensionContext) {
     })
 }
 
+async function createAssetCommand(type: string) {
+
+}
+
+async function duplicateAssetCommand(node: JResTreeNode) {
+
+}
+
+async function deleteAssetCommand(node: JResTreeNode) {
+
+}
+
 async function choosehwCommand() {
     console.log("Choose hardware command")
 }
@@ -137,7 +174,7 @@ async function createCommand()  {
             label: "arcade",
         },
         {
-            label: "micro:bit",
+            label: "microbit",
         }
     ];
     qp.onDidAccept(() => {

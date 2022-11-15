@@ -18,19 +18,75 @@
     "commands": [
       {
         "command": "makecode.build",
-        "title": "Build MakeCode modules"
+        "title": "MakeCode: Build project"
       },
       {
         "command": "makecode.simulate",
-        "title": "Simulate MakeCode project"
+        "title": "MakeCode: Simulate project"
       },
       {
         "command": "makecode.create",
-        "title": "Create an empty MakeCode project"
+        "title": "MakeCode: Create an empty project"
       },
       {
         "command": "makecode.choosehw",
-        "title": "Choose MakeCode hardware board"
+        "title": "MakeCode: Choose hardware board"
+      },
+      {
+        "command": "makecode.createImage",
+        "title": "MakeCode: Create a new image asset",
+        "icon": {
+          "light": "media/light/new-file.svg",
+          "dark": "media/dark/new-file.svg"
+        }
+      },
+      {
+        "command": "makecode.createTile",
+        "title": "MakeCode: Create a new tile asset",
+        "icon": {
+          "light": "media/light/new-file.svg",
+          "dark": "media/dark/new-file.svg"
+        }
+      },
+      {
+        "command": "makecode.createTilemap",
+        "title": "MakeCode: Create a new tilemap asset",
+        "icon": {
+          "light": "media/light/new-file.svg",
+          "dark": "media/dark/new-file.svg"
+        }
+      },
+      {
+        "command": "makecode.createAnimation",
+        "title": "MakeCode: Create a new animation asset",
+        "icon": {
+          "light": "media/light/new-file.svg",
+          "dark": "media/dark/new-file.svg"
+        }
+      },
+      {
+        "command": "makecode.createSong",
+        "title": "MakeCode: Create a new song asset",
+        "icon": {
+          "light": "media/light/new-file.svg",
+          "dark": "media/dark/new-file.svg"
+        }
+      },
+      {
+        "command": "makecode.deleteAsset",
+        "title": "MakeCode: Delete an asset",
+        "icon": {
+          "light": "media/light/trash.svg",
+          "dark": "media/dark/trash.svg"
+        }
+      },
+      {
+        "command": "makecode.duplicateAsset",
+        "title": "MakeCode: Duplicate an asset",
+        "icon": {
+          "light": "media/light/files.svg",
+          "dark": "media/dark/files.svg"
+        }
       }
     ],
     "customEditors": [
@@ -57,10 +113,34 @@
     "views": {
       "asset-explorer": [
         {
-          "id": "assetExplorer",
-          "name": "Asset Explorer",
+          "id": "imageExplorer",
+          "name": "Images",
           "icon": "media/logo.svg",
-          "contextualTitle": "Asset Explorer"
+          "contextualTitle": "Images"
+        },
+        {
+          "id": "animationExplorer",
+          "name": "Animations",
+          "icon": "media/logo.svg",
+          "contextualTitle": "Animations"
+        },
+        {
+          "id": "tileExplorer",
+          "name": "Tiles",
+          "icon": "media/logo.svg",
+          "contextualTitle": "Tiles"
+        },
+        {
+          "id": "tilemapExplorer",
+          "name": "Tilemaps",
+          "icon": "media/logo.svg",
+          "contextualTitle": "Tilemaps"
+        },
+        {
+          "id": "songExplorer",
+          "name": "Songs",
+          "icon": "media/logo.svg",
+          "contextualTitle": "Songs"
         }
       ]
     },
@@ -75,6 +155,85 @@
           "when": "resourceLangId == typescript",
           "command": "makecode.simulate",
           "group": "navigation"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "makecode.createImage",
+          "when": "view == imageExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "makecode.createTile",
+          "when": "view == tileExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "makecode.createTilemap",
+          "when": "view == tilemapExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "makecode.createAnimation",
+          "when": "view == animationExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "makecode.createSong",
+          "when": "view == songExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "makecode.duplicateAsset",
+          "when": "view == imageExplorer",
+          "group": "inline"
+        },
+        {
+          "command": "makecode.duplicateAsset",
+          "when": "view == tileExplorer",
+          "group": "inline"
+        },
+        {
+          "command": "makecode.duplicateAsset",
+          "when": "view == tilemapExplorer",
+          "group": "inline"
+        },
+        {
+          "command": "makecode.duplicateAsset",
+          "when": "view == animationExplorer",
+          "group": "inline"
+        },
+        {
+          "command": "makecode.duplicateAsset",
+          "when": "view == songExplorer",
+          "group": "inline"
+        },
+        {
+          "command": "makecode.deleteAsset",
+          "when": "view == imageExplorer",
+          "group": "inline"
+        },
+        {
+          "command": "makecode.deleteAsset",
+          "when": "view == tileExplorer",
+          "group": "inline"
+        },
+        {
+          "command": "makecode.deleteAsset",
+          "when": "view == tilemapExplorer",
+          "group": "inline"
+        },
+        {
+          "command": "makecode.deleteAsset",
+          "when": "view == animationExplorer",
+          "group": "inline"
+        },
+        {
+          "command": "makecode.deleteAsset",
+          "when": "view == songExplorer",
+          "group": "inline"
         }
       ]
     }

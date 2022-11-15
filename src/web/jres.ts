@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 
-interface JRESTreeNode {
+export interface JResTreeNode {
     kind: "image" | "tile" | "tilemap" | "animation" | "song";
     id?: string;
     name?: string;
@@ -9,27 +9,37 @@ interface JRESTreeNode {
     uri?: vscode.Uri;
 }
 
+let model: JResTreeModel;
 
-export class JresTreeProvider implements vscode.TreeDataProvider<JRESTreeNode> {
-    protected nodes: JRESTreeNode[] = [];
-
-    _onDidChangeTreeData: vscode.EventEmitter<JRESTreeNode[]>
-    onDidChangeTreeData: vscode.Event<JRESTreeNode[]>;
+class JResTreeModel {
+    nodes: JResTreeNode [] = [];
+    eventEmitter: vscode.EventEmitter<JResTreeNode[]>;
 
     constructor() {
-        this._onDidChangeTreeData = new vscode.EventEmitter<JRESTreeNode[]>;
-        this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-
+        this.eventEmitter = new vscode.EventEmitter<JResTreeNode[]>();
         this.refreshJresAsync();
     }
+
 
     async refreshJresAsync() {
         this.nodes = await readProjectJRESAsync();
 
-        this._onDidChangeTreeData.fire(this.nodes);
+        this.eventEmitter.fire(this.nodes);
+    }
+}
+
+export class JResTreeProvider implements vscode.TreeDataProvider<JResTreeNode> {
+
+    onDidChangeTreeData: vscode.Event<JResTreeNode[]>;
+
+    constructor(public kind: "image" | "tile" | "tilemap" | "animation" | "song") {
+        if (!model) {
+            model = new JResTreeModel();
+        }
+        this.onDidChangeTreeData = model.eventEmitter.event
     }
 
-    getTreeItem(element: JRESTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    getTreeItem(element: JResTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
         return {
             label: element.name || kindToDisplayName(element.kind),
             resourceUri: element.uri,
@@ -42,45 +52,19 @@ export class JresTreeProvider implements vscode.TreeDataProvider<JRESTreeNode> {
         }
     }
 
-    getChildren(element?: JRESTreeNode | undefined): vscode.ProviderResult<JRESTreeNode[]> {
-        if (!element) {
-            return [
-                {
-                    kind: "image"
-                },
-                {
-                    kind: "tile"
-                },
-                {
-                    kind: "tilemap"
-                },
-                {
-                    kind: "animation"
-                },
-                {
-                    kind: "song"
-                }
-            ]
-        }
-        if (!element.id) {
-            return this.nodes.filter(n => n.kind === element.kind);
-        }
+    getChildren(element?: JResTreeNode | undefined): vscode.ProviderResult<JResTreeNode[]> {
+        if (!element) return model.nodes.filter(node => node.kind === this.kind);
         return [];
     }
 
-    getParent(element: JRESTreeNode): vscode.ProviderResult<JRESTreeNode> {
-        if (element.id) {
-            return {
-                kind: element.kind
-            }
-        }
+    getParent(element: JResTreeNode): vscode.ProviderResult<JResTreeNode> {
         return undefined;
     }
 }
 
 
 async function readProjectJRESAsync() {
-    const nodes: JRESTreeNode[] = [];
+    const nodes: JResTreeNode[] = [];
     const files = await vscode.workspace.findFiles("**/*.jres");
 
     for (const file of files) {
