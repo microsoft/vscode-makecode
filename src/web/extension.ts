@@ -5,11 +5,11 @@ import * as vscode from 'vscode';
 import { createVsCodeHost, readFileAsync, stringToBuffer } from './host';
 import { setHost } from 'makecode-core/built/host';
 
-import { initCommand, buildCommandOnce, BuildOptions } from "makecode-core/built/commands";
+import { initCommand, buildCommandOnce } from "makecode-core/built/commands";
 import { Simulator } from './simulator';
-import { delay, throttle } from './util';
 import { JResTreeProvider, JResTreeNode } from './jres';
 import { AssetEditor } from './assetEditor';
+import { BuildWatcher } from './buildWatcher';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -27,6 +27,10 @@ export function activate(context: vscode.ExtensionContext) {
             }));
         context.subscriptions.push(cmd);
     }
+
+    Simulator.register(context);
+    AssetEditor.register(context);
+    BuildWatcher.register(context);
 
     addCmd('makecode.build', buildCommand)
     addCmd('makecode.simulate', () => simulateCommand(context))
@@ -67,6 +71,8 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider("songExplorer", new JResTreeProvider("song"))
     );
+
+    BuildWatcher.watcher.addEventListener("error", showError);
 }
 
 async function buildCommand() {
@@ -75,77 +81,26 @@ async function buildCommand() {
     await buildCommandOnce({ watch: true });
 }
 
-async function simulateCommand(context: vscode.ExtensionContext) {
-    console.log("Simulate command");
-
-    const opts: BuildOptions = {
-        javaScript: true,
-        update: true,
-        watch: true
-    };
-
-    let building = false
-    let buildPending = false
-    const buildAsync = async (ev?: string, filename?: string) => {
-        if (ev) console.log(`detected ${ev} ${filename}`)
-
-        buildPending = true
-
-        await delay(100) // wait for other change events, that might have piled-up to arrive
-
-        // don't trigger 2 build, wait and do it again
-        if (building) {
-            console.log(` build in progress, waiting...`)
-            return
-        }
-
-        // start a build
-        try {
-            building = true
-            while (buildPending) {
-                buildPending = false
-                const opts0 = {
-                    ...opts
-                }
-                if (ev) {
-                    // if not first time, don't update
-                    opts0.update = false
-                }
-
-                await buildCommandOnce(opts0);
-
-                Simulator.createOrShow(context);
-                Simulator.currentSimulator?.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
-            }
-        } catch (e) {
-            showError(e + "");
-        } finally {
-            building = false
-        }
+export async function simulateCommand(context: vscode.ExtensionContext) {
+    if (BuildWatcher.watcher.isEnabled()) {
+        console.log("Simulator already running");
+        return;
     }
 
-    vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: "Building project...",
-        cancellable: false
-    }, () => {
+    const runSimulator = async () => {
+        if (!Simulator.currentSimulator) {
+            BuildWatcher.watcher.setEnabled(false);
+            BuildWatcher.watcher.removeEventListener("build-completed", runSimulator);
+            return;
+        }
 
-        vscode.workspace.onDidSaveTextDocument( // auto-compile simulator
-            throttle(
-                (doc: vscode.TextDocument) => {
-                    if (!Simulator.currentSimulator) return;
+        Simulator.createOrShow(context);
+        Simulator.currentSimulator.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
+    }
 
-                    // skip node_modules, pxt_modules, built, .git
-                    if (/\/?((node|pxt)_modules|built|\.git)/i.test(doc.fileName)) return;
-                    // only watch for source files
-                    if (!/\.(json|ts|asm|cpp|c|h|hpp)$/i.test(doc.fileName)) return;
-                    buildAsync("save", doc.fileName);
-                },
-            500, true)
-        )
-
-        return buildAsync();
-    })
+    BuildWatcher.watcher.addEventListener("build-completed", runSimulator);
+    BuildWatcher.watcher.setEnabled(true);
+    Simulator.createOrShow(context);
 }
 
 async function createAssetCommand(type: string) {
@@ -187,7 +142,7 @@ async function createCommand()  {
 }
 
 async function openAssetEditor(context: vscode.ExtensionContext, uri: vscode.Uri) {
-    AssetEditor.createOrShow(context);
+    AssetEditor.createOrShow();
     AssetEditor.currentSimulator?.openURIAsync(uri);
 }
 

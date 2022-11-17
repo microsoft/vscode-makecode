@@ -7,17 +7,13 @@ const assetUrl = "http://localhost:3232/asseteditor.html";
 export class AssetEditor {
     public static readonly viewType = "mkcdasset";
     public static currentSimulator: AssetEditor | undefined;
-    public assetStaet: any;
     public simStateTimer: any;
 
-    public static createOrShow(extCtx: vscode.ExtensionContext) {
+    public static createOrShow() {
         let column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : vscode.ViewColumn.One;
         column = column! < 9 ? column! + 1 : column;
 
-        extensionContext = extCtx
-
         if (AssetEditor.currentSimulator) {
-            AssetEditor.currentSimulator.assetStaet = null;
             AssetEditor.currentSimulator.panel.reveal(vscode.ViewColumn.Beside, true);
             return;
         }
@@ -34,12 +30,17 @@ export class AssetEditor {
         AssetEditor.currentSimulator = new AssetEditor(panel)
     }
 
+    public static register(context: vscode.ExtensionContext) {
+        extensionContext = context;
+        vscode.window.registerWebviewPanelSerializer('mkcdasset', new AssetEditorSerializer());
+    }
+
     public static revive(panel: vscode.WebviewPanel) {
         AssetEditor.currentSimulator = new AssetEditor(panel)
     }
 
     protected panel: vscode.WebviewPanel;
-    protected editing: vscode.Uri | undefined;
+    protected editing: AssetEditorState | undefined;
     protected disposables: vscode.Disposable[];
     protected pendingMessages: {[index: string]: (res: any) => void} = {};
     protected nextId = 0;
@@ -63,12 +64,22 @@ export class AssetEditor {
     }
 
     async openURIAsync(uri: vscode.Uri) {
-        this.editing = uri;
+        const parts = uri.path.split(".");
+        const assetType = parts[1];
+        const assetId = parts.slice(2).join(".");
+
+        await this.openAssetAsync(assetType, assetId);
+    }
+
+    async openAssetAsync(assetType: string, assetId: string) {
+        this.editing = {
+            editing: {
+                assetType,
+                assetId
+            }
+        };
         this.panel.webview.html = ""
         const simulatorHTML = await getAssetEditorHtmlAsync(this.panel.webview);
-        if (this.assetStaet == null) {
-            this.assetStaet = await extensionContext.workspaceState.get("assetstate", {})
-        }
         this.panel.webview.html = simulatorHTML;
     }
 
@@ -87,9 +98,7 @@ export class AssetEditor {
     }
 
     async handleSimulatorEventAsync(message: any) {
-        const parts = this.editing!.path.split(".");
-        const assetType = parts[1];
-        const assetId = parts.slice(2).join(".");
+        const { assetType, assetId } = this.editing!.editing
 
         switch (message.kind) {
             case "ready":
@@ -115,6 +124,17 @@ export class AssetEditor {
 
     addDisposable(d: vscode.Disposable) {
         this.disposables.push(d);
+    }
+}
+
+interface AssetEditorState {
+    editing: { assetType: string, assetId: string };
+}
+
+export class AssetEditorSerializer implements vscode.WebviewPanelSerializer {
+    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: AssetEditorState) {
+        AssetEditor.revive(webviewPanel);
+        await AssetEditor.currentSimulator?.openAssetAsync(state.editing.assetType, state.editing.assetId)
     }
 }
 

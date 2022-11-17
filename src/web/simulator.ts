@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
-import * as mkc from 'makecode-core/built/mkc';
 
 import { simloaderFiles } from "makecode-core/built/simloaderfiles";
 import { existsAsync, readFileAsync } from "./host";
+import { simulateCommand } from "./extension";
 
 let extensionContext: vscode.ExtensionContext;
 
@@ -12,6 +12,11 @@ export class Simulator {
     public simState: any;
     public simStateTimer: any;
     private static simconsole: vscode.OutputChannel;
+
+    public static register(extCtx: vscode.ExtensionContext) {
+        extensionContext = extCtx;
+        vscode.window.registerWebviewPanelSerializer('mkcdsim', new SimulatorSerializer(extCtx))
+    }
 
     public static createOrShow(extCtx: vscode.ExtensionContext) {
         let column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : vscode.ViewColumn.One;
@@ -96,6 +101,14 @@ export class Simulator {
 
     addDisposable(d: vscode.Disposable) {
         this.disposables.push(d);
+    }
+}
+
+export class SimulatorSerializer implements vscode.WebviewPanelSerializer {
+    constructor(public context: vscode.ExtensionContext) {}
+    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: unknown) {
+        Simulator.revive(webviewPanel);
+        await simulateCommand(this.context)
     }
 }
 
