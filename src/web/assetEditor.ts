@@ -1,8 +1,29 @@
 import * as vscode from "vscode";
+import { writeFileAsync } from "./host";
+import { syncJResAsync } from "./jres";
 
 let extensionContext: vscode.ExtensionContext;
 const assetUrl = "http://localhost:3232/asseteditor.html";
 // const assetUrl = "https://arcade.makecode.com/beta--asseteditor";
+
+interface EditingState {
+    type: "edit";
+    assetType: string;
+    assetId: string;
+}
+
+interface DuplicatingState {
+    type: "duplicate";
+    assetType: string;
+    assetId: string;
+}
+
+interface CreatingState {
+    type: "create";
+    assetType: string;
+}
+
+type AssetEditorState = EditingState | DuplicatingState | CreatingState;
 
 export class AssetEditor {
     public static readonly viewType = "mkcdasset";
@@ -45,7 +66,7 @@ export class AssetEditor {
     protected pendingMessages: {[index: string]: (res: any) => void} = {};
     protected nextId = 0;
 
-    private constructor(panel: vscode.WebviewPanel) {
+    constructor(panel: vscode.WebviewPanel) {
         this.panel = panel;
 
         this.panel.webview.onDidReceiveMessage(message => {
@@ -73,14 +94,31 @@ export class AssetEditor {
 
     async openAssetAsync(assetType: string, assetId: string) {
         this.editing = {
-            editing: {
-                assetType,
-                assetId
-            }
+            type: "edit",
+            assetType,
+            assetId
         };
-        this.panel.webview.html = ""
-        const simulatorHTML = await getAssetEditorHtmlAsync(this.panel.webview);
-        this.panel.webview.html = simulatorHTML;
+
+        await this.initWebviewHtmlAsync();
+    }
+
+    async duplicateAssetAsync(assetType: string, assetId: string) {
+        this.editing = {
+            type: "duplicate",
+            assetType,
+            assetId
+        };
+
+        await this.initWebviewHtmlAsync();
+    }
+
+    async createAssetAsync(assetType: string) {
+        this.editing = {
+            type: "create",
+            assetType
+        };
+
+        await this.initWebviewHtmlAsync();
     }
 
     handleSimulatorMessage(message: any) {
@@ -98,16 +136,15 @@ export class AssetEditor {
     }
 
     async handleSimulatorEventAsync(message: any) {
-        const { assetType, assetId } = this.editing!.editing
-
         switch (message.kind) {
             case "ready":
-                this.sendMessageAsync({
-                    type: "open",
-                    assetType,
-                    assetId,
-                    files: await readProjectJResAsync()
+                await this.onReadyMessageReceivedAsync();
+                break;
+            case "done-clicked":
+                const saved = await this.sendMessageAsync({
+                    type: "save"
                 });
+                await saveFilesAsync(saved.files);
                 break;
         }
     }
@@ -116,7 +153,7 @@ export class AssetEditor {
         message._fromVscode = true;
         message.id = this.nextId++;
 
-        return new Promise(resolve => {
+        return new Promise<any>(resolve => {
             this.pendingMessages[message.id] = resolve;
             this.panel.webview.postMessage(message);
         })
@@ -125,16 +162,48 @@ export class AssetEditor {
     addDisposable(d: vscode.Disposable) {
         this.disposables.push(d);
     }
-}
 
-interface AssetEditorState {
-    editing: { assetType: string, assetId: string };
+    protected async initWebviewHtmlAsync() {
+        this.panel.webview.html = ""
+        const simulatorHTML = await getAssetEditorHtmlAsync(this.panel.webview);
+        this.panel.webview.html = simulatorHTML;
+    }
+
+    protected async onReadyMessageReceivedAsync() {
+        if (!this.editing) return;
+
+        switch (this.editing.type) {
+            case "edit":
+                this.sendMessageAsync({
+                    type: "open",
+                    assetType: this.editing.assetType,
+                    assetId: this.editing.assetId,
+                    files: await readProjectJResAsync()
+                });
+                break;
+            case "duplicate":
+                this.sendMessageAsync({
+                    type: "duplicate",
+                    assetType: this.editing.assetType,
+                    assetId: this.editing.assetId,
+                    files: await readProjectJResAsync()
+                });
+                break;
+            case "create":
+                this.sendMessageAsync({
+                    type: "create",
+                    assetType: this.editing.assetType,
+                    files: await readProjectJResAsync()
+                });
+                break;
+        }
+    }
 }
 
 export class AssetEditorSerializer implements vscode.WebviewPanelSerializer {
-    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: AssetEditorState) {
+    async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
         AssetEditor.revive(webviewPanel);
-        await AssetEditor.currentSimulator?.openAssetAsync(state.editing.assetType, state.editing.assetId)
+        await AssetEditor.currentSimulator?.openAssetAsync(state.editing!.assetType, state.editing!.assetId)
     }
 }
 
@@ -186,4 +255,12 @@ async function readProjectJResAsync() {
     }
 
     return fileSystem;
+}
+
+async function saveFilesAsync(files: {[index: string]: string}) {
+    for (const file of Object.keys(files)) {
+        await writeFileAsync(file, files[file]);
+    }
+
+    await syncJResAsync();
 }

@@ -15,6 +15,8 @@ class JResTreeModel {
     nodes: JResTreeNode [] = [];
     eventEmitter: vscode.EventEmitter<JResTreeNode[]>;
 
+    providers: JResTreeProvider[] = [];
+
     constructor() {
         this.eventEmitter = new vscode.EventEmitter<JResTreeNode[]>();
         this.refreshJresAsync();
@@ -22,21 +24,23 @@ class JResTreeModel {
 
 
     async refreshJresAsync() {
-        this.nodes = await readProjectJRESAsync();
-
-        this.eventEmitter.fire(this.nodes);
+        this.nodes = await readProjectJResAsync();
+        vscode.commands.executeCommand("makecode.refreshAssets")
     }
 }
 
 export class JResTreeProvider implements vscode.TreeDataProvider<JResTreeNode> {
 
-    onDidChangeTreeData: vscode.Event<JResTreeNode[]>;
+    _onDidChangeTreeData: vscode.EventEmitter<JResTreeNode[] | undefined | void>;
+    onDidChangeTreeData: vscode.Event<JResTreeNode[] | undefined | void>;
 
     constructor(public kind: "image" | "tile" | "tilemap" | "animation" | "song") {
         if (!model) {
             model = new JResTreeModel();
         }
-        this.onDidChangeTreeData = model.eventEmitter.event
+        this._onDidChangeTreeData = new vscode.EventEmitter();
+        this.onDidChangeTreeData = this._onDidChangeTreeData.event
+        model.providers.push(this);
     }
 
     getTreeItem(element: JResTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
@@ -62,8 +66,23 @@ export class JResTreeProvider implements vscode.TreeDataProvider<JResTreeNode> {
     }
 }
 
+export async function syncJResAsync() {
+    if (!model) {
+        model = new JResTreeModel();
+    }
+    await model.refreshJresAsync();
+}
 
-async function readProjectJRESAsync() {
+export function fireChangeEvent() {
+    if (!model) {
+        model = new JResTreeModel();
+    }
+    for (const provider of model.providers) {
+        provider._onDidChangeTreeData.fire();
+    }
+}
+
+async function readProjectJResAsync() {
     const nodes: JResTreeNode[] = [];
     const files = await vscode.workspace.findFiles("**/*.jres");
 
@@ -79,7 +98,8 @@ async function readProjectJRESAsync() {
             if (key === "*") continue;
 
             const value = jres[key];
-            const id = (jres[key].namespace || globalNamespace) + "." + key;
+            const ns = jres[key].namespace || globalNamespace;
+            const id = key.startsWith(ns) ? key : namespaceJoin(ns, key);
 
             if (typeof value === "string") {
                 nodes.push({
@@ -90,7 +110,7 @@ async function readProjectJRESAsync() {
                     uri: vscode.Uri.from({
                         scheme: "vscode.env.uriScheme",
                         authority: "makecode",
-                        path: "/asset." + mimeTypeToKind(defaultMimeType!) + "." + id
+                        path: "/" + namespaceJoin("asset", mimeTypeToKind(defaultMimeType!), id!)
                     })
                 });
             }
@@ -103,7 +123,7 @@ async function readProjectJRESAsync() {
                     uri: vscode.Uri.from({
                         scheme: "vscode.env.uriScheme",
                         authority: "makecode",
-                        path: "/asset." + mimeTypeToKind(jres[key].mimeType || defaultMimeType, jres[key].tilemapTile) + "." + id
+                        path: "/" + namespaceJoin("asset", mimeTypeToKind(jres[key].mimeType || defaultMimeType, jres[key].tilemapTile), id!)
                     })
                 });
             }
@@ -126,6 +146,20 @@ function mimeTypeToKind(mime: string, isTile?: boolean) {
     }
 
     return "image";
+}
+
+function namespaceJoin(...parts: string[]) {
+    let res = parts.shift();
+    while (parts.length) {
+        res = namespaceJoinCore(res!, parts.shift()!);
+    }
+    return res;
+}
+
+function namespaceJoinCore(a: string, b: string) {
+    if (a.endsWith(".")) a = a.slice(0, a.length - 1);
+    if (b.startsWith(".")) b = b.slice(1);
+    return a + "." + b;
 }
 
 function kindToDisplayName(kind: string) {

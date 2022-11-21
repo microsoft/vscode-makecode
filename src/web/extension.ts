@@ -7,7 +7,7 @@ import { setHost } from 'makecode-core/built/host';
 
 import { initCommand, buildCommandOnce } from "makecode-core/built/commands";
 import { Simulator } from './simulator';
-import { JResTreeProvider, JResTreeNode } from './jres';
+import { JResTreeProvider, JResTreeNode, fireChangeEvent } from './jres';
 import { AssetEditor } from './assetEditor';
 import { BuildWatcher } from './buildWatcher';
 
@@ -42,6 +42,7 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd('makecode.createTilemap', () => createAssetCommand("tilemap"))
     addCmd('makecode.createAnimation', () => createAssetCommand("animation"))
     addCmd('makecode.createSong', () => createAssetCommand("song"))
+    addCmd('makecode.refreshAssets', async () => fireChangeEvent())
 
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.duplicateAsset", duplicateAssetCommand)
@@ -104,11 +105,13 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
 }
 
 async function createAssetCommand(type: string) {
-
+    AssetEditor.createOrShow();
+    AssetEditor.currentSimulator?.createAssetAsync(type);
 }
 
 async function duplicateAssetCommand(node: JResTreeNode) {
-
+    AssetEditor.createOrShow();
+    AssetEditor.currentSimulator?.duplicateAssetAsync(node.kind, node.id!);
 }
 
 async function deleteAssetCommand(node: JResTreeNode) {

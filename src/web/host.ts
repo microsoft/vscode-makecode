@@ -32,7 +32,7 @@ export async function readFileAsync(path: string, encoding?: "utf8") {
     return contents;
 }
 
-async function writeFileAsync(path: string, content: any, encoding?: "base64" | "utf8"): Promise<void> {
+export async function writeFileAsync(path: string, content: any, encoding?: "base64" | "utf8"): Promise<void> {
     if (typeof content === "string") {
         content = new TextEncoder().encode(content);
     }

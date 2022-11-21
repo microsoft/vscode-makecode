@@ -87,18 +87,14 @@
           "light": "media/light/files.svg",
           "dark": "media/dark/files.svg"
         }
-      }
-    ],
-    "customEditors": [
+      },
       {
-        "viewType": "makecode.assetEditor",
-        "displayName": "MakeCode Asset Editor",
-        "selector": [
-          {
-            "filenamePattern": "*.jres"
-          }
-        ],
-        "priority": "default"
+        "command": "makecode.refreshAssets",
+        "title": "MakeCode: Refresh asset explorer",
+        "icon": {
+          "light": "media/light/refresh.svg",
+          "dark": "media/dark/refresh.svg"
+        }
       }
     ],
     "viewsContainers": {
@@ -180,6 +176,31 @@
         },
         {
           "command": "makecode.createSong",
+          "when": "view == songExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "makecode.refreshAssets",
+          "when": "view == imageExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "makecode.refreshAssets",
+          "when": "view == tileExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "makecode.refreshAssets",
+          "when": "view == tilemapExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "makecode.refreshAssets",
+          "when": "view == animationExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "makecode.refreshAssets",
           "when": "view == songExplorer",
           "group": "navigation"
         }
