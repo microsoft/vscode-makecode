@@ -25,7 +25,7 @@ class JResTreeModel {
 
     async refreshJresAsync() {
         this.nodes = await readProjectJResAsync();
-        vscode.commands.executeCommand("makecode.refreshAssets")
+        vscode.commands.executeCommand("makecode.refreshAssets", true)
     }
 }
 
@@ -80,6 +80,31 @@ export function fireChangeEvent() {
     for (const provider of model.providers) {
         provider._onDidChangeTreeData.fire();
     }
+}
+
+export async function deleteAssetAsync(node: JResTreeNode) {
+    if (!node.sourceFile || !node.id) return;
+
+    const sourceText = new TextDecoder().decode(await vscode.workspace.fs.readFile(node.sourceFile));
+    const sourceJRes = JSON.parse(sourceText);
+
+    if (sourceJRes[node.id]) {
+        delete sourceJRes[node.id];
+    }
+    else {
+        const parts = node.id.split(".");
+
+        const ns = parts.slice(0, parts.length - 1).join(".");
+        const id = parts[parts.length - 1];
+
+        const entry = sourceJRes[id];
+        if (entry?.namespace === ns || entry?.namespace === ns + "." || sourceJRes["*"]?.namespace === ns || sourceJRes["*"]?.namespace === ns + ".") {
+            delete sourceJRes[id];
+        }
+    }
+
+    await vscode.workspace.fs.writeFile(node.sourceFile, new TextEncoder().encode(JSON.stringify(sourceJRes, null, 4)));
+    await syncJResAsync();
 }
 
 async function readProjectJResAsync() {

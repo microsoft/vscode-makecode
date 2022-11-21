@@ -7,7 +7,7 @@ import { setHost } from 'makecode-core/built/host';
 
 import { initCommand, buildCommandOnce } from "makecode-core/built/commands";
 import { Simulator } from './simulator';
-import { JResTreeProvider, JResTreeNode, fireChangeEvent } from './jres';
+import { JResTreeProvider, JResTreeNode, fireChangeEvent, deleteAssetAsync, syncJResAsync } from './jres';
 import { AssetEditor } from './assetEditor';
 import { BuildWatcher } from './buildWatcher';
 
@@ -42,13 +42,15 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd('makecode.createTilemap', () => createAssetCommand("tilemap"))
     addCmd('makecode.createAnimation', () => createAssetCommand("animation"))
     addCmd('makecode.createSong', () => createAssetCommand("song"))
-    addCmd('makecode.refreshAssets', async () => fireChangeEvent())
 
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.duplicateAsset", duplicateAssetCommand)
     )
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.deleteAsset", deleteAssetCommand)
+    )
+    context.subscriptions.push(
+        vscode.commands.registerCommand("makecode.refreshAssets", refreshAssetsCommand)
     )
 
     context.subscriptions.push(
@@ -115,7 +117,16 @@ async function duplicateAssetCommand(node: JResTreeNode) {
 }
 
 async function deleteAssetCommand(node: JResTreeNode) {
+    await deleteAssetAsync(node)
+}
 
+async function refreshAssetsCommand(justFireEvent: boolean) {
+    if (justFireEvent) {
+        fireChangeEvent();
+    }
+    else {
+        await syncJResAsync();
+    }
 }
 
 async function choosehwCommand() {

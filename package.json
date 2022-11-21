@@ -238,11 +238,6 @@
         },
         {
           "command": "makecode.deleteAsset",
-          "when": "view == tileExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.deleteAsset",
           "when": "view == tilemapExplorer",
           "group": "inline"
         },
