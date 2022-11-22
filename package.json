@@ -33,6 +33,22 @@
         "title": "MakeCode: Choose hardware board"
       },
       {
+        "command": "makecode.install",
+        "title": "MakeCode: Download project dependencies"
+      },
+      {
+        "command": "makecode.clean",
+        "title": "MakeCode: Clean built folders"
+      },
+      {
+        "command": "makecode.importUrl",
+        "title": "MakeCode: Import project from URL"
+      },
+      {
+        "command": "makecode.shareProject",
+        "title": "MakeCode: Share project"
+      },
+      {
         "command": "makecode.createImage",
         "title": "MakeCode: Create a new image asset",
         "icon": {

@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { fileExistsAsync } from './extension';
 
 export async function maybeShowConfigNotificationAsync() {
     if (!vscode.workspace.workspaceFolders) return;
@@ -21,15 +22,12 @@ export async function maybeShowConfigNotificationAsync() {
     }
 }
 
-async function fileExistsAsync(path: vscode.Uri) {
-    try {
-        const stat = await vscode.workspace.fs.stat(path);
-        return true;
-    }
-    catch {
-        return false
-    }
+export async function writeTSConfigAsync(folder: vscode.Uri) {
+    if (await fileExistsAsync(vscode.Uri.joinPath(folder, "tsconfig.json"))) return;
+
+    await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, "tsconfig.json"), new TextEncoder().encode(templateConfig));
 }
+
 
 const templateConfig = `{
     "compilerOptions": {

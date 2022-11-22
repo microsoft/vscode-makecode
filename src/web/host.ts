@@ -1,6 +1,8 @@
 import { Host, HttpRequestOptions, HttpResponse } from "makecode-core/built/host";
 import { BrowserLanguageService } from "makecode-browser/built/languageService";
-import * as vscode from "vscode"
+import * as vscode from "vscode";
+
+let _activeWorkspace: vscode.WorkspaceFolder;
 
 export function createVsCodeHost(): Host {
     return {
@@ -71,7 +73,7 @@ async function unlinkAsync(path: string): Promise<void> {
 }
 
 async function cwdAsync() {
-    return vscode.workspace.rootPath!;
+    return activeWorkspace().uri.fsPath;
 }
 
 async function listFilesAsync(directory: string, filename: string) {
@@ -144,9 +146,18 @@ function httpRequestCoreAsync(options: HttpRequestOptions) {
 }
 
 function resolvePath(path: string) {
-    return vscode.Uri.joinPath(vscode.Uri.file(vscode.workspace.rootPath!), path);
+    return vscode.Uri.joinPath(activeWorkspace().uri, path);
 }
 
 export function stringToBuffer(str: string, encoding?: string){
     return new TextEncoder().encode(encoding === "base64" ? atob(str) : str);
+}
+
+export function setActiveWorkspace(folder: vscode.WorkspaceFolder) {
+    _activeWorkspace = folder;
+}
+
+function activeWorkspace() {
+    if (!_activeWorkspace) _activeWorkspace = vscode.workspace.workspaceFolders![0];
+    return _activeWorkspace;
 }
