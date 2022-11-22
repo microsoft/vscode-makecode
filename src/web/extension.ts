@@ -10,6 +10,7 @@ import { Simulator } from './simulator';
 import { JResTreeProvider, JResTreeNode, fireChangeEvent, deleteAssetAsync, syncJResAsync } from './jres';
 import { AssetEditor } from './assetEditor';
 import { BuildWatcher } from './buildWatcher';
+import { maybeShowConfigNotificationAsync } from './tsconfig';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -76,6 +77,8 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     BuildWatcher.watcher.addEventListener("error", showError);
+
+    maybeShowConfigNotificationAsync();
 }
 
 async function buildCommand() {
