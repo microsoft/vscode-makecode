@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 
-import { activeWorkspace, createVsCodeHost, readFileAsync, setActiveWorkspace, stringToBuffer } from "./host";
+import { activeWorkspace, createVsCodeHost, readFileAsync, setActiveWorkspace } from "./host";
 import { setHost } from "makecode-core/built/host";
 
 import * as cmd from "makecode-core/built/commands";
@@ -39,21 +39,21 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.clean", cleanCommand);
     addCmd("makecode.importUrl", importUrlCommand);
 
-    addCmd("makecode.createImage", () => createAssetCommand("image"))
-    addCmd("makecode.createTile", () => createAssetCommand("tile"))
-    addCmd("makecode.createTilemap", () => createAssetCommand("tilemap"))
-    addCmd("makecode.createAnimation", () => createAssetCommand("animation"))
-    addCmd("makecode.createSong", () => createAssetCommand("song"))
+    addCmd("makecode.createImage", () => createAssetCommand("image"));
+    addCmd("makecode.createTile", () => createAssetCommand("tile"));
+    addCmd("makecode.createTilemap", () => createAssetCommand("tilemap"));
+    addCmd("makecode.createAnimation", () => createAssetCommand("animation"));
+    addCmd("makecode.createSong", () => createAssetCommand("song"));
 
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.duplicateAsset", duplicateAssetCommand)
-    )
+    );
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.deleteAsset", deleteAssetCommand)
-    )
+    );
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.refreshAssets", refreshAssetsCommand)
-    )
+    );
 
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.openAsset", uri => {
@@ -106,7 +106,7 @@ async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.Works
         return;
     }
     else if (folders.length === 1) {
-        return folders[0]
+        return folders[0];
     }
 
     const choice = await vscode.window.showQuickPick(folders.map(f => f.name), { placeHolder: "Choose a workspace" });
@@ -122,7 +122,7 @@ async function buildCommand() {
     console.log("Build command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (workspace) setActiveWorkspace(workspace)
+    if (workspace) setActiveWorkspace(workspace);
     else return;
 
     clearBuildErrors();
@@ -144,7 +144,7 @@ async function installCommand() {
     console.log("Install command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (workspace) setActiveWorkspace(workspace)
+    if (workspace) setActiveWorkspace(workspace);
     else return;
 
     await cmd.installCommand({});
@@ -154,7 +154,7 @@ async function cleanCommand() {
     console.log("Clean command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (workspace) setActiveWorkspace(workspace)
+    if (workspace) setActiveWorkspace(workspace);
     else return;
 
     await cmd.cleanCommand({});
@@ -164,7 +164,7 @@ async function importUrlCommand() {
     console.log("Import URL command");
 
     const workspace = await chooseWorkspaceAsync(false);
-    if (workspace) setActiveWorkspace(workspace)
+    if (workspace) setActiveWorkspace(workspace);
     else return;
 
     const input = await vscode.window.showInputBox({
@@ -175,7 +175,7 @@ async function importUrlCommand() {
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Downloading URL",
+        title: "Downloading URL...",
         cancellable: false
     }, async progress => {
         try {
@@ -190,14 +190,14 @@ async function importUrlCommand() {
             message: "Creating tsconfig.json..."
         });
 
-        await writeTSConfigAsync(workspace.uri)
+        await writeTSConfigAsync(workspace.uri);
 
         progress.report({
             message: "Installing dependencies..."
         });
 
         try {
-            await cmd.installCommand({})
+            await cmd.installCommand({});
         }
         catch (e) {
             showError("Unable to install project dependencies");
@@ -258,24 +258,57 @@ async function choosehwCommand() {
     console.log("Choose hardware command")
 }
 
+interface HardwareQuickpick extends vscode.QuickPickItem {
+    id: string;
+}
+
 async function createCommand()  {
     console.log("Create command")
 
-    const qp = vscode.window.createQuickPick();
+    const qp = vscode.window.createQuickPick<HardwareQuickpick>();
 
     qp.items = [
         {
-            label: "arcade",
+            label: "MakeCode Arcade",
+            detail: "Create a retro-style video game",
+            id: "arcade"
         },
         {
-            label: "microbit",
+            label: "Micro:bit",
+            detail: "Create a project for the Micro:bit",
+            id: "microbit"
         }
     ];
+
     qp.onDidAccept(() => {
         const selected = qp.selectedItems[0];
-        cmd.initCommand(selected.label, [], {})
-        qp.dispose();
-    })
+        qp.dispose()
+
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Creating project...",
+            cancellable: false
+        }, async progress => {
+            try {
+                await cmd.initCommand(selected.id, [], {});
+            }
+            catch (e) {
+                showError("Unable to create project");
+                return;
+            }
+
+            progress.report({
+                message: "Installing dependencies..."
+            });
+
+            try {
+                await cmd.installCommand({});
+            }
+            catch (e) {
+                showError("Unable to install project dependencies");
+            }
+        });
+    });
 
     qp.show();
 }
