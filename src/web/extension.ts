@@ -10,7 +10,7 @@ import { Simulator } from "./simulator";
 import { JResTreeProvider, JResTreeNode, fireChangeEvent, deleteAssetAsync, syncJResAsync } from "./jres";
 import { AssetEditor } from "./assetEditor";
 import { BuildWatcher } from "./buildWatcher";
-import { maybeShowConfigNotificationAsync, writeTSConfigAsync } from "./tsconfig";
+import { maybeShowConfigNotificationAsync, maybeShowDependenciesNotificationAsync, writeTSConfigAsync } from "./projectWarnings";
 import { CompileResult } from "makecode-core/built/service";
 
 
@@ -35,7 +35,7 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.simulate", () => simulateCommand(context));
     addCmd("makecode.choosehw", choosehwCommand);
     addCmd("makecode.create", createCommand);
-    addCmd("makecode.install", installCommand);
+    addCmd("makecode.install", async () => await installCommand());
     addCmd("makecode.clean", cleanCommand);
     addCmd("makecode.importUrl", importUrlCommand);
 
@@ -83,6 +83,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(diagnosticsCollection);
 
     maybeShowConfigNotificationAsync();
+    maybeShowDependenciesNotificationAsync();
 }
 
 async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.WorkspaceFolder | undefined> {
@@ -102,7 +103,7 @@ async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.Works
     }
 
     if (folders.length === 0) {
-        vscode.window.showErrorMessage("You must have a MakeCode project open to use this command");
+        showError("You must have a MakeCode project open to use this command");
         return;
     }
     else if (folders.length === 1) {
@@ -140,12 +141,17 @@ async function buildCommand() {
     });
 }
 
-async function installCommand() {
+export async function installCommand(useWorkspace?: vscode.WorkspaceFolder) {
     console.log("Install command");
 
-    const workspace = await chooseWorkspaceAsync(true);
-    if (workspace) setActiveWorkspace(workspace);
-    else return;
+    if (useWorkspace) {
+        setActiveWorkspace(useWorkspace);
+    }
+    else {
+        const workspace = await chooseWorkspaceAsync(true);
+        if (workspace) setActiveWorkspace(workspace);
+        else return;
+    }
 
     await cmd.installCommand({});
 }
