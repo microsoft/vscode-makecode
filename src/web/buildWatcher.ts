@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 
 import { buildCommandOnce, BuildOptions } from "makecode-core/built/commands";
 import { delay, throttle } from './util';
+import { clearBuildErrors, reportBuildErrors } from './extension';
 
 export class BuildWatcher {
     public static watcher: BuildWatcher;
@@ -62,6 +63,15 @@ export class BuildWatcher {
         return this.running;
     }
 
+    async buildNowAsync() {
+        if (this.isEnabled()) {
+            await this.buildAsync(false)
+        }
+        else {
+            this.setEnabled(true);
+        }
+    }
+
     addEventListener(event: "error", handler: (error: any) => void): void;
     addEventListener(event: "build-completed", handler: () => void): void;
     addEventListener(event: "error" | "build-completed", handler: Function): void {
@@ -106,7 +116,11 @@ export class BuildWatcher {
                         opts0.update = false
                     }
 
-                    await buildCommandOnce(opts0);
+                    clearBuildErrors();
+                    const result = await buildCommandOnce(opts0);
+                    if (result.diagnostics.length) {
+                        reportBuildErrors(result);
+                    }
 
                     if (!this.running) return;
 

@@ -157,7 +157,7 @@ export function setActiveWorkspace(folder: vscode.WorkspaceFolder) {
     _activeWorkspace = folder;
 }
 
-function activeWorkspace() {
+export function activeWorkspace() {
     if (!_activeWorkspace) _activeWorkspace = vscode.workspace.workspaceFolders![0];
     return _activeWorkspace;
 }

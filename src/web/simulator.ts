@@ -85,11 +85,30 @@ export class Simulator {
     }
 
     handleSimulatorMessage(message: any) {
-        if (message.type === "fetch-js") {
-            this.postMessage({
-                ...message,
-                text: this.binaryJS
-            })
+        switch (message.type) {
+            case "fetch-js":
+                this.postMessage({
+                    ...message,
+                    text: this.binaryJS
+                });
+                break;
+            case "bulkserial":
+                const data: { data: string, time: number }[] = message.data;
+                for (const entry of data) {
+                    Simulator.simconsole.appendLine(entry.data);
+                }
+                break;
+            case "debugger":
+                if (message.subtype === "breakpoint" && message.exceptionMessage) {
+                    let stackTrace = "Uncaught " + message.exceptionMessage + "\n"
+                    for (let s of message.stackframes) {
+                        let fi = s.funcInfo
+                        stackTrace += `   at ${fi.functionName} (${fi.fileName
+                            }:${fi.line + 1}:${fi.column + 1})\n`
+                    }
+                    Simulator.simconsole.appendLine(stackTrace);
+                    Simulator.simconsole.show(false);
+                }
         }
     }
 
@@ -125,7 +144,8 @@ async function getSimHtmlAsync() {
     else if (await existsAsync("assets/js/" + customPath)) {
         customJs = await readFileAsync("assets/js/" + customPath, "utf8");
     }
-    // <script type="text/javascript" src="loader.js"></script>
+
+    // In order to avoid using a server, we inline the loader and custom js files
     return index.replace(/<\s*script\s+type="text\/javascript"\s+src="([^"]+)"\s*>\s*<\/\s*script\s*>/g, (substring, match) => {
         if (match === "loader.js") {
             return `

@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
 
-import { createVsCodeHost, readFileAsync, setActiveWorkspace, stringToBuffer } from "./host";
+import { activeWorkspace, createVsCodeHost, readFileAsync, setActiveWorkspace, stringToBuffer } from "./host";
 import { setHost } from "makecode-core/built/host";
 
 import * as cmd from "makecode-core/built/commands";
@@ -11,14 +11,12 @@ import { JResTreeProvider, JResTreeNode, fireChangeEvent, deleteAssetAsync, sync
 import { AssetEditor } from "./assetEditor";
 import { BuildWatcher } from "./buildWatcher";
 import { maybeShowConfigNotificationAsync, writeTSConfigAsync } from "./tsconfig";
+import { CompileResult } from "makecode-core/built/service";
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+
+let diagnosticsCollection: vscode.DiagnosticCollection;
 export function activate(context: vscode.ExtensionContext) {
     setHost(createVsCodeHost());
-
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
     console.log("Congratulations, your extension 'pxt-vscode-web' is now active in the web extension host!");
 
     const addCmd = (id: string, fn: () => Promise<void>) => {
@@ -81,6 +79,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     BuildWatcher.watcher.addEventListener("error", showError);
 
+    diagnosticsCollection = vscode.languages.createDiagnosticCollection("MakeCode");
+    context.subscriptions.push(diagnosticsCollection);
+
     maybeShowConfigNotificationAsync();
 }
 
@@ -124,7 +125,19 @@ async function buildCommand() {
     if (workspace) setActiveWorkspace(workspace)
     else return;
 
-    await cmd.buildCommandOnce({ watch: true });
+    clearBuildErrors();
+
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Building project...",
+        cancellable: false
+    }, async () => {
+        const result = await cmd.buildCommandOnce({ watch: true });
+
+        if (result.diagnostics.length) {
+            reportBuildErrors(result);
+        }
+    });
 }
 
 async function installCommand() {
@@ -197,24 +210,24 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
     if (workspace) setActiveWorkspace(workspace)
     else return;
 
-    if (BuildWatcher.watcher.isEnabled() && Simulator.currentSimulator) {
-        console.log("Simulator already running");
-        return;
-    }
+    if (!BuildWatcher.watcher.isEnabled()) {
+        const runSimulator = async () => {
+            if (!Simulator.currentSimulator) {
+                BuildWatcher.watcher.setEnabled(false);
+                BuildWatcher.watcher.removeEventListener("build-completed", runSimulator);
+                return;
+            }
 
-    const runSimulator = async () => {
-        if (!Simulator.currentSimulator) {
-            BuildWatcher.watcher.setEnabled(false);
-            BuildWatcher.watcher.removeEventListener("build-completed", runSimulator);
-            return;
+            Simulator.createOrShow(context);
+            Simulator.currentSimulator.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
         }
-
-        Simulator.createOrShow(context);
-        Simulator.currentSimulator.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
+        BuildWatcher.watcher.addEventListener("build-completed", runSimulator);
+        BuildWatcher.watcher.setEnabled(true);
+    }
+    else {
+        await BuildWatcher.watcher.buildNowAsync();
     }
 
-    BuildWatcher.watcher.addEventListener("build-completed", runSimulator);
-    BuildWatcher.watcher.setEnabled(true);
     Simulator.createOrShow(context);
 }
 
@@ -287,5 +300,52 @@ export async function fileExistsAsync(path: vscode.Uri) {
     }
     catch {
         return false
+    }
+}
+
+export function clearBuildErrors() {
+    diagnosticsCollection.clear();
+}
+
+export function reportBuildErrors(res: CompileResult) {
+    const diagnostics: {[index: string]: vscode.Diagnostic[]} = {};
+
+    for (const d of res.diagnostics) {
+        const range = new vscode.Range(d.line, d.column, d.endLine ?? d.line, d.endColumn ?? d.column);
+
+        let message: string;
+
+        if (typeof d.messageText === "string") {
+            message = d.messageText;
+        }
+        else {
+            let diagnosticChain = d.messageText;
+            message = "";
+
+            let indent = 0;
+            while (diagnosticChain) {
+                if (indent) {
+                    message += "\n";
+
+                    for (let i = 0; i < indent; i++) {
+                        message += "  ";
+                    }
+                }
+                message += diagnosticChain.messageText;
+                indent++;
+                diagnosticChain = diagnosticChain.next!;
+            }
+        }
+
+        if (!diagnostics[d.fileName]) {
+            diagnostics[d.fileName] = [];
+        }
+
+        diagnostics[d.fileName].push(new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error));
+    }
+
+    for (const filename of Object.keys(diagnostics)) {
+        const uri = vscode.Uri.joinPath(activeWorkspace().uri, filename);
+        diagnosticsCollection.set(uri, diagnostics[filename]);
     }
 }
