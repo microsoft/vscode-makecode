@@ -21,10 +21,10 @@ export function activate(context: vscode.ExtensionContext) {
     const addCmd = (id: string, fn: () => Promise<void>) => {
         const cmd = vscode.commands.registerCommand(id, () => fn()
             .catch( err => {
-                console.error("MakeCode Ext Exception", err)
+                console.error("MakeCode Ext Exception", err);
             }));
         context.subscriptions.push(cmd);
-    }
+    };
 
     Simulator.register(context);
     AssetEditor.register(context);
@@ -112,7 +112,9 @@ async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.Works
     const choice = await vscode.window.showQuickPick(folders.map(f => f.name), { placeHolder: "Choose a workspace" });
 
     for (const folder of folders) {
-        if (folder.name === choice) return folder;
+        if (folder.name === choice) {
+            return folder;
+        }
     }
 
     return undefined;
@@ -122,7 +124,9 @@ async function buildCommand() {
     console.log("Build command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (!workspace) return;
+    if (!workspace) {
+        return;
+    }
 
     clearBuildErrors();
 
@@ -143,7 +147,9 @@ export async function installCommand() {
     console.log("Install command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (!workspace) return;
+    if (!workspace) {
+        return;
+    }
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -158,7 +164,9 @@ async function cleanCommand() {
     console.log("Clean command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (!workspace) return;
+    if (!workspace) {
+        return;
+    }
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -173,13 +181,17 @@ async function importUrlCommand() {
     console.log("Import URL command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (!workspace) return;
+    if (!workspace) {
+        return;
+    }
 
     const input = await vscode.window.showInputBox({
         prompt: "Paste a shared project URL or GitHub repo"
     });
 
-    if (!input) return;
+    if (!input) {
+        return;
+    }
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -215,8 +227,12 @@ async function importUrlCommand() {
 
 export async function simulateCommand(context: vscode.ExtensionContext) {
     const workspace = await chooseWorkspaceAsync(false);
-    if (workspace) setActiveWorkspace(workspace)
-    else return;
+    if (workspace) {
+        setActiveWorkspace(workspace);
+    }
+    else {
+        return;
+    }
 
     if (!BuildWatcher.watcher.isEnabled()) {
         const runSimulator = async () => {
@@ -228,7 +244,7 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
 
             Simulator.createOrShow(context);
             Simulator.currentSimulator.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
-        }
+        };
         BuildWatcher.watcher.addEventListener("build-completed", runSimulator);
         BuildWatcher.watcher.startWatching(workspace);
     }
@@ -250,7 +266,7 @@ async function duplicateAssetCommand(node: JResTreeNode) {
 }
 
 async function deleteAssetCommand(node: JResTreeNode) {
-    await deleteAssetAsync(node)
+    await deleteAssetAsync(node);
 }
 
 async function refreshAssetsCommand(justFireEvent: boolean) {
@@ -263,7 +279,7 @@ async function refreshAssetsCommand(justFireEvent: boolean) {
 }
 
 async function choosehwCommand() {
-    console.log("Choose hardware command")
+    console.log("Choose hardware command");
 }
 
 interface HardwareQuickpick extends vscode.QuickPickItem {
@@ -271,10 +287,12 @@ interface HardwareQuickpick extends vscode.QuickPickItem {
 }
 
 async function createCommand()  {
-    console.log("Create command")
+    console.log("Create command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (!workspace) return;
+    if (!workspace) {
+        return;
+    }
 
     const qp = vscode.window.createQuickPick<HardwareQuickpick>();
 
@@ -293,7 +311,7 @@ async function createCommand()  {
 
     qp.onDidAccept(() => {
         const selected = qp.selectedItems[0];
-        qp.dispose()
+        qp.dispose();
 
         vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
@@ -301,7 +319,7 @@ async function createCommand()  {
             cancellable: false
         }, async progress => {
             try {
-                await createEmptyProjectAsync(workspace, selected.id)
+                await createEmptyProjectAsync(workspace, selected.id);
             }
             catch (e) {
                 showError("Unable to create project");
@@ -343,7 +361,7 @@ export async function fileExistsAsync(path: vscode.Uri) {
         return true;
     }
     catch {
-        return false
+        return false;
     }
 }
 

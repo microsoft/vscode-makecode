@@ -33,7 +33,7 @@ export class BuildWatcher {
     }
 
     startWatching(folder: vscode.WorkspaceFolder) {
-        if (this.running && this.folder == folder) return;
+        if (this.running && this.folder === folder) {return;}
         this.stop();
 
         this.folder = folder;
@@ -42,16 +42,22 @@ export class BuildWatcher {
         this.watcherDisposable = vscode.workspace.onDidSaveTextDocument(
             throttle(
                 (doc: vscode.TextDocument) => {
-                    if (!this.running) return;
+                    if (!this.running) {
+                        return;
+                    }
 
                     // skip node_modules, pxt_modules, built, .git
-                    if (/\/?((node|pxt)_modules|built|\.git)/i.test(doc.fileName)) return;
+                    if (/\/?((node|pxt)_modules|built|\.git)/i.test(doc.fileName)) {
+                        return;
+                    }
                     // only watch for source files
-                    if (!/\.(json|ts|asm|cpp|c|h|hpp)$/i.test(doc.fileName)) return;
+                    if (!/\.(json|ts|asm|cpp|c|h|hpp)$/i.test(doc.fileName)) {
+                        return;
+                    }
                     this.buildAsync(false);
                 },
             500, true)
-        )
+        );
 
         this.context.subscriptions.push(this.watcherDisposable);
         this.buildAsync(true);
@@ -75,7 +81,7 @@ export class BuildWatcher {
 
     async buildNowAsync(folder: vscode.WorkspaceFolder) {
         if (this.isEnabled()) {
-            await this.buildAsync(false)
+            await this.buildAsync(false);
         }
         else {
             this.startWatching(folder);
@@ -85,27 +91,35 @@ export class BuildWatcher {
     addEventListener(event: "error", handler: (error: any) => void): void;
     addEventListener(event: "build-completed", handler: () => void): void;
     addEventListener(event: "error" | "build-completed", handler: Function): void {
-        if (event === "build-completed") this.buildCompletedListeners.push(handler as any);
-        else this.errorListeners.push(handler as any);
+        if (event === "build-completed") {
+            this.buildCompletedListeners.push(handler as any);
+        }
+        else {
+            this.errorListeners.push(handler as any);
+        }
     }
 
     removeEventListener(event: "error", handler: (error: any) => void): void;
     removeEventListener(event: "build-completed", handler: () => void): void;
     removeEventListener(event: "error" | "build-completed", handler: Function): void {
-        if (event === "build-completed") this.buildCompletedListeners = this.buildCompletedListeners.filter(h => h !== handler)
-        else this.errorListeners = this.errorListeners.filter(h => h !== handler)
+        if (event === "build-completed") {
+            this.buildCompletedListeners = this.buildCompletedListeners.filter(h => h !== handler);
+        }
+        else {
+            this.errorListeners = this.errorListeners.filter(h => h !== handler);
+        }
     }
 
     protected async buildAsync(firstBuild = false) {
-        this.buildPending = true
+        this.buildPending = true;
 
         // delay just in case there are multiple events firing
-        await delay(100)
+        await delay(100);
 
         // if already building, bail out
         if (this.building) {
-            console.log(` build in progress, waiting...`)
-            return
+            console.log(` build in progress, waiting...`);
+            return;
         }
 
         vscode.window.withProgress({
@@ -115,15 +129,15 @@ export class BuildWatcher {
         }, async () => {
             // start a build
             try {
-                this.building = true
+                this.building = true;
                 while (this.buildPending) {
-                    this.buildPending = false
+                    this.buildPending = false;
                     const opts0 = {
                         ...this.buildOpts
-                    }
+                    };
                     if (!firstBuild) {
                         // if not first time, don't update
-                        opts0.update = false
+                        opts0.update = false;
                     }
 
                     clearBuildErrors();
@@ -137,7 +151,7 @@ export class BuildWatcher {
                         reportBuildErrors(result);
                     }
 
-                    if (!this.running) return;
+                    if (!this.running) {return;}
 
                     for (const handler of this.buildCompletedListeners) {
                         handler();
@@ -150,7 +164,7 @@ export class BuildWatcher {
                 }
             }
             finally {
-                this.building = false
+                this.building = false;
             }
         });
     }
@@ -166,7 +180,7 @@ export class BuildWatcher {
         const token: vscode.CancellationToken = {
             isCancellationRequested: false,
             onCancellationRequested: cancelEvent.event
-        }
+        };
 
         const tokenSource = {
             token,
@@ -182,7 +196,7 @@ export class BuildWatcher {
             }
         };
 
-        this.pendingCancelToken = tokenSource
+        this.pendingCancelToken = tokenSource;
         this.context.subscriptions.push(cancelEvent);
     }
 }

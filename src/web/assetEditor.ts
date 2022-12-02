@@ -48,7 +48,7 @@ export class AssetEditor {
             retainContextWhenHidden: true
         });
 
-        AssetEditor.currentSimulator = new AssetEditor(panel)
+        AssetEditor.currentSimulator = new AssetEditor(panel);
     }
 
     public static register(context: vscode.ExtensionContext) {
@@ -57,7 +57,7 @@ export class AssetEditor {
     }
 
     public static revive(panel: vscode.WebviewPanel) {
-        AssetEditor.currentSimulator = new AssetEditor(panel)
+        AssetEditor.currentSimulator = new AssetEditor(panel);
     }
 
     protected panel: vscode.WebviewPanel;
@@ -156,7 +156,7 @@ export class AssetEditor {
         return new Promise<any>(resolve => {
             this.pendingMessages[message.id] = resolve;
             this.panel.webview.postMessage(message);
-        })
+        });
     }
 
     addDisposable(d: vscode.Disposable) {
@@ -164,13 +164,13 @@ export class AssetEditor {
     }
 
     protected async initWebviewHtmlAsync() {
-        this.panel.webview.html = ""
+        this.panel.webview.html = "";
         const simulatorHTML = await getAssetEditorHtmlAsync(this.panel.webview);
         this.panel.webview.html = simulatorHTML;
     }
 
     protected async onReadyMessageReceivedAsync() {
-        if (!this.editing) return;
+        if (!this.editing) {return;}
 
         switch (this.editing.type) {
             case "edit":
@@ -203,7 +203,7 @@ export class AssetEditor {
 export class AssetEditorSerializer implements vscode.WebviewPanelSerializer {
     async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
         AssetEditor.revive(webviewPanel);
-        await AssetEditor.currentSimulator?.openAssetAsync(state.editing!.assetType, state.editing!.assetId)
+        await AssetEditor.currentSimulator?.openAssetAsync(state.editing!.assetType, state.editing!.assetId);
     }
 }
 
@@ -268,7 +268,7 @@ async function saveFilesAsync(files: {[index: string]: string}) {
 
         if (configFiles.indexOf(file) === -1) {
             insertGeneratedFile(configFiles, file);
-            didChangeConfig = true
+            didChangeConfig = true;
         }
     }
 

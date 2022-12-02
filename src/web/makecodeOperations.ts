@@ -61,7 +61,9 @@ function enqueueOperationAsync<U>(folder: vscode.WorkspaceFolder, action: () => 
 }
 
 async function pokeQueueAsync() {
-    if (currentlyWorking) return;
+    if (currentlyWorking) {
+        return;
+    }
 
     while (operationQueue.length) {
         const op = operationQueue.shift()!;
@@ -77,7 +79,7 @@ async function pokeQueueAsync() {
             op.resolve(res);
         }
         catch (e) {
-            op.reject(e)
+            op.reject(e);
         }
         finally {
             currentlyWorking = false;

@@ -15,14 +15,14 @@ export class Simulator {
 
     public static register(extCtx: vscode.ExtensionContext) {
         extensionContext = extCtx;
-        vscode.window.registerWebviewPanelSerializer('mkcdsim', new SimulatorSerializer(extCtx))
+        vscode.window.registerWebviewPanelSerializer('mkcdsim', new SimulatorSerializer(extCtx));
     }
 
     public static createOrShow(extCtx: vscode.ExtensionContext) {
         let column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : vscode.ViewColumn.One;
         column = column! < 9 ? column! + 1 : column;
 
-        extensionContext = extCtx
+        extensionContext = extCtx;
 
         if (Simulator.simconsole) {
             Simulator.simconsole.clear();
@@ -45,11 +45,11 @@ export class Simulator {
             retainContextWhenHidden: true
         });
 
-        Simulator.currentSimulator = new Simulator(panel)
+        Simulator.currentSimulator = new Simulator(panel);
     }
 
     public static revive(panel: vscode.WebviewPanel) {
-        Simulator.currentSimulator = new Simulator(panel)
+        Simulator.currentSimulator = new Simulator(panel);
     }
 
     protected panel: vscode.WebviewPanel;
@@ -76,10 +76,10 @@ export class Simulator {
 
     async simulateAsync(binaryJS: string) {
         this.binaryJS = binaryJS;
-        this.panel.webview.html = ""
+        this.panel.webview.html = "";
         const simulatorHTML = await getSimHtmlAsync();
         if (this.simState == null) {
-            this.simState = await extensionContext.workspaceState.get("simstate", {})
+            this.simState = await extensionContext.workspaceState.get("simstate", {});
         }
         this.panel.webview.html = simulatorHTML;
     }
@@ -100,11 +100,11 @@ export class Simulator {
                 break;
             case "debugger":
                 if (message.subtype === "breakpoint" && message.exceptionMessage) {
-                    let stackTrace = "Uncaught " + message.exceptionMessage + "\n"
+                    let stackTrace = "Uncaught " + message.exceptionMessage + "\n";
                     for (let s of message.stackframes) {
-                        let fi = s.funcInfo
+                        let fi = s.funcInfo;
                         stackTrace += `   at ${fi.functionName} (${fi.fileName
-                            }:${fi.line + 1}:${fi.column + 1})\n`
+                            }:${fi.line + 1}:${fi.column + 1})\n`;
                     }
                     Simulator.simconsole.appendLine(stackTrace);
                     Simulator.simconsole.show(false);
@@ -115,7 +115,7 @@ export class Simulator {
     postMessage(msg: any) {
         this.panel.webview.postMessage(msg);
         msg._fromVscode = true;
-        console.log("sending", msg)
+        console.log("sending", msg);
     }
 
     addDisposable(d: vscode.Disposable) {
@@ -127,7 +127,7 @@ export class SimulatorSerializer implements vscode.WebviewPanelSerializer {
     constructor(public context: vscode.ExtensionContext) {}
     async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: unknown) {
         Simulator.revive(webviewPanel);
-        await simulateCommand(this.context)
+        await simulateCommand(this.context);
     }
 }
 
@@ -152,14 +152,14 @@ async function getSimHtmlAsync() {
             <script type="text/javascript">
                 ${loaderJs}
             </script>
-            `
+            `;
         }
         else if (match === "custom.js") {
             return `
             <script type="text/javascript">
                 ${customJs}
             </script>
-            `
+            `;
         }
         return "";
     }).replace("usePostMessage: false", "usePostMessage: true");

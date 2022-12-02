@@ -45,6 +45,6 @@ suite("Web Extension Test Suite", () => {
 			];
 			insertGeneratedFile(files, "images.g.ts");
 			assert.deepStrictEqual(files, ["images.g.ts", "a.ts", "b.ts"]);
-		})
-	})
+		});
+	});
 });

@@ -3,20 +3,30 @@ import { fileExistsAsync } from './extension';
 import { installDependenciesAsync } from './makecodeOperations';
 
 export async function maybeShowConfigNotificationAsync() {
-    if (!vscode.workspace.workspaceFolders) return;
+    if (!vscode.workspace.workspaceFolders) {
+        return;
+    }
 
     const foldersToFix: vscode.WorkspaceFolder[] = [];
     for (const folder of vscode.workspace.workspaceFolders) {
-        if (await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "tsconfig.json"))) continue;
-        if (!(await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt.json")))) continue;
+        if (await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "tsconfig.json"))) {
+            continue;
+        }
+        if (!(await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt.json")))) {
+            continue;
+        }
         foldersToFix.push(folder);
     }
 
-    if (foldersToFix.length == 0) return;
+    if (foldersToFix.length === 0) {
+        return;
+    }
 
     const selection = await vscode.window.showWarningMessage("MakeCode project is missing a tsconfig.json file.", "Add tsconfig.json");
 
-    if (!selection) return;
+    if (!selection) {
+        return;
+    }
 
     for (const folder of foldersToFix) {
         await writeFileAsync(folder.uri, "tsconfig.json", templateConfig);
@@ -24,18 +34,24 @@ export async function maybeShowConfigNotificationAsync() {
 }
 
 export async function writeTSConfigAsync(folder: vscode.Uri) {
-    if (await fileExistsAsync(vscode.Uri.joinPath(folder, "tsconfig.json"))) return;
+    if (await fileExistsAsync(vscode.Uri.joinPath(folder, "tsconfig.json"))) {return;}
 
     await writeFileAsync(folder, "tsconfig.json", templateConfig);
 }
 
 export async function maybeShowDependenciesNotificationAsync() {
-    if (!vscode.workspace.workspaceFolders) return;
+    if (!vscode.workspace.workspaceFolders) {
+        return;
+    }
 
     const foldersToFix: vscode.WorkspaceFolder[] = [];
     for (const folder of vscode.workspace.workspaceFolders) {
-        if (!(await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt.json")))) continue;
-        if (await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt_modules"))) continue;
+        if (!(await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt.json")))) {
+            continue;
+        }
+        if (await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt_modules"))) {
+            continue;
+        }
 
         try {
             const config = await readFileAsync(folder.uri, "pxt.json");
@@ -50,10 +66,14 @@ export async function maybeShowDependenciesNotificationAsync() {
         }
     }
 
-    if (foldersToFix.length == 0) return;
+    if (foldersToFix.length === 0) {
+        return;
+    }
 
     const selection = await vscode.window.showInformationMessage("Do you want to install the dependencies of all open MakeCode projects?", "Install dependencies");
-    if (!selection) return;
+    if (!selection) {
+        return;
+    }
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
