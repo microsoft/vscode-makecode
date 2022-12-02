@@ -23,4 +23,4 @@ jobs:
       - name: Compiling
         run: yarn compile-web
       - name: Testing
-        run: yarn test
+        run: xvfb-run -a yarn test
