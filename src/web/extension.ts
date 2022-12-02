@@ -1,17 +1,16 @@
 // The module "vscode" contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
+import { setHost } from "makecode-core/built/host";
+import { CompileResult } from "makecode-core/built/service";
 
 import { activeWorkspace, createVsCodeHost, readFileAsync, setActiveWorkspace } from "./host";
-import { setHost } from "makecode-core/built/host";
-
-import * as cmd from "makecode-core/built/commands";
 import { Simulator } from "./simulator";
 import { JResTreeProvider, JResTreeNode, fireChangeEvent, deleteAssetAsync, syncJResAsync } from "./jres";
 import { AssetEditor } from "./assetEditor";
 import { BuildWatcher } from "./buildWatcher";
 import { maybeShowConfigNotificationAsync, maybeShowDependenciesNotificationAsync, writeTSConfigAsync } from "./projectWarnings";
-import { CompileResult } from "makecode-core/built/service";
+import { buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, installDependenciesAsync } from "./makecodeOperations";
 
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
@@ -35,7 +34,7 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.simulate", () => simulateCommand(context));
     addCmd("makecode.choosehw", choosehwCommand);
     addCmd("makecode.create", createCommand);
-    addCmd("makecode.install", async () => await installCommand());
+    addCmd("makecode.install", installCommand);
     addCmd("makecode.clean", cleanCommand);
     addCmd("makecode.importUrl", importUrlCommand);
 
@@ -123,8 +122,7 @@ async function buildCommand() {
     console.log("Build command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (workspace) setActiveWorkspace(workspace);
-    else return;
+    if (!workspace) return;
 
     clearBuildErrors();
 
@@ -133,7 +131,7 @@ async function buildCommand() {
         title: "Building project...",
         cancellable: false
     }, async () => {
-        const result = await cmd.buildCommandOnce({ watch: true });
+        const result = await buildProjectAsync(workspace);
 
         if (result.diagnostics.length) {
             reportBuildErrors(result);
@@ -141,37 +139,41 @@ async function buildCommand() {
     });
 }
 
-export async function installCommand(useWorkspace?: vscode.WorkspaceFolder) {
+export async function installCommand() {
     console.log("Install command");
 
-    if (useWorkspace) {
-        setActiveWorkspace(useWorkspace);
-    }
-    else {
-        const workspace = await chooseWorkspaceAsync(true);
-        if (workspace) setActiveWorkspace(workspace);
-        else return;
-    }
+    const workspace = await chooseWorkspaceAsync(true);
+    if (!workspace) return;
 
-    await cmd.installCommand({});
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Installing project dependencies...",
+        cancellable: false
+    }, async progress => {
+        await installDependenciesAsync(workspace);
+    });
 }
 
 async function cleanCommand() {
     console.log("Clean command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (workspace) setActiveWorkspace(workspace);
-    else return;
+    if (!workspace) return;
 
-    await cmd.cleanCommand({});
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Cleaning project folders...",
+        cancellable: false
+    }, async progress => {
+        await cleanProjectFolderAsync(workspace);
+    });
 }
 
 async function importUrlCommand() {
     console.log("Import URL command");
 
-    const workspace = await chooseWorkspaceAsync(false);
-    if (workspace) setActiveWorkspace(workspace);
-    else return;
+    const workspace = await chooseWorkspaceAsync(true);
+    if (!workspace) return;
 
     const input = await vscode.window.showInputBox({
         prompt: "Paste a shared project URL or GitHub repo"
@@ -185,7 +187,7 @@ async function importUrlCommand() {
         cancellable: false
     }, async progress => {
         try {
-            await cmd.downloadCommand(input, {});
+            await downloadSharedProjectAsync(workspace, input);
         }
         catch (e) {
             showError("Unable to download project");
@@ -203,7 +205,7 @@ async function importUrlCommand() {
         });
 
         try {
-            await cmd.installCommand({});
+            await installDependenciesAsync(workspace);
         }
         catch (e) {
             showError("Unable to install project dependencies");
@@ -219,7 +221,7 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
     if (!BuildWatcher.watcher.isEnabled()) {
         const runSimulator = async () => {
             if (!Simulator.currentSimulator) {
-                BuildWatcher.watcher.setEnabled(false);
+                BuildWatcher.watcher.stop();
                 BuildWatcher.watcher.removeEventListener("build-completed", runSimulator);
                 return;
             }
@@ -228,10 +230,10 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
             Simulator.currentSimulator.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
         }
         BuildWatcher.watcher.addEventListener("build-completed", runSimulator);
-        BuildWatcher.watcher.setEnabled(true);
+        BuildWatcher.watcher.startWatching(workspace);
     }
     else {
-        await BuildWatcher.watcher.buildNowAsync();
+        await BuildWatcher.watcher.buildNowAsync(workspace);
     }
 
     Simulator.createOrShow(context);
@@ -271,6 +273,9 @@ interface HardwareQuickpick extends vscode.QuickPickItem {
 async function createCommand()  {
     console.log("Create command")
 
+    const workspace = await chooseWorkspaceAsync(true);
+    if (!workspace) return;
+
     const qp = vscode.window.createQuickPick<HardwareQuickpick>();
 
     qp.items = [
@@ -296,7 +301,7 @@ async function createCommand()  {
             cancellable: false
         }, async progress => {
             try {
-                await cmd.initCommand(selected.id, [], {});
+                await createEmptyProjectAsync(workspace, selected.id)
             }
             catch (e) {
                 showError("Unable to create project");
@@ -308,7 +313,7 @@ async function createCommand()  {
             });
 
             try {
-                await cmd.installCommand({});
+                await installDependenciesAsync(workspace);
             }
             catch (e) {
                 showError("Unable to install project dependencies");

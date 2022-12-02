@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { fileExistsAsync, installCommand } from './extension';
+import { fileExistsAsync } from './extension';
+import { installDependenciesAsync } from './makecodeOperations';
 
 export async function maybeShowConfigNotificationAsync() {
     if (!vscode.workspace.workspaceFolders) return;
@@ -65,7 +66,7 @@ export async function maybeShowDependenciesNotificationAsync() {
             });
 
             try {
-                await installCommand(folder);
+                await installDependenciesAsync(folder);
             }
             catch (e) {
                 vscode.window.showErrorMessage(`Error while installing dependencies for ${folder.name}: ${e}`);

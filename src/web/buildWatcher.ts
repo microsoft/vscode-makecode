@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 
-import { buildCommandOnce, BuildOptions } from "makecode-core/built/commands";
+import { BuildOptions } from "makecode-core/built/commands";
 import { delay, throttle } from './util';
 import { clearBuildErrors, reportBuildErrors } from './extension';
+import { buildProjectAsync } from './makecodeOperations';
 
 export class BuildWatcher {
     public static watcher: BuildWatcher;
@@ -15,11 +16,13 @@ export class BuildWatcher {
     protected running = false;
     protected building = false;
     protected buildPending = false;
+    protected pendingCancelToken: vscode.CancellationTokenSource | undefined;
 
     protected errorListeners: ((error: any) => void)[] = [];
     protected buildCompletedListeners: (() => void)[] = [];
 
     protected watcherDisposable: vscode.Disposable | undefined;
+    protected folder: vscode.WorkspaceFolder | undefined;
 
     private constructor(protected context: vscode.ExtensionContext) {
         this.buildOpts = {
@@ -29,17 +32,12 @@ export class BuildWatcher {
         };
     }
 
-    setEnabled(enabled: boolean) {
-        if (enabled === this.running) return;
+    startWatching(folder: vscode.WorkspaceFolder) {
+        if (this.running && this.folder == folder) return;
+        this.stop();
 
-        this.running = enabled;
-
-        if (!enabled) {
-            if (this.watcherDisposable) {
-                this.watcherDisposable.dispose();
-            }
-            return;
-        }
+        this.folder = folder;
+        this.running = true;
 
         this.watcherDisposable = vscode.workspace.onDidSaveTextDocument(
             throttle(
@@ -59,16 +57,28 @@ export class BuildWatcher {
         this.buildAsync(true);
     }
 
+    stop() {
+        this.running = false;
+        if (this.watcherDisposable) {
+            this.watcherDisposable.dispose();
+            this.watcherDisposable = undefined;
+        }
+        if (this.pendingCancelToken) {
+            this.pendingCancelToken.cancel();
+            this.pendingCancelToken.dispose();
+        }
+    }
+
     isEnabled() {
         return this.running;
     }
 
-    async buildNowAsync() {
+    async buildNowAsync(folder: vscode.WorkspaceFolder) {
         if (this.isEnabled()) {
             await this.buildAsync(false)
         }
         else {
-            this.setEnabled(true);
+            this.startWatching(folder);
         }
     }
 
@@ -117,7 +127,12 @@ export class BuildWatcher {
                     }
 
                     clearBuildErrors();
-                    const result = await buildCommandOnce(opts0);
+
+                    this.newCancelToken();
+                    const token = this.pendingCancelToken;
+                    const result = await buildProjectAsync(this.folder!, this.buildOpts, token?.token);
+                    token?.dispose();
+
                     if (result.diagnostics.length) {
                         reportBuildErrors(result);
                     }
@@ -138,5 +153,36 @@ export class BuildWatcher {
                 this.building = false
             }
         });
+    }
+
+    protected newCancelToken() {
+        if (this.pendingCancelToken) {
+            this.pendingCancelToken.cancel();
+            this.pendingCancelToken.dispose();
+        }
+
+        const cancelEvent = new vscode.EventEmitter<void>();
+
+        const token: vscode.CancellationToken = {
+            isCancellationRequested: false,
+            onCancellationRequested: cancelEvent.event
+        }
+
+        const tokenSource = {
+            token,
+            cancel: () => {
+                cancelEvent.fire();
+                token.isCancellationRequested = true;
+            },
+            dispose: () => {
+                cancelEvent.dispose();
+                if (this.pendingCancelToken === tokenSource) {
+                    this.pendingCancelToken = undefined;
+                }
+            }
+        };
+
+        this.pendingCancelToken = tokenSource
+        this.context.subscriptions.push(cancelEvent);
     }
 }
