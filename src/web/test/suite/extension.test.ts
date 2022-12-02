@@ -1,15 +1,50 @@
-import * as assert from 'assert';
+import * as assert from "assert";
 
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
-import * as vscode from 'vscode';
-// import * as myExtension from '../../extension';
+import * as vscode from "vscode";
+import { insertGeneratedFile } from "../../assetEditor";
 
-suite('Web Extension Test Suite', () => {
-	vscode.window.showInformationMessage('Start all tests.');
+suite("Web Extension Test Suite", () => {
+	vscode.window.showInformationMessage("Start all tests.");
 
-	test('Sample test', () => {
-		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
+	suite("insertGeneratedFile", () => {
+		test("next to existing file", () => {
+			const files = [
+				"a.ts",
+				"images.g.jres",
+				"b.ts"
+			];
+			insertGeneratedFile(files, "images.g.ts");
+			assert.deepStrictEqual(files, ["a.ts", "images.g.jres", "images.g.ts", "b.ts"]);
+		});
+
+		test("after all generated files", () => {
+			const files = [
+				"a.ts",
+				"b.g.jres",
+				"c.g.ts",
+				"d.ts"
+			];
+			insertGeneratedFile(files, "images.g.ts");
+			assert.deepStrictEqual(files, ["a.ts", "b.g.jres", "c.g.ts", "images.g.ts", "d.ts"]);
+		});
+
+		test("after jres files", () => {
+			const files = [
+				"a.ts",
+				"b.jres",
+				"c.ts"
+			];
+			insertGeneratedFile(files, "images.g.ts");
+			assert.deepStrictEqual(files, ["a.ts", "b.jres", "images.g.ts", "c.ts"]);
+		});
+
+		test("at beginning of list", () => {
+			const files = [
+				"a.ts",
+				"b.ts"
+			];
+			insertGeneratedFile(files, "images.g.ts");
+			assert.deepStrictEqual(files, ["images.g.ts", "a.ts", "b.ts"]);
+		});
 	});
 });

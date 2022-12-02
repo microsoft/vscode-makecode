@@ -25,7 +25,7 @@ class JResTreeModel {
 
     async refreshJresAsync() {
         this.nodes = await readProjectJResAsync();
-        vscode.commands.executeCommand("makecode.refreshAssets", true)
+        vscode.commands.executeCommand("makecode.refreshAssets", true);
     }
 }
 
@@ -39,7 +39,7 @@ export class JResTreeProvider implements vscode.TreeDataProvider<JResTreeNode> {
             model = new JResTreeModel();
         }
         this._onDidChangeTreeData = new vscode.EventEmitter();
-        this.onDidChangeTreeData = this._onDidChangeTreeData.event
+        this.onDidChangeTreeData = this._onDidChangeTreeData.event;
         model.providers.push(this);
     }
 
@@ -53,11 +53,13 @@ export class JResTreeProvider implements vscode.TreeDataProvider<JResTreeNode> {
                 arguments: [element.uri],
             } : undefined,
             collapsibleState: element.id ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed
-        }
+        };
     }
 
     getChildren(element?: JResTreeNode | undefined): vscode.ProviderResult<JResTreeNode[]> {
-        if (!element) return model.nodes.filter(node => node.kind === this.kind);
+        if (!element) {
+            return model.nodes.filter(node => node.kind === this.kind);
+        }
         return [];
     }
 
@@ -83,7 +85,9 @@ export function fireChangeEvent() {
 }
 
 export async function deleteAssetAsync(node: JResTreeNode) {
-    if (!node.sourceFile || !node.id) return;
+    if (!node.sourceFile || !node.id) {
+        return;
+    }
 
     const sourceText = new TextDecoder().decode(await vscode.workspace.fs.readFile(node.sourceFile));
     const sourceJRes = JSON.parse(sourceText);
@@ -112,7 +116,9 @@ async function readProjectJResAsync() {
     const files = await vscode.workspace.findFiles("**/*.jres");
 
     for (const file of files) {
-        if (file.fsPath.indexOf("pxt_modules") !== -1 || file.fsPath.indexOf("node_modules") !== -1) continue;
+        if (file.fsPath.indexOf("pxt_modules") !== -1 || file.fsPath.indexOf("node_modules") !== -1) {
+            continue;
+        }
         const contents = new TextDecoder().decode(await vscode.workspace.fs.readFile(file));
         const jres = JSON.parse(contents);
 
@@ -120,7 +126,9 @@ async function readProjectJResAsync() {
         const globalNamespace: string | undefined = jres["*"]?.namespace;
 
         for (const key of Object.keys(jres)) {
-            if (key === "*") continue;
+            if (key === "*") {
+                continue;
+            }
 
             const value = jres[key];
             const ns = jres[key].namespace || globalNamespace;
@@ -182,8 +190,12 @@ function namespaceJoin(...parts: string[]) {
 }
 
 function namespaceJoinCore(a: string, b: string) {
-    if (a.endsWith(".")) a = a.slice(0, a.length - 1);
-    if (b.startsWith(".")) b = b.slice(1);
+    if (a.endsWith(".")) {
+        a = a.slice(0, a.length - 1);
+    }
+    if (b.startsWith(".")) {
+        b = b.slice(1);
+    }
     return a + "." + b;
 }
 

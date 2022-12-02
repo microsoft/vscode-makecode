@@ -8,14 +8,20 @@ export function throttle(func: (...args: any[]) => any, wait: number, immediate?
         const args = arguments;
         const later = () => {
             timeout = null;
-            if (!immediate) func.apply(context, args as any);
+            if (!immediate) {
+                func.apply(context, args as any);
+            }
         };
         const callNow = immediate && !timeout;
-        if (!timeout) timeout = setTimeout(later, wait);
-        if (callNow) func.apply(context, args as any);
+        if (!timeout) {
+            timeout = setTimeout(later, wait);
+        }
+        if (callNow) {
+            func.apply(context, args as any);
+        }
     };
 }
 
 export function delay(ms: number) {
-    return new Promise<void>(resolve => setTimeout(resolve, ms))
+    return new Promise<void>(resolve => setTimeout(resolve, ms));
 }

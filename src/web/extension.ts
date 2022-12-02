@@ -1,33 +1,30 @@
 // The module "vscode" contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-
-import { createVsCodeHost, readFileAsync, setActiveWorkspace, stringToBuffer } from "./host";
 import { setHost } from "makecode-core/built/host";
+import { CompileResult } from "makecode-core/built/service";
 
-import * as cmd from "makecode-core/built/commands";
+import { activeWorkspace, createVsCodeHost, readFileAsync, setActiveWorkspace } from "./host";
 import { Simulator } from "./simulator";
 import { JResTreeProvider, JResTreeNode, fireChangeEvent, deleteAssetAsync, syncJResAsync } from "./jres";
 import { AssetEditor } from "./assetEditor";
 import { BuildWatcher } from "./buildWatcher";
-import { maybeShowConfigNotificationAsync, writeTSConfigAsync } from "./tsconfig";
+import { maybeShowConfigNotificationAsync, maybeShowDependenciesNotificationAsync, writeTSConfigAsync } from "./projectWarnings";
+import { buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, installDependenciesAsync } from "./makecodeOperations";
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+
+let diagnosticsCollection: vscode.DiagnosticCollection;
 export function activate(context: vscode.ExtensionContext) {
     setHost(createVsCodeHost());
-
-    // Use the console to output diagnostic information (console.log) and errors (console.error)
-    // This line of code will only be executed once when your extension is activated
     console.log("Congratulations, your extension 'pxt-vscode-web' is now active in the web extension host!");
 
     const addCmd = (id: string, fn: () => Promise<void>) => {
         const cmd = vscode.commands.registerCommand(id, () => fn()
             .catch( err => {
-                console.error("MakeCode Ext Exception", err)
+                console.error("MakeCode Ext Exception", err);
             }));
         context.subscriptions.push(cmd);
-    }
+    };
 
     Simulator.register(context);
     AssetEditor.register(context);
@@ -41,21 +38,21 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.clean", cleanCommand);
     addCmd("makecode.importUrl", importUrlCommand);
 
-    addCmd("makecode.createImage", () => createAssetCommand("image"))
-    addCmd("makecode.createTile", () => createAssetCommand("tile"))
-    addCmd("makecode.createTilemap", () => createAssetCommand("tilemap"))
-    addCmd("makecode.createAnimation", () => createAssetCommand("animation"))
-    addCmd("makecode.createSong", () => createAssetCommand("song"))
+    addCmd("makecode.createImage", () => createAssetCommand("image"));
+    addCmd("makecode.createTile", () => createAssetCommand("tile"));
+    addCmd("makecode.createTilemap", () => createAssetCommand("tilemap"));
+    addCmd("makecode.createAnimation", () => createAssetCommand("animation"));
+    addCmd("makecode.createSong", () => createAssetCommand("song"));
 
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.duplicateAsset", duplicateAssetCommand)
-    )
+    );
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.deleteAsset", deleteAssetCommand)
-    )
+    );
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.refreshAssets", refreshAssetsCommand)
-    )
+    );
 
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.openAsset", uri => {
@@ -81,7 +78,11 @@ export function activate(context: vscode.ExtensionContext) {
 
     BuildWatcher.watcher.addEventListener("error", showError);
 
+    diagnosticsCollection = vscode.languages.createDiagnosticCollection("MakeCode");
+    context.subscriptions.push(diagnosticsCollection);
+
     maybeShowConfigNotificationAsync();
+    maybeShowDependenciesNotificationAsync();
 }
 
 async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.WorkspaceFolder | undefined> {
@@ -101,17 +102,19 @@ async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.Works
     }
 
     if (folders.length === 0) {
-        vscode.window.showErrorMessage("You must have a MakeCode project open to use this command");
+        showError("You must have a MakeCode project open to use this command");
         return;
     }
     else if (folders.length === 1) {
-        return folders[0]
+        return folders[0];
     }
 
     const choice = await vscode.window.showQuickPick(folders.map(f => f.name), { placeHolder: "Choose a workspace" });
 
     for (const folder of folders) {
-        if (folder.name === choice) return folder;
+        if (folder.name === choice) {
+            return folder;
+        }
     }
 
     return undefined;
@@ -121,52 +124,82 @@ async function buildCommand() {
     console.log("Build command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (workspace) setActiveWorkspace(workspace)
-    else return;
+    if (!workspace) {
+        return;
+    }
 
-    await cmd.buildCommandOnce({ watch: true });
+    clearBuildErrors();
+
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Building project...",
+        cancellable: false
+    }, async () => {
+        const result = await buildProjectAsync(workspace);
+
+        if (result.diagnostics.length) {
+            reportBuildErrors(result);
+        }
+    });
 }
 
-async function installCommand() {
+export async function installCommand() {
     console.log("Install command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (workspace) setActiveWorkspace(workspace)
-    else return;
+    if (!workspace) {
+        return;
+    }
 
-    await cmd.installCommand({});
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Installing project dependencies...",
+        cancellable: false
+    }, async progress => {
+        await installDependenciesAsync(workspace);
+    });
 }
 
 async function cleanCommand() {
     console.log("Clean command");
 
     const workspace = await chooseWorkspaceAsync(true);
-    if (workspace) setActiveWorkspace(workspace)
-    else return;
+    if (!workspace) {
+        return;
+    }
 
-    await cmd.cleanCommand({});
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Cleaning project folders...",
+        cancellable: false
+    }, async progress => {
+        await cleanProjectFolderAsync(workspace);
+    });
 }
 
 async function importUrlCommand() {
     console.log("Import URL command");
 
-    const workspace = await chooseWorkspaceAsync(false);
-    if (workspace) setActiveWorkspace(workspace)
-    else return;
+    const workspace = await chooseWorkspaceAsync(true);
+    if (!workspace) {
+        return;
+    }
 
     const input = await vscode.window.showInputBox({
         prompt: "Paste a shared project URL or GitHub repo"
     });
 
-    if (!input) return;
+    if (!input) {
+        return;
+    }
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Downloading URL",
+        title: "Downloading URL...",
         cancellable: false
     }, async progress => {
         try {
-            await cmd.downloadCommand(input, {});
+            await downloadSharedProjectAsync(workspace, input);
         }
         catch (e) {
             showError("Unable to download project");
@@ -177,14 +210,14 @@ async function importUrlCommand() {
             message: "Creating tsconfig.json..."
         });
 
-        await writeTSConfigAsync(workspace.uri)
+        await writeTSConfigAsync(workspace.uri);
 
         progress.report({
             message: "Installing dependencies..."
         });
 
         try {
-            await cmd.installCommand({})
+            await installDependenciesAsync(workspace);
         }
         catch (e) {
             showError("Unable to install project dependencies");
@@ -194,27 +227,31 @@ async function importUrlCommand() {
 
 export async function simulateCommand(context: vscode.ExtensionContext) {
     const workspace = await chooseWorkspaceAsync(false);
-    if (workspace) setActiveWorkspace(workspace)
-    else return;
-
-    if (BuildWatcher.watcher.isEnabled() && Simulator.currentSimulator) {
-        console.log("Simulator already running");
+    if (workspace) {
+        setActiveWorkspace(workspace);
+    }
+    else {
         return;
     }
 
-    const runSimulator = async () => {
-        if (!Simulator.currentSimulator) {
-            BuildWatcher.watcher.setEnabled(false);
-            BuildWatcher.watcher.removeEventListener("build-completed", runSimulator);
-            return;
-        }
+    if (!BuildWatcher.watcher.isEnabled()) {
+        const runSimulator = async () => {
+            if (!Simulator.currentSimulator) {
+                BuildWatcher.watcher.stop();
+                BuildWatcher.watcher.removeEventListener("build-completed", runSimulator);
+                return;
+            }
 
-        Simulator.createOrShow(context);
-        Simulator.currentSimulator.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
+            Simulator.createOrShow(context);
+            Simulator.currentSimulator.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
+        };
+        BuildWatcher.watcher.addEventListener("build-completed", runSimulator);
+        BuildWatcher.watcher.startWatching(workspace);
+    }
+    else {
+        await BuildWatcher.watcher.buildNowAsync(workspace);
     }
 
-    BuildWatcher.watcher.addEventListener("build-completed", runSimulator);
-    BuildWatcher.watcher.setEnabled(true);
     Simulator.createOrShow(context);
 }
 
@@ -229,7 +266,7 @@ async function duplicateAssetCommand(node: JResTreeNode) {
 }
 
 async function deleteAssetCommand(node: JResTreeNode) {
-    await deleteAssetAsync(node)
+    await deleteAssetAsync(node);
 }
 
 async function refreshAssetsCommand(justFireEvent: boolean) {
@@ -242,27 +279,65 @@ async function refreshAssetsCommand(justFireEvent: boolean) {
 }
 
 async function choosehwCommand() {
-    console.log("Choose hardware command")
+    console.log("Choose hardware command");
+}
+
+interface HardwareQuickpick extends vscode.QuickPickItem {
+    id: string;
 }
 
 async function createCommand()  {
-    console.log("Create command")
+    console.log("Create command");
 
-    const qp = vscode.window.createQuickPick();
+    const workspace = await chooseWorkspaceAsync(true);
+    if (!workspace) {
+        return;
+    }
+
+    const qp = vscode.window.createQuickPick<HardwareQuickpick>();
 
     qp.items = [
         {
-            label: "arcade",
+            label: "MakeCode Arcade",
+            detail: "Create a retro-style video game",
+            id: "arcade"
         },
         {
-            label: "microbit",
+            label: "Micro:bit",
+            detail: "Create a project for the Micro:bit",
+            id: "microbit"
         }
     ];
+
     qp.onDidAccept(() => {
         const selected = qp.selectedItems[0];
-        cmd.initCommand(selected.label, [], {})
         qp.dispose();
-    })
+
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Creating project...",
+            cancellable: false
+        }, async progress => {
+            try {
+                await createEmptyProjectAsync(workspace, selected.id);
+            }
+            catch (e) {
+                showError("Unable to create project");
+                return;
+            }
+
+            progress.report({
+                message: "Installing dependencies..."
+            });
+
+            try {
+                await installDependenciesAsync(workspace);
+            }
+            catch (e) {
+                showError("Unable to install project dependencies");
+            }
+        });
+    });
 
     qp.show();
 }
@@ -286,6 +361,53 @@ export async function fileExistsAsync(path: vscode.Uri) {
         return true;
     }
     catch {
-        return false
+        return false;
+    }
+}
+
+export function clearBuildErrors() {
+    diagnosticsCollection.clear();
+}
+
+export function reportBuildErrors(res: CompileResult) {
+    const diagnostics: {[index: string]: vscode.Diagnostic[]} = {};
+
+    for (const d of res.diagnostics) {
+        const range = new vscode.Range(d.line, d.column, d.endLine ?? d.line, d.endColumn ?? d.column);
+
+        let message: string;
+
+        if (typeof d.messageText === "string") {
+            message = d.messageText;
+        }
+        else {
+            let diagnosticChain = d.messageText;
+            message = "";
+
+            let indent = 0;
+            while (diagnosticChain) {
+                if (indent) {
+                    message += "\n";
+
+                    for (let i = 0; i < indent; i++) {
+                        message += "  ";
+                    }
+                }
+                message += diagnosticChain.messageText;
+                indent++;
+                diagnosticChain = diagnosticChain.next!;
+            }
+        }
+
+        if (!diagnostics[d.fileName]) {
+            diagnostics[d.fileName] = [];
+        }
+
+        diagnostics[d.fileName].push(new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error));
+    }
+
+    for (const filename of Object.keys(diagnostics)) {
+        const uri = vscode.Uri.joinPath(activeWorkspace().uri, filename);
+        diagnosticsCollection.set(uri, diagnostics[filename]);
     }
 }

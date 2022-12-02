@@ -20,17 +20,19 @@ export function createVsCodeHost(): Host {
         getDeployDrivesAsync: async () => [],
         getEnvironmentVariable: () => "",
         exitWithStatus: code => {
-            throw new Error(`Exit with status ${code}`)
+            throw new Error(`Exit with status ${code}`);
         },
         bufferToString: buffer => new TextDecoder().decode(buffer),
         stringToBuffer
-    }
+    };
 }
 
 export function readFileAsync(path: string, encoding: "utf8"): Promise<string>;
 export async function readFileAsync(path: string, encoding?: "utf8") {
     const contents = await vscode.workspace.fs.readFile(resolvePath(path));
-    if (encoding) return new TextDecoder().decode(contents);
+    if (encoding) {
+        return new TextDecoder().decode(contents);
+    }
     return contents;
 }
 
@@ -85,64 +87,68 @@ async function listFilesAsync(directory: string, filename: string) {
 function httpRequestCoreAsync(options: HttpRequestOptions) {
     return new Promise<HttpResponse>((resolve, reject) => {
         let client: XMLHttpRequest;
-        let resolved = false
+        let resolved = false;
 
-        let headers = options.headers || {}
+        let headers = options.headers || {};
 
         client = new XMLHttpRequest();
         client.onreadystatechange = () => {
-            if (resolved) return // Safari/iOS likes to call this thing more than once
+            if (resolved) {return;} // Safari/iOS likes to call this thing more than once
 
-            if (client.readyState == 4) {
-                resolved = true
+            if (client.readyState === 4) {
+                resolved = true;
                 let res: HttpResponse = {
                     statusCode: client.status,
                     headers: {},
                     buffer: (client as any).responseBody || client.response,
                     text: client.responseText,
-                }
+                };
 
-                if (typeof res.buffer == "string") {
+                if (typeof res.buffer === "string") {
                     res.buffer = new TextEncoder().encode(res.buffer);
                 }
                 const allHeaders = client.getAllResponseHeaders();
                 allHeaders.split(/\r?\n/).forEach(l => {
-                    let m = /^\s*([^:]+): (.*)/.exec(l)
-                    if (m) res.headers[m[1].toLowerCase()] = m[2]
-                })
-                resolve(res)
+                    let m = /^\s*([^:]+): (.*)/.exec(l);
+                    if (m) {
+                        res.headers[m[1].toLowerCase()] = m[2];
+                    }
+                });
+                resolve(res);
             }
-        }
+        };
 
-        let data = options.data
+        let data = options.data;
         let method = options.method || (data == null ? "GET" : "POST");
 
         let buf: any;
 
         if (data == null) {
-            buf = null
+            buf = null;
         } else if (data instanceof Uint8Array) {
-            buf = data
-        } else if (typeof data == "object") {
-            buf = JSON.stringify(data)
-            headers["content-type"] = "application/json; charset=utf8"
-        } else if (typeof data == "string") {
-            buf = data
+            buf = data;
+        } else if (typeof data === "object") {
+            buf = JSON.stringify(data);
+            headers["content-type"] = "application/json; charset=utf8";
+        } else if (typeof data === "string") {
+            buf = data;
         } else {
-            throw new Error("bad data")
+            throw new Error("bad data");
         }
 
         client.open(method, options.url);
 
         Object.keys(headers).forEach(k => {
-            client.setRequestHeader(k, headers[k])
-        })
+            client.setRequestHeader(k, headers[k]);
+        });
 
-        if (buf == null)
+        if (buf == null) {
             client.send();
-        else
+        }
+        else {
             client.send(buf);
-    })
+        }
+    });
 }
 
 function resolvePath(path: string) {
@@ -157,7 +163,9 @@ export function setActiveWorkspace(folder: vscode.WorkspaceFolder) {
     _activeWorkspace = folder;
 }
 
-function activeWorkspace() {
-    if (!_activeWorkspace) _activeWorkspace = vscode.workspace.workspaceFolders![0];
+export function activeWorkspace() {
+    if (!_activeWorkspace) {
+        _activeWorkspace = vscode.workspace.workspaceFolders![0];
+    }
     return _activeWorkspace;
 }
