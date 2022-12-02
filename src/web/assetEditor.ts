@@ -284,9 +284,9 @@ async function saveFilesAsync(files: {[index: string]: string}) {
  * 3. If there are any .jres files in the files list, insert after the last one
  * 4. Insert at the beginning of the array
  */
-function insertGeneratedFile(arr: string[], toInsert: string) {
+export function insertGeneratedFile(arr: string[], toInsert: string) {
     let lastGenIndex = -1;
-    let lastJRESIndex = 0;
+    let lastJRESIndex = -1;
 
     const basename = toInsert.split(".").slice(0, -1).join(".");
 
@@ -294,7 +294,7 @@ function insertGeneratedFile(arr: string[], toInsert: string) {
         const currentBasename = arr[i].split(".").slice(0, -1).join(".");
 
         if (currentBasename === basename) {
-            arr.splice(i, 0, toInsert);
+            arr.splice(i + 1, 0, toInsert);
             return;
         }
 
@@ -308,9 +308,9 @@ function insertGeneratedFile(arr: string[], toInsert: string) {
     }
 
     if (lastGenIndex !== -1) {
-        arr.splice(lastGenIndex, 0, toInsert);
+        arr.splice(lastGenIndex + 1, 0, toInsert);
     }
     else {
-        arr.splice(lastJRESIndex, 0, toInsert);
+        arr.splice(lastJRESIndex + 1, 0, toInsert);
     }
 }

@@ -49,7 +49,6 @@ function enqueueOperationAsync<U>(folder: vscode.WorkspaceFolder, action: () => 
             cancellationToken
         };
         operationQueue.push(op);
-        pokeQueueAsync();
 
         if (cancellationToken) {
             cancellationToken.onCancellationRequested(e => {
@@ -57,6 +56,7 @@ function enqueueOperationAsync<U>(folder: vscode.WorkspaceFolder, action: () => 
                 operationQueue = operationQueue.filter(o => o !== op);
             });
         }
+        pokeQueueAsync();
     });
 }
 
