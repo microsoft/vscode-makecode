@@ -27,7 +27,7 @@ jobs:
       - name: Compiling
         run: yarn compile-web
       - name: Testing
-        run: yarn test
+        run: xvfb-run -a yarn test
       - name: Production webpack
         run: yarn package-web
       - name: Build vsix
