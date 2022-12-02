@@ -1,10 +1,10 @@
-name: pxt-buildmain
+name: pxt-buildpr
 
 on: [pull_request]
 
 jobs:
   build:
-    name: buildmain
+    name: buildpr
 
     runs-on: ubuntu-latest
 

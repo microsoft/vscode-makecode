@@ -1911,10 +1911,10 @@ make-dir@^1.0.0:
   dependencies:
     pify "^3.0.0"
 
-makecode-browser@^0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/makecode-browser/-/makecode-browser-0.0.1.tgz#5279db617b3cc549ab12319db4915f5819741885"
-  integrity sha512-8p8pbCzbtoSSofOVtWq5mM1mUdHDKA3odRN0bWMRnxJTEW1nk+pIYEY9iztcoX2FMc92IjFlMhLaZu2QY4ucSg==
+makecode-browser@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/makecode-browser/-/makecode-browser-1.0.0.tgz#b70af1d9ab101d8c2997935ed15faa057e7936c3"
+  integrity sha512-yx1j42B98FTLIRuO7gbnFV0KqQnjCX4g7kMGNoiDSs5pLLmdwRzxWstsYjJPQKssLQrrzSrngzVSBuvTL28rEQ==
   dependencies:
     makecode-core "^0.0.1"
 
@@ -1925,10 +1925,10 @@ makecode-core@^0.0.1:
   dependencies:
     chalk "^4.1.2"
 
-makecode-core@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.0.0.tgz#e23ea7b439fd6e9844a99bc523e5e0ee04cda958"
-  integrity sha512-vHGMe8a6ax7/npBwtDMG7sP5sWxSA39lGHOCn8NZ+x9ejGDy0wCJBjQxZ5i5HwtDEFk+UMOskU/V2TwBwUPl3g==
+makecode-core@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.0.1.tgz#92187cd905fa22eb22412c8134354088e3783485"
+  integrity sha512-rMxdH8/3HxmmzR3yKzGbNPL7DDyO68peXks0OdKrjA4Rd4Oj1F9WzteJ3rp6HHaFb1Vdli+RUOKhaOlkk8F0tA==
   dependencies:
     chalk "^4.1.2"
 
