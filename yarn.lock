@@ -659,7 +659,7 @@ caniuse-lite@^1.0.30001400:
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001419.tgz#3542722d57d567c8210d5e4d0f9f17336b776457"
   integrity sha512-aFO1r+g6R7TW+PNQxKzjITwLOyDhVRLjW0LcwS/HCZGUUKTGNp9+IwLC4xyDSZBygVL/mxaFR3HIV6wEKQuSzw==
 
-chalk@^4.0.0, chalk@^4.1.0:
+chalk@^4.0.0, chalk@^4.1.0, chalk@^4.1.2:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-4.1.2.tgz#aac4e2b7734a740867aeb16bf02aad556a1e7a01"
   integrity sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==
@@ -1910,6 +1910,27 @@ make-dir@^1.0.0:
   integrity sha512-2w31R7SJtieJJnQtGc7RVL2StM2vGYVfqUOvUDxH6bC6aJTxPxTF0GnIgCyu7tjockiUWAYQRbxa7vKn34s5sQ==
   dependencies:
     pify "^3.0.0"
+
+makecode-browser@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/makecode-browser/-/makecode-browser-1.0.0.tgz#b70af1d9ab101d8c2997935ed15faa057e7936c3"
+  integrity sha512-yx1j42B98FTLIRuO7gbnFV0KqQnjCX4g7kMGNoiDSs5pLLmdwRzxWstsYjJPQKssLQrrzSrngzVSBuvTL28rEQ==
+  dependencies:
+    makecode-core "^0.0.1"
+
+makecode-core@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-0.0.1.tgz#5e029a0ef0197bde23336769a56d773f24a08a26"
+  integrity sha512-1UK49MeeGJyjAnmvqqGXKrYN36Ssy1sstHwKbvMowMHJ1LrczHCorFzvhtoSw5q8rqeMeRpIZoE32f4HG/eDWQ==
+  dependencies:
+    chalk "^4.1.2"
+
+makecode-core@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.0.1.tgz#92187cd905fa22eb22412c8134354088e3783485"
+  integrity sha512-rMxdH8/3HxmmzR3yKzGbNPL7DDyO68peXks0OdKrjA4Rd4Oj1F9WzteJ3rp6HHaFb1Vdli+RUOKhaOlkk8F0tA==
+  dependencies:
+    chalk "^4.1.2"
 
 media-typer@0.3.0:
   version "0.3.0"

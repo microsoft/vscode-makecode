@@ -1,0 +1,26 @@
+name: pxt-buildpr
+
+on: [pull_request]
+
+jobs:
+  build:
+    name: buildpr
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: '16.x'
+      - name: yarn install
+        uses: bahmutov/npm-install@v1
+        with:
+          install-command: yarn install
+      - name: Linting
+        run: yarn lint
+      - name: Compiling
+        run: yarn compile-web
+      - name: Testing
+        run: xvfb-run -a yarn test
