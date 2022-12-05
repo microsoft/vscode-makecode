@@ -37,3 +37,8 @@ jobs:
         with:
           name: extension
           path: pxt-vscode-web.vsix
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: pxt-vscode-web.vsix
