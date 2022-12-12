@@ -1,5 +1,6 @@
 {
   "name": "pxt-vscode-web",
+  "publisher": "ms-edu",
   "displayName": "pxt-vscode-web",
   "description": "Run MakeCode inside vscode",
   "version": "0.0.1",
@@ -7,8 +8,9 @@
     "vscode": "^1.72.0"
   },
   "categories": [
-    "Other"
+    "Education"
   ],
+  "preview": true,
   "activationEvents": [
     "onCommand:makecode.create",
     "workspaceContains:./pxt.json"
