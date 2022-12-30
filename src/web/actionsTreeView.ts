@@ -35,8 +35,8 @@ const actions: ActionTreeNode[] = [
         label: "Create a share link",
         icon: new vscode.ThemeIcon("export"),
         command: {
-            title: "Install project dependencies",
-            command: "makecode.install"
+            title: "Create a share link",
+            command: "makecode.shareProject"
         }
     }
 ]

@@ -14,6 +14,7 @@ import { buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, do
 import { ActionsTreeViewProvider } from "./actionsTreeView";
 import { BuildOptions } from "makecode-core/built/commands";
 import { getHardwareVariantsAsync } from "./hardwareVariants";
+import { shareProjectAsync } from "./shareLink";
 
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
@@ -40,6 +41,7 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.install", installCommand);
     addCmd("makecode.clean", cleanCommand);
     addCmd("makecode.importUrl", importUrlCommand);
+    addCmd("makecode.shareProject", shareCommandAsync);
 
     addCmd("makecode.createImage", () => createAssetCommand("image"));
     addCmd("makecode.createTile", () => createAssetCommand("tile"));
@@ -378,6 +380,21 @@ async function createCommand()  {
 async function openAssetEditor(context: vscode.ExtensionContext, uri: vscode.Uri) {
     AssetEditor.createOrShow();
     AssetEditor.currentSimulator?.openURIAsync(uri);
+}
+
+async function shareCommandAsync() {
+    const workspace = await chooseWorkspaceAsync(true);
+    if (!workspace) {
+        return;
+    }
+
+    const link = await shareProjectAsync(workspace);
+
+    if (link) {
+        const output = vscode.window.createOutputChannel("MakeCode");
+        output.show();
+        output.append("Congratulations! Your project is shared at " + link)
+    }
 }
 
 // This method is called when your extension is deactivated

@@ -39,6 +39,10 @@ export function listHardwareVariantsAsync(folder: vscode.WorkspaceFolder, cancel
     return enqueueOperationAsync(folder, () => cmd.listHardwareVariantsAsync({}), cancellationToken);
 }
 
+export function getAppTargetAsync(folder: vscode.WorkspaceFolder, cancellationToken?: vscode.CancellationToken) {
+    return enqueueOperationAsync(folder, () => cmd.getAppTargetAsync({}), cancellationToken);
+}
+
 /**
  * The mkc CLI uses global state, so we need to perform operations in a queue just in case the
  * user is doing things in multiple workspaces at once

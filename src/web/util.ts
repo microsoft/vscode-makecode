@@ -31,3 +31,23 @@ export function delay(ms: number) {
 export async function readTextFileAsync(uri: vscode.Uri): Promise<string> {
     return new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
 }
+
+function getRandomBuf(buf: Uint8Array) {
+    if (crypto)
+        crypto.getRandomValues(buf);
+    else {
+        for (let i = 0; i < buf.length; ++i)
+            buf[i] = Math.floor(Math.random() * 255);
+    }
+}
+
+function randomUint32() {
+    let buf = new Uint8Array(4)
+    getRandomBuf(buf)
+    return new Uint32Array(buf.buffer)[0]
+}
+
+export function guidGen() {
+    function f() { return (randomUint32() | 0x10000).toString(16).slice(-4); }
+    return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
+}
