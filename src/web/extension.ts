@@ -10,7 +10,10 @@ import { JResTreeProvider, JResTreeNode, fireChangeEvent, deleteAssetAsync, sync
 import { AssetEditor } from "./assetEditor";
 import { BuildWatcher } from "./buildWatcher";
 import { maybeShowConfigNotificationAsync, maybeShowDependenciesNotificationAsync, writeTSConfigAsync } from "./projectWarnings";
-import { buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, installDependenciesAsync } from "./makecodeOperations";
+import { buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, installDependenciesAsync, listHardwareVariantsAsync } from "./makecodeOperations";
+import { ActionsTreeViewProvider } from "./actionsTreeView";
+import { BuildOptions } from "makecode-core/built/commands";
+import { getHardwareVariantsAsync } from "./hardwareVariants";
 
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
@@ -60,6 +63,10 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+
+    context.subscriptions.push(
+        vscode.window.registerTreeDataProvider("makecodeActions", new ActionsTreeViewProvider())
+    );
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider("imageExplorer", new JResTreeProvider("image"))
     );
@@ -130,12 +137,17 @@ async function buildCommand() {
 
     clearBuildErrors();
 
+    const opts: BuildOptions = {
+        watch: true,
+        hw: await pickHardwareVariantAsync(workspace)
+    };
+
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: "Building project...",
         cancellable: false
     }, async () => {
-        const result = await buildProjectAsync(workspace);
+        const result = await buildProjectAsync(workspace, opts);
 
         if (result.diagnostics.length) {
             reportBuildErrors(result);
@@ -222,6 +234,27 @@ async function importUrlCommand() {
         catch (e) {
             showError("Unable to install project dependencies");
         }
+    });
+}
+
+async function pickHardwareVariantAsync(workspace: vscode.WorkspaceFolder) {
+
+    const variants = await getHardwareVariantsAsync(workspace);
+
+    if (variants.length <= 1) return;
+
+    const qp = vscode.window.createQuickPick<HardwareQuickpick>();
+
+    qp.items = variants;
+
+    return new Promise<string>((resolve, reject) => {
+        qp.onDidAccept(() => {
+            const selected = qp.selectedItems[0];
+            qp.dispose();
+
+            resolve(selected?.id);
+        });
+        qp.show();
     });
 }
 

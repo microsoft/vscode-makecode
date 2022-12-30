@@ -35,6 +35,10 @@ export function downloadSharedProjectAsync(folder: vscode.WorkspaceFolder, url: 
     return enqueueOperationAsync(folder, () => cmd.downloadCommand(url, {}), cancellationToken);
 }
 
+export function listHardwareVariantsAsync(folder: vscode.WorkspaceFolder, cancellationToken?: vscode.CancellationToken) {
+    return enqueueOperationAsync(folder, () => cmd.listHardwareVariantsAsync({}), cancellationToken);
+}
+
 /**
  * The mkc CLI uses global state, so we need to perform operations in a queue just in case the
  * user is doing things in multiple workspaces at once

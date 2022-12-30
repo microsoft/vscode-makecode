@@ -127,6 +127,12 @@
     "views": {
       "asset-explorer": [
         {
+          "id": "makecodeActions",
+          "name": "Actions",
+          "icon": "media/logo.svg",
+          "contextualTitle": "Actions"
+        },
+        {
           "id": "imageExplorer",
           "name": "Images",
           "icon": "media/logo.svg",
