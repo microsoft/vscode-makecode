@@ -32,6 +32,11 @@ export async function readTextFileAsync(uri: vscode.Uri): Promise<string> {
     return new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
 }
 
+export async function writeTextFileAsync(uri: vscode.Uri, contents: string) {
+    await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(contents));
+}
+
+
 function getRandomBuf(buf: Uint8Array) {
     if (crypto)
         crypto.getRandomValues(buf);

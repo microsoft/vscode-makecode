@@ -51,6 +51,14 @@
         "title": "MakeCode: Share project"
       },
       {
+        "command": "makecode.addDependency",
+        "title": "MakeCode: Add extension to project"
+      },
+      {
+        "command": "makecode.removeDependency",
+        "title": "MakeCode: Remove extension from project"
+      },
+      {
         "command": "makecode.createImage",
         "title": "MakeCode: Create a new image asset",
         "icon": {

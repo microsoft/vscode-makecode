@@ -10,11 +10,12 @@ import { JResTreeProvider, JResTreeNode, fireChangeEvent, deleteAssetAsync, sync
 import { AssetEditor } from "./assetEditor";
 import { BuildWatcher } from "./buildWatcher";
 import { maybeShowConfigNotificationAsync, maybeShowDependenciesNotificationAsync, writeTSConfigAsync } from "./projectWarnings";
-import { buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, installDependenciesAsync, listHardwareVariantsAsync } from "./makecodeOperations";
+import { addDependencyAsync, buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, installDependenciesAsync, listHardwareVariantsAsync } from "./makecodeOperations";
 import { ActionsTreeViewProvider } from "./actionsTreeView";
 import { BuildOptions } from "makecode-core/built/commands";
 import { getHardwareVariantsAsync } from "./hardwareVariants";
 import { shareProjectAsync } from "./shareLink";
+import { readTextFileAsync, writeTextFileAsync } from "./util";
 
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
@@ -42,6 +43,8 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.clean", cleanCommand);
     addCmd("makecode.importUrl", importUrlCommand);
     addCmd("makecode.shareProject", shareCommandAsync);
+    addCmd("makecode.addDependency", addDependencyCommandAsync);
+    addCmd("makecode.removeDependency", removeDependencyCommandAsync);
 
     addCmd("makecode.createImage", () => createAssetCommand("image"));
     addCmd("makecode.createTile", () => createAssetCommand("tile"));
@@ -194,7 +197,7 @@ async function cleanCommand() {
 async function importUrlCommand() {
     console.log("Import URL command");
 
-    const workspace = await chooseWorkspaceAsync(true);
+    const workspace = await chooseWorkspaceAsync(false);
     if (!workspace) {
         return;
     }
@@ -240,13 +243,11 @@ async function importUrlCommand() {
 }
 
 async function pickHardwareVariantAsync(workspace: vscode.WorkspaceFolder) {
-
     const variants = await getHardwareVariantsAsync(workspace);
 
     if (variants.length <= 1) return;
 
     const qp = vscode.window.createQuickPick<HardwareQuickpick>();
-
     qp.items = variants;
 
     return new Promise<string>((resolve, reject) => {
@@ -395,6 +396,84 @@ async function shareCommandAsync() {
         output.show();
         output.append("Congratulations! Your project is shared at " + link)
     }
+}
+
+async function addDependencyCommandAsync() {
+    const workspace = await chooseWorkspaceAsync(true);
+    if (!workspace) {
+        return;
+    }
+
+    const input = await vscode.window.showInputBox({
+        prompt: "Enter the GitHub repo of the extension to add"
+    });
+
+    if (!input) {
+        return;
+    }
+
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Adding Extension...",
+        cancellable: false
+    }, async progress => {
+        try {
+            await addDependencyAsync(workspace, input);
+        }
+        catch (e) {
+            showError("Unable to add dependency. Are you connected to the Internet?");
+            return;
+        }
+    });
+}
+
+async function removeDependencyCommandAsync() {
+    const workspace = await chooseWorkspaceAsync(true);
+    if (!workspace) {
+        return;
+    }
+
+    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
+
+    const config = await readTextFileAsync(configPath);
+    const parsed = JSON.parse(config) as pxt.PackageConfig;
+
+    const extensions: vscode.QuickPickItem[] = Object.keys(parsed.dependencies).map(depName => {
+        return {
+            label: depName,
+            description: parsed.dependencies[depName]
+        }
+    });
+
+    const toRemove = await vscode.window.showQuickPick(extensions, {
+        title: "Choose which extensions to remove from this project",
+        canPickMany: true
+    });
+
+    if (!toRemove?.length) return;
+
+    for (const ext of toRemove) {
+        delete parsed.dependencies[ext.label];
+    }
+
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Removing Extensions...",
+        cancellable: false
+    }, async () => {
+        await writeTextFileAsync(configPath, JSON.stringify(parsed, null, 4));
+
+        try {
+            vscode.workspace.fs.delete(vscode.Uri.joinPath(workspace.uri, "pxt_modules"), {
+                recursive: true
+            });
+        }
+        catch (e) {
+
+        }
+
+        await installDependenciesAsync(workspace);
+    })
 }
 
 // This method is called when your extension is deactivated
