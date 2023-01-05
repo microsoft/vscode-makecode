@@ -47,6 +47,11 @@ const webExtensionConfig = {
 			use: [{
 				loader: "ts-loader"
 			}]
+		},
+		{
+			// Make sure our marketplace icon is copied to final output
+			test: /\.(jpe?g|gif|png|svg)$/,
+			loader: "file"
 		}]
 	},
 	plugins: [
