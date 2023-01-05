@@ -3,7 +3,7 @@
   "publisher": "ms-edu",
   "displayName": "Microsoft MakeCode Arcade",
   "description": "Learn Code and Make Games. The MakeCode Arcade extension for VS Code allows students to take their game development to the next level. Using JavaScript or Python, create retro arcade style video games using your own art and music assets.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.72.0"
   },
