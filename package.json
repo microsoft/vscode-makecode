@@ -1,8 +1,8 @@
 {
   "name": "pxt-vscode-web",
   "publisher": "ms-edu",
-  "displayName": "pxt-vscode-web",
-  "description": "Run MakeCode inside vscode",
+  "displayName": "Microsoft MakeCode Arcade",
+  "description": "Learn Code and Make Games. The MakeCode Arcade extension for VS Code allows students to take their game development to the next level. Using JavaScript or Python, create retro arcade style video games using your own art and music assets.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.72.0"
@@ -10,7 +10,15 @@
   "categories": [
     "Education"
   ],
+  "keywords": [
+    "makecode", "education", "arcade", "learn", "student"
+  ],
+  "icon": "media/logo-128x128.png",
   "preview": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/pxt-vscode-web"
+  },
   "activationEvents": [
     "onCommand:makecode.create",
     "workspaceContains:./pxt.json"
