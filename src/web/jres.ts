@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { readTextFileAsync } from "./util";
 
 
 export interface JResTreeNode {
@@ -89,7 +90,7 @@ export async function deleteAssetAsync(node: JResTreeNode) {
         return;
     }
 
-    const sourceText = new TextDecoder().decode(await vscode.workspace.fs.readFile(node.sourceFile));
+    const sourceText = await readTextFileAsync(node.sourceFile);
     const sourceJRes = JSON.parse(sourceText);
 
     if (sourceJRes[node.id]) {
@@ -119,7 +120,7 @@ async function readProjectJResAsync() {
         if (file.fsPath.indexOf("pxt_modules") !== -1 || file.fsPath.indexOf("node_modules") !== -1) {
             continue;
         }
-        const contents = new TextDecoder().decode(await vscode.workspace.fs.readFile(file));
+        const contents = await readTextFileAsync(file);
         const jres = JSON.parse(contents);
 
         const defaultMimeType: string | undefined = jres["*"]?.mimeType;

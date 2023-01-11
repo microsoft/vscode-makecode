@@ -59,6 +59,14 @@
         "title": "MakeCode: Share project"
       },
       {
+        "command": "makecode.addDependency",
+        "title": "MakeCode: Add extension to project"
+      },
+      {
+        "command": "makecode.removeDependency",
+        "title": "MakeCode: Remove extension from project"
+      },
+      {
         "command": "makecode.createImage",
         "title": "MakeCode: Create a new image asset",
         "icon": {
@@ -134,6 +142,12 @@
     },
     "views": {
       "asset-explorer": [
+        {
+          "id": "makecodeActions",
+          "name": "Actions",
+          "icon": "media/logo.svg",
+          "contextualTitle": "Actions"
+        },
         {
           "id": "imageExplorer",
           "name": "Images",
@@ -308,7 +322,7 @@
   },
   "dependencies": {
     "path-browserify": "^1.0.1",
-    "makecode-core": "^1.0.1",
+    "makecode-core": "^1.0.2",
     "makecode-browser": "^1.0.0"
   }
 }

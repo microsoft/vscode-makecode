@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { fileExistsAsync } from './extension';
 import { installDependenciesAsync } from './makecodeOperations';
+import { readTextFileAsync, writeTextFileAsync } from './util';
 
 export async function maybeShowConfigNotificationAsync() {
     if (!vscode.workspace.workspaceFolders) {
@@ -29,14 +30,14 @@ export async function maybeShowConfigNotificationAsync() {
     }
 
     for (const folder of foldersToFix) {
-        await writeFileAsync(folder.uri, "tsconfig.json", templateConfig);
+        await writeTextFileAsync(vscode.Uri.joinPath(folder.uri, "tsconfig.json"), templateConfig);
     }
 }
 
 export async function writeTSConfigAsync(folder: vscode.Uri) {
     if (await fileExistsAsync(vscode.Uri.joinPath(folder, "tsconfig.json"))) {return;}
 
-    await writeFileAsync(folder, "tsconfig.json", templateConfig);
+    await writeTextFileAsync(vscode.Uri.joinPath(folder, "tsconfig.json"), templateConfig);
 }
 
 export async function maybeShowDependenciesNotificationAsync() {
@@ -54,7 +55,7 @@ export async function maybeShowDependenciesNotificationAsync() {
         }
 
         try {
-            const config = await readFileAsync(folder.uri, "pxt.json");
+            const config = await readTextFileAsync(vscode.Uri.joinPath(folder.uri, "pxt.json"));
             const parsed = JSON.parse(config);
 
             if (Object.keys(parsed.dependencies).length > 0) {
@@ -93,15 +94,6 @@ export async function maybeShowDependenciesNotificationAsync() {
             }
         }
     });
-}
-
-async function writeFileAsync(folder: vscode.Uri, filename: string, contents: string) {
-    await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, filename), new TextEncoder().encode(contents));
-}
-
-async function readFileAsync(folder: vscode.Uri, filename: string) {
-    const contents = await vscode.workspace.fs.readFile(vscode.Uri.joinPath(folder, filename));
-    return new TextDecoder().decode(contents);
 }
 
 const templateConfig = `{

@@ -84,7 +84,7 @@ async function listFilesAsync(directory: string, filename: string) {
     return files.map(uri => uri.fsPath);
 }
 
-function httpRequestCoreAsync(options: HttpRequestOptions) {
+export function httpRequestCoreAsync(options: HttpRequestOptions) {
     return new Promise<HttpResponse>((resolve, reject) => {
         let client: XMLHttpRequest;
         let resolved = false;
@@ -156,7 +156,22 @@ function resolvePath(path: string) {
 }
 
 export function stringToBuffer(str: string, encoding?: string){
-    return new TextEncoder().encode(encoding === "base64" ? atob(str) : str);
+    let contents: string;
+    if (encoding === "base64") {
+        try {
+            contents = atob(str);
+        }
+        catch (e) {
+            // mimic Buffer.from() in node.js which just ignores invalid characters
+
+            contents = atob(str.replace(/[^a-zA-Z\d+/]/g, ""));
+        }
+    }
+    else {
+        contents = str;
+    }
+
+    return new TextEncoder().encode(contents);
 }
 
 export function setActiveWorkspace(folder: vscode.WorkspaceFolder) {

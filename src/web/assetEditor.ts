@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { readFileAsync, writeFileAsync } from "./host";
 import { syncJResAsync } from "./jres";
+import { readTextFileAsync } from "./util";
 
 let extensionContext: vscode.ExtensionContext;
 // const assetUrl = "http://localhost:3232/asseteditor.html";
@@ -210,7 +211,7 @@ export class AssetEditorSerializer implements vscode.WebviewPanelSerializer {
 
 async function getAssetEditorHtmlAsync(webview: vscode.Webview) {
     const uri = vscode.Uri.joinPath(extensionContext.extensionUri, "resources", "assetframe.html");
-    const contents = new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
+    const contents = await readTextFileAsync(uri);
 
     const pathURL = (s: string) =>
         webview.asWebviewUri(vscode.Uri.joinPath(extensionContext.extensionUri, "resources", s)).toString();
@@ -225,7 +226,7 @@ async function readProjectJResAsync() {
     const fileSystem: {[index: string]: string} = {};
 
     for (const file of files) {
-        const contents = new TextDecoder().decode(await vscode.workspace.fs.readFile(file));
+        const contents = await readTextFileAsync(file);
         fileSystem[vscode.workspace.asRelativePath(file)] = contents;
 
         const pathParts = file.path.split(".");
@@ -234,7 +235,7 @@ async function readProjectJResAsync() {
         });
 
         try {
-            const tsContents = new TextDecoder().decode(await vscode.workspace.fs.readFile(tsFile));
+            const tsContents = await readTextFileAsync(tsFile);
             fileSystem[vscode.workspace.asRelativePath(tsFile)] = tsContents;
         }
         catch (e) {
@@ -246,7 +247,7 @@ async function readProjectJResAsync() {
         });
 
         try {
-            const gtsContents = new TextDecoder().decode(await vscode.workspace.fs.readFile(gtsFile));
+            const gtsContents = await readTextFileAsync(gtsFile);
             fileSystem[vscode.workspace.asRelativePath(gtsFile)] = gtsContents;
         }
         catch (e) {
