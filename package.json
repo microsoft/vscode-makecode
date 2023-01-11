@@ -314,7 +314,7 @@
   },
   "dependencies": {
     "path-browserify": "^1.0.1",
-    "makecode-core": "^1.0.1",
+    "makecode-core": "^1.0.2",
     "makecode-browser": "^1.0.0"
   }
 }
