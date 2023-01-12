@@ -103,13 +103,11 @@ async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.Works
         return;
     }
 
-    let folders = onlyProjects ? [] : vscode.workspace.workspaceFolders.slice();
+    const folders = [];
 
-    if (onlyProjects) {
-        for (const folder of vscode.workspace.workspaceFolders) {
-            if (await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt.json"))) {
-                folders.push(folder);
-            }
+    for (const folder of vscode.workspace.workspaceFolders) {
+        if (!onlyProjects || await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt.json"))) {
+            folders.push(folder);
         }
     }
 
@@ -325,57 +323,35 @@ interface HardwareQuickpick extends vscode.QuickPickItem {
 async function createCommand()  {
     console.log("Create command");
 
-    const workspace = await chooseWorkspaceAsync(true);
+    const workspace = await chooseWorkspaceAsync(false);
     if (!workspace) {
         return;
     }
 
-    const qp = vscode.window.createQuickPick<HardwareQuickpick>();
-
-    qp.items = [
-        {
-            label: "MakeCode Arcade",
-            detail: "Create a retro-style video game",
-            id: "arcade"
-        },
-        {
-            label: "Micro:bit",
-            detail: "Create a project for the Micro:bit",
-            id: "microbit"
+    vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: "Creating empty project...",
+        cancellable: false
+    }, async progress => {
+        try {
+            await createEmptyProjectAsync(workspace, "arcade");
         }
-    ];
+        catch (e) {
+            showError("Unable to create project");
+            return;
+        }
 
-    qp.onDidAccept(() => {
-        const selected = qp.selectedItems[0];
-        qp.dispose();
-
-        vscode.window.withProgress({
-            location: vscode.ProgressLocation.Notification,
-            title: "Creating project...",
-            cancellable: false
-        }, async progress => {
-            try {
-                await createEmptyProjectAsync(workspace, selected.id);
-            }
-            catch (e) {
-                showError("Unable to create project");
-                return;
-            }
-
-            progress.report({
-                message: "Installing dependencies..."
-            });
-
-            try {
-                await installDependenciesAsync(workspace);
-            }
-            catch (e) {
-                showError("Unable to install project dependencies");
-            }
+        progress.report({
+            message: "Installing dependencies..."
         });
-    });
 
-    qp.show();
+        try {
+            await installDependenciesAsync(workspace);
+        }
+        catch (e) {
+            showError("Unable to install project dependencies");
+        }
+    });
 }
 
 async function openAssetEditor(context: vscode.ExtensionContext, uri: vscode.Uri) {
