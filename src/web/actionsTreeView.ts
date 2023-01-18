@@ -8,7 +8,7 @@ interface ActionTreeNode {
 
 const actions: ActionTreeNode[] = [
     {
-        label: "Start MakeCode simulator",
+        label: vscode.l10n.t("Start MakeCode simulator"),
         icon: new vscode.ThemeIcon("play-circle"),
         command: {
             title: "Start MakeCode simulator",
@@ -16,34 +16,34 @@ const actions: ActionTreeNode[] = [
         }
     },
     {
-        label: "Install project dependencies",
+        label: vscode.l10n.t("Install project dependencies"),
         icon: new vscode.ThemeIcon("sync"),
         command: {
-            title: "Install project dependencies",
+            title: vscode.l10n.t("Install project dependencies"),
             command: "makecode.install"
         }
     },
     {
-        label: "Compile project to uf2/hex",
+        label: vscode.l10n.t("Compile project to uf2/hex"),
         icon: new vscode.ThemeIcon("desktop-download"),
         command: {
-            title: "Build MakeCode project",
+            title: vscode.l10n.t("Build MakeCode project"),
             command: "makecode.build"
         }
     },
     {
-        label: "Create a share link",
+        label: vscode.l10n.t("Create a share link"),
         icon: new vscode.ThemeIcon("export"),
         command: {
-            title: "Create a share link",
+            title: vscode.l10n.t("Create a share link"),
             command: "makecode.shareProject"
         }
     },
     {
-        label: "Add an extension",
+        label: vscode.l10n.t("Add an extension"),
         icon: new vscode.ThemeIcon("add"),
         command: {
-            title: "Add an extension",
+            title: vscode.l10n.t("Add an extension"),
             command: "makecode.addDependency"
         }
     }
