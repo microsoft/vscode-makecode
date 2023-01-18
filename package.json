@@ -157,7 +157,7 @@
       "activitybar": [
         {
           "id": "asset-explorer",
-          "title": "Asset Explorer",
+          "title": "%makecode.assetExplorer.title%",
           "icon": "media/logo.svg"
         }
       ]
@@ -166,37 +166,37 @@
       "asset-explorer": [
         {
           "id": "makecodeActions",
-          "name": "Actions",
+          "name": "%makecode.actionsExplorer.title%",
           "icon": "media/logo.svg",
           "contextualTitle": "Actions"
         },
         {
           "id": "imageExplorer",
-          "name": "Images",
+          "name": "%makecode.imageExplorer.title%",
           "icon": "media/logo.svg",
           "contextualTitle": "Images"
         },
         {
           "id": "animationExplorer",
-          "name": "Animations",
+          "name": "%makecode.animationExplorer.title%",
           "icon": "media/logo.svg",
           "contextualTitle": "Animations"
         },
         {
           "id": "tileExplorer",
-          "name": "Tiles",
+          "name": "%makecode.tileExplorer.title%",
           "icon": "media/logo.svg",
           "contextualTitle": "Tiles"
         },
         {
           "id": "tilemapExplorer",
-          "name": "Tilemaps",
+          "name": "%makecode.tilemapExplorer.title%",
           "icon": "media/logo.svg",
           "contextualTitle": "Tilemaps"
         },
         {
           "id": "songExplorer",
-          "name": "Songs",
+          "name": "%makecode.songExplorer.title%",
           "icon": "media/logo.svg",
           "contextualTitle": "Songs"
         }

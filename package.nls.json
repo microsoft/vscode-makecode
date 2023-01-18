@@ -17,5 +17,12 @@
   "makecode.createSong.title": "Create a new song asset",
   "makecode.deleteAsset.title": "Delete an asset",
   "makecode.duplicateAsset.title": "Duplicate an asset",
-  "makecode.refreshAssets.title": "Refresh asset explorer"
+  "makecode.refreshAssets.title": "Refresh asset explorer",
+  "makecode.assetExplorer.title": "Asset Explorer",
+  "makecode.actionsExplorer.title": "Actions",
+  "makecode.imageExplorer.title": "Images",
+  "makecode.animationExplorer.title": "Animations",
+  "makecode.tileExplorer.title": "Tiles",
+  "makecode.tilemapExplorer.title": "Tilemaps",
+  "makecode.songExplorer.title": "Songs"
 }
