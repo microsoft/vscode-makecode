@@ -269,7 +269,9 @@
     "watch-web": "webpack --watch",
     "package-web": "webpack --mode production --devtool hidden-source-map",
     "lint": "eslint src --ext ts",
-    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=."
+    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=.",
+    "generate-l10n": "vscode-l10n-dev export --outDir ./l10n ./src",
+    "generate-l10n-ploc": "vscode-l10n-dev generate-pseudo -o ./l10n ./l10n/bundle.l10n.json ./package.nls.json"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.0",
