@@ -243,27 +243,7 @@
         },
         {
           "command": "makecode.refreshAssets",
-          "when": "view == imageExplorer",
-          "group": "navigation"
-        },
-        {
-          "command": "makecode.refreshAssets",
-          "when": "view == tileExplorer",
-          "group": "navigation"
-        },
-        {
-          "command": "makecode.refreshAssets",
-          "when": "view == tilemapExplorer",
-          "group": "navigation"
-        },
-        {
-          "command": "makecode.refreshAssets",
-          "when": "view == animationExplorer",
-          "group": "navigation"
-        },
-        {
-          "command": "makecode.refreshAssets",
-          "when": "view == songExplorer",
+          "when": "view == imageExplorer || view == tileExplorer || view == tilemapExplorer || view == animationExplorer || view == songExplorer",
           "group": "navigation"
         }
       ],
