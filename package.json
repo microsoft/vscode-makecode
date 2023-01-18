@@ -250,47 +250,12 @@
       "view/item/context": [
         {
           "command": "makecode.duplicateAsset",
-          "when": "view == imageExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.duplicateAsset",
-          "when": "view == tileExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.duplicateAsset",
-          "when": "view == tilemapExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.duplicateAsset",
-          "when": "view == animationExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.duplicateAsset",
-          "when": "view == songExplorer",
+          "when": "view == imageExplorer || view == tileExplorer || view == tilemapExplorer || view == animationExplorer || view == songExplorer",
           "group": "inline"
         },
         {
           "command": "makecode.deleteAsset",
-          "when": "view == imageExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.deleteAsset",
-          "when": "view == tilemapExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.deleteAsset",
-          "when": "view == animationExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.deleteAsset",
-          "when": "view == songExplorer",
+          "when": "view == imageExplorer || view == tileExplorer || view == tilemapExplorer || view == animationExplorer || view == songExplorer",
           "group": "inline"
         }
       ]
