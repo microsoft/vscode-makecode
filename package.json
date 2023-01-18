@@ -5,7 +5,7 @@
   "description": "Learn Code and Make Games. The MakeCode Arcade extension for VS Code allows students to take their game development to the next level. Using JavaScript or Python, create retro arcade style video games using your own art and music assets.",
   "version": "0.0.4",
   "engines": {
-    "vscode": "^1.72.0"
+    "vscode": "^1.74.0"
   },
   "categories": [
     "Education"
@@ -275,7 +275,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.0",
-    "@types/vscode": "^1.72.0",
+    "@types/vscode": "^1.74.0",
     "@types/webpack-env": "^1.18.0",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
