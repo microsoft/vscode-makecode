@@ -11,7 +11,11 @@
     "Education"
   ],
   "keywords": [
-    "makecode", "education", "arcade", "learn", "student"
+    "makecode",
+    "education",
+    "arcade",
+    "learn",
+    "student"
   ],
   "icon": "media/logo-128x128.png",
   "preview": true,
@@ -28,47 +32,58 @@
     "commands": [
       {
         "command": "makecode.build",
-        "title": "MakeCode: Build project"
+        "title": "%makecode.build.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.simulate",
-        "title": "MakeCode: Simulate project"
+        "title": "%makecode.simulate.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.create",
-        "title": "MakeCode: Create an empty project"
+        "title": "%makecode.create.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.choosehw",
-        "title": "MakeCode: Choose hardware board"
+        "title": "%makecode.choosehw.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.install",
-        "title": "MakeCode: Download project dependencies"
+        "title": "%makecode.install.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.clean",
-        "title": "MakeCode: Clean built folders"
+        "title": "%makecode.clean.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.importUrl",
-        "title": "MakeCode: Import project from URL"
+        "title": "%makecode.importUrl.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.shareProject",
-        "title": "MakeCode: Share project"
+        "title": "%makecode.shareProject.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.addDependency",
-        "title": "MakeCode: Add extension to project"
+        "title": "%makecode.addDependency.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.removeDependency",
-        "title": "MakeCode: Remove extension from project"
+        "title": "%makecode.removeDependency.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.createImage",
-        "title": "MakeCode: Create a new image asset",
+        "title": "%makecode.createImage.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/new-file.svg",
           "dark": "media/dark/new-file.svg"
@@ -76,7 +91,8 @@
       },
       {
         "command": "makecode.createTile",
-        "title": "MakeCode: Create a new tile asset",
+        "title": "%makecode.createTile.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/new-file.svg",
           "dark": "media/dark/new-file.svg"
@@ -84,7 +100,8 @@
       },
       {
         "command": "makecode.createTilemap",
-        "title": "MakeCode: Create a new tilemap asset",
+        "title": "%makecode.createTilemap.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/new-file.svg",
           "dark": "media/dark/new-file.svg"
@@ -92,7 +109,8 @@
       },
       {
         "command": "makecode.createAnimation",
-        "title": "MakeCode: Create a new animation asset",
+        "title": "%makecode.createAnimation.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/new-file.svg",
           "dark": "media/dark/new-file.svg"
@@ -100,7 +118,8 @@
       },
       {
         "command": "makecode.createSong",
-        "title": "MakeCode: Create a new song asset",
+        "title": "%makecode.createSong.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/new-file.svg",
           "dark": "media/dark/new-file.svg"
@@ -108,7 +127,8 @@
       },
       {
         "command": "makecode.deleteAsset",
-        "title": "MakeCode: Delete an asset",
+        "title": "%makecode.deleteAsset.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/trash.svg",
           "dark": "media/dark/trash.svg"
@@ -116,7 +136,8 @@
       },
       {
         "command": "makecode.duplicateAsset",
-        "title": "MakeCode: Duplicate an asset",
+        "title": "%makecode.duplicateAsset.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/files.svg",
           "dark": "media/dark/files.svg"
@@ -124,7 +145,8 @@
       },
       {
         "command": "makecode.refreshAssets",
-        "title": "MakeCode: Refresh asset explorer",
+        "title": "%makecode.refreshAssets.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/refresh.svg",
           "dark": "media/dark/refresh.svg"
