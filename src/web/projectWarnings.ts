@@ -23,7 +23,7 @@ export async function maybeShowConfigNotificationAsync() {
         return;
     }
 
-    const selection = await vscode.window.showWarningMessage("MakeCode project is missing a tsconfig.json file.", "Add tsconfig.json");
+    const selection = await vscode.window.showWarningMessage(vscode.l10n.t("MakeCode project is missing a tsconfig.json file."), vscode.l10n.t("Add tsconfig.json"));
 
     if (!selection) {
         return;
@@ -71,26 +71,26 @@ export async function maybeShowDependenciesNotificationAsync() {
         return;
     }
 
-    const selection = await vscode.window.showInformationMessage("Do you want to install the dependencies of all open MakeCode projects?", "Install dependencies");
+    const selection = await vscode.window.showInformationMessage(vscode.l10n.t("Do you want to install the dependencies of all open MakeCode projects?"), vscode.l10n.t("Install dependencies"));
     if (!selection) {
         return;
     }
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Installing dependencies...",
+        title: vscode.l10n.t("Installing dependencies..."),
         cancellable: false
     }, async progress => {
         for (const folder of foldersToFix) {
             progress.report({
-                message: `Installing dependencies for ${folder.name}...`
+                message: vscode.l10n.t('Installing dependencies for {0}', [folder.name])
             });
 
             try {
                 await installDependenciesAsync(folder);
             }
             catch (e) {
-                vscode.window.showErrorMessage(`Error while installing dependencies for ${folder.name}: ${e}`);
+                vscode.window.showErrorMessage(vscode.l10n.t('Error while installing dependencies for {0}: ${1}', [folder.name, e]));
             }
         }
     });
