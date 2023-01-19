@@ -11,7 +11,7 @@ const actions: ActionTreeNode[] = [
         label: vscode.l10n.t("Start MakeCode simulator"),
         icon: new vscode.ThemeIcon("play-circle"),
         command: {
-            title: "Start MakeCode simulator",
+            title: vscode.l10n.t("Start MakeCode simulator"),
             command: "makecode.simulate"
         }
     },
