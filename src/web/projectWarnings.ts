@@ -83,14 +83,20 @@ export async function maybeShowDependenciesNotificationAsync() {
     }, async progress => {
         for (const folder of foldersToFix) {
             progress.report({
-                message: vscode.l10n.t('Installing dependencies for {0}', [folder.name])
+                message: vscode.l10n.t('Installing dependencies for {0}', folder.name)
             });
 
             try {
                 await installDependenciesAsync(folder);
             }
             catch (e) {
-                vscode.window.showErrorMessage(vscode.l10n.t('Error while installing dependencies for {0}: ${1}', [folder.name, e]));
+                let errorMessage = '';
+                if (typeof e === 'string') {
+                    errorMessage = e;
+                } else if (e instanceof Error) {
+                    errorMessage = e.message;
+                }
+                vscode.window.showErrorMessage(vscode.l10n.t('Error while installing dependencies for {0}: {1}', folder.name, errorMessage));
             }
         }
     });
