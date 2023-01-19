@@ -36,7 +36,7 @@ export class Simulator {
             return;
         }
 
-        const panel = vscode.window.createWebviewPanel(Simulator.viewType, "Microsoft MakeCode Simulator", {
+        const panel = vscode.window.createWebviewPanel(Simulator.viewType, vscode.l10n.t("Microsoft MakeCode Simulator"), {
             viewColumn: vscode.ViewColumn.Beside,
             preserveFocus: true,
         }, {

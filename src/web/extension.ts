@@ -95,11 +95,14 @@ export function activate(context: vscode.ExtensionContext) {
 
     maybeShowConfigNotificationAsync();
     maybeShowDependenciesNotificationAsync();
+
+    // Set a context key to indicate that we have activated, so context menu commands can show
+    vscode.commands.executeCommand('setContext', 'makecode.extensionActive', true);
 }
 
 async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.WorkspaceFolder | undefined> {
     if (!vscode.workspace.workspaceFolders?.length) {
-        vscode.window.showInformationMessage("Open a workspace to use this command");
+        vscode.window.showInformationMessage(vscode.l10n.t("Open a workspace to use this command"));
         return;
     }
 
@@ -112,14 +115,14 @@ async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.Works
     }
 
     if (folders.length === 0) {
-        showError("You must have a MakeCode project open to use this command");
+        showError(vscode.l10n.t("You must have a MakeCode project open to use this command"));
         return;
     }
     else if (folders.length === 1) {
         return folders[0];
     }
 
-    const choice = await vscode.window.showQuickPick(folders.map(f => f.name), { placeHolder: "Choose a workspace" });
+    const choice = await vscode.window.showQuickPick(folders.map(f => f.name), { placeHolder: vscode.l10n.t("Choose a workspace") });
 
     for (const folder of folders) {
         if (folder.name === choice) {
@@ -147,7 +150,7 @@ async function buildCommand() {
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Building project...",
+        title: vscode.l10n.t("Building project..."),
         cancellable: false
     }, async () => {
         const result = await buildProjectAsync(workspace, opts);
@@ -168,7 +171,7 @@ export async function installCommand() {
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Installing project dependencies...",
+        title: vscode.l10n.t("Installing project dependencies..."),
         cancellable: false
     }, async progress => {
         await installDependenciesAsync(workspace);
@@ -185,7 +188,7 @@ async function cleanCommand() {
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Cleaning project folders...",
+        title: vscode.l10n.t("Cleaning project folders..."),
         cancellable: false
     }, async progress => {
         await cleanProjectFolderAsync(workspace);
@@ -201,7 +204,7 @@ async function importUrlCommand() {
     }
 
     const input = await vscode.window.showInputBox({
-        prompt: "Paste a shared project URL or GitHub repo"
+        prompt: vscode.l10n.t("Paste a shared project URL or GitHub repo")
     });
 
     if (!input) {
@@ -210,32 +213,32 @@ async function importUrlCommand() {
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Downloading URL...",
+        title: vscode.l10n.t("Downloading URL..."),
         cancellable: false
     }, async progress => {
         try {
             await downloadSharedProjectAsync(workspace, input);
         }
         catch (e) {
-            showError("Unable to download project");
+            showError(vscode.l10n.t("Unable to download project"));
             return;
         }
 
         progress.report({
-            message: "Creating tsconfig.json..."
+            message: vscode.l10n.t("Creating tsconfig.json...")
         });
 
         await writeTSConfigAsync(workspace.uri);
 
         progress.report({
-            message: "Installing dependencies..."
+            message: vscode.l10n.t("Installing dependencies...")
         });
 
         try {
             await installDependenciesAsync(workspace);
         }
         catch (e) {
-            showError("Unable to install project dependencies");
+            showError(vscode.l10n.t("Unable to install project dependencies"));
         }
     });
 }
@@ -330,26 +333,26 @@ async function createCommand()  {
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Creating empty project...",
+        title: vscode.l10n.t("Creating empty project..."),
         cancellable: false
     }, async progress => {
         try {
             await createEmptyProjectAsync(workspace, "arcade");
         }
         catch (e) {
-            showError("Unable to create project");
+            showError(vscode.l10n.t("Unable to create project"));
             return;
         }
 
         progress.report({
-            message: "Installing dependencies..."
+            message: vscode.l10n.t("Installing dependencies...")
         });
 
         try {
             await installDependenciesAsync(workspace);
         }
         catch (e) {
-            showError("Unable to install project dependencies");
+            showError(vscode.l10n.t("Unable to install project dependencies"));
         }
     });
 }
@@ -370,7 +373,7 @@ async function shareCommandAsync() {
     if (link) {
         const output = vscode.window.createOutputChannel("MakeCode");
         output.show();
-        output.append("Congratulations! Your project is shared at " + link)
+        output.append(vscode.l10n.t("Congratulations! Your project is shared at ") + link)
     }
 }
 
@@ -381,7 +384,7 @@ async function addDependencyCommandAsync() {
     }
 
     const input = await vscode.window.showInputBox({
-        prompt: "Enter the GitHub repo of the extension to add"
+        prompt: vscode.l10n.t("Enter the GitHub repo of the extension to add")
     });
 
     if (!input) {
@@ -390,14 +393,14 @@ async function addDependencyCommandAsync() {
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Adding Extension...",
+        title: vscode.l10n.t("Adding Extension..."),
         cancellable: false
     }, async progress => {
         try {
             await addDependencyAsync(workspace, input);
         }
         catch (e) {
-            showError("Unable to add dependency. Are you connected to the Internet?");
+            showError(vscode.l10n.t("Unable to add dependency. Are you connected to the Internet?"));
             return;
         }
     });
@@ -422,7 +425,7 @@ async function removeDependencyCommandAsync() {
     });
 
     const toRemove = await vscode.window.showQuickPick(extensions, {
-        title: "Choose which extensions to remove from this project",
+        title: vscode.l10n.t("Choose which extensions to remove from this project"),
         canPickMany: true
     });
 
@@ -434,7 +437,7 @@ async function removeDependencyCommandAsync() {
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Removing Extensions...",
+        title: vscode.l10n.t("Removing Extensions..."),
         cancellable: false
     }, async () => {
         await writeTextFileAsync(configPath, JSON.stringify(parsed, null, 4));

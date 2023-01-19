@@ -5,13 +5,17 @@
   "description": "Learn Code and Make Games. The MakeCode Arcade extension for VS Code allows students to take their game development to the next level. Using JavaScript or Python, create retro arcade style video games using your own art and music assets.",
   "version": "0.0.4",
   "engines": {
-    "vscode": "^1.72.0"
+    "vscode": "^1.74.0"
   },
   "categories": [
     "Education"
   ],
   "keywords": [
-    "makecode", "education", "arcade", "learn", "student"
+    "makecode",
+    "education",
+    "arcade",
+    "learn",
+    "student"
   ],
   "icon": "media/logo-128x128.png",
   "preview": true,
@@ -28,47 +32,58 @@
     "commands": [
       {
         "command": "makecode.build",
-        "title": "MakeCode: Build project"
+        "title": "%makecode.build.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.simulate",
-        "title": "MakeCode: Simulate project"
+        "title": "%makecode.simulate.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.create",
-        "title": "MakeCode: Create an empty project"
+        "title": "%makecode.create.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.choosehw",
-        "title": "MakeCode: Choose hardware board"
+        "title": "%makecode.choosehw.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.install",
-        "title": "MakeCode: Download project dependencies"
+        "title": "%makecode.install.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.clean",
-        "title": "MakeCode: Clean built folders"
+        "title": "%makecode.clean.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.importUrl",
-        "title": "MakeCode: Import project from URL"
+        "title": "%makecode.importUrl.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.shareProject",
-        "title": "MakeCode: Share project"
+        "title": "%makecode.shareProject.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.addDependency",
-        "title": "MakeCode: Add extension to project"
+        "title": "%makecode.addDependency.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.removeDependency",
-        "title": "MakeCode: Remove extension from project"
+        "title": "%makecode.removeDependency.title%",
+        "category": "%makecode.category.title%"
       },
       {
         "command": "makecode.createImage",
-        "title": "MakeCode: Create a new image asset",
+        "title": "%makecode.createImage.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/new-file.svg",
           "dark": "media/dark/new-file.svg"
@@ -76,7 +91,8 @@
       },
       {
         "command": "makecode.createTile",
-        "title": "MakeCode: Create a new tile asset",
+        "title": "%makecode.createTile.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/new-file.svg",
           "dark": "media/dark/new-file.svg"
@@ -84,7 +100,8 @@
       },
       {
         "command": "makecode.createTilemap",
-        "title": "MakeCode: Create a new tilemap asset",
+        "title": "%makecode.createTilemap.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/new-file.svg",
           "dark": "media/dark/new-file.svg"
@@ -92,7 +109,8 @@
       },
       {
         "command": "makecode.createAnimation",
-        "title": "MakeCode: Create a new animation asset",
+        "title": "%makecode.createAnimation.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/new-file.svg",
           "dark": "media/dark/new-file.svg"
@@ -100,7 +118,8 @@
       },
       {
         "command": "makecode.createSong",
-        "title": "MakeCode: Create a new song asset",
+        "title": "%makecode.createSong.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/new-file.svg",
           "dark": "media/dark/new-file.svg"
@@ -108,7 +127,8 @@
       },
       {
         "command": "makecode.deleteAsset",
-        "title": "MakeCode: Delete an asset",
+        "title": "%makecode.deleteAsset.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/trash.svg",
           "dark": "media/dark/trash.svg"
@@ -116,7 +136,8 @@
       },
       {
         "command": "makecode.duplicateAsset",
-        "title": "MakeCode: Duplicate an asset",
+        "title": "%makecode.duplicateAsset.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/files.svg",
           "dark": "media/dark/files.svg"
@@ -124,7 +145,8 @@
       },
       {
         "command": "makecode.refreshAssets",
-        "title": "MakeCode: Refresh asset explorer",
+        "title": "%makecode.refreshAssets.title%",
+        "category": "%makecode.category.title%",
         "icon": {
           "light": "media/light/refresh.svg",
           "dark": "media/dark/refresh.svg"
@@ -135,7 +157,7 @@
       "activitybar": [
         {
           "id": "asset-explorer",
-          "title": "Asset Explorer",
+          "title": "%makecode.assetExplorer.title%",
           "icon": "media/logo.svg"
         }
       ]
@@ -144,39 +166,33 @@
       "asset-explorer": [
         {
           "id": "makecodeActions",
-          "name": "Actions",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Actions"
+          "name": "%makecode.actionsExplorer.title%",
+          "icon": "media/logo.svg"
         },
         {
           "id": "imageExplorer",
-          "name": "Images",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Images"
+          "name": "%makecode.imageExplorer.title%",
+          "icon": "media/logo.svg"
         },
         {
           "id": "animationExplorer",
-          "name": "Animations",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Animations"
+          "name": "%makecode.animationExplorer.title%",
+          "icon": "media/logo.svg"
         },
         {
           "id": "tileExplorer",
-          "name": "Tiles",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Tiles"
+          "name": "%makecode.tileExplorer.title%",
+          "icon": "media/logo.svg"
         },
         {
           "id": "tilemapExplorer",
-          "name": "Tilemaps",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Tilemaps"
+          "name": "%makecode.tilemapExplorer.title%",
+          "icon": "media/logo.svg"
         },
         {
           "id": "songExplorer",
-          "name": "Songs",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Songs"
+          "name": "%makecode.songExplorer.title%",
+          "icon": "media/logo.svg"
         }
       ]
     },
@@ -188,7 +204,7 @@
     "menus": {
       "editor/context": [
         {
-          "when": "resourceLangId == typescript",
+          "when": "resourceLangId == typescript && makecode.extensionActive",
           "command": "makecode.simulate",
           "group": "navigation"
         }
@@ -221,74 +237,19 @@
         },
         {
           "command": "makecode.refreshAssets",
-          "when": "view == imageExplorer",
-          "group": "navigation"
-        },
-        {
-          "command": "makecode.refreshAssets",
-          "when": "view == tileExplorer",
-          "group": "navigation"
-        },
-        {
-          "command": "makecode.refreshAssets",
-          "when": "view == tilemapExplorer",
-          "group": "navigation"
-        },
-        {
-          "command": "makecode.refreshAssets",
-          "when": "view == animationExplorer",
-          "group": "navigation"
-        },
-        {
-          "command": "makecode.refreshAssets",
-          "when": "view == songExplorer",
+          "when": "view == imageExplorer || view == tileExplorer || view == tilemapExplorer || view == animationExplorer || view == songExplorer",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
           "command": "makecode.duplicateAsset",
-          "when": "view == imageExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.duplicateAsset",
-          "when": "view == tileExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.duplicateAsset",
-          "when": "view == tilemapExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.duplicateAsset",
-          "when": "view == animationExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.duplicateAsset",
-          "when": "view == songExplorer",
+          "when": "view == imageExplorer || view == tileExplorer || view == tilemapExplorer || view == animationExplorer || view == songExplorer",
           "group": "inline"
         },
         {
           "command": "makecode.deleteAsset",
-          "when": "view == imageExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.deleteAsset",
-          "when": "view == tilemapExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.deleteAsset",
-          "when": "view == animationExplorer",
-          "group": "inline"
-        },
-        {
-          "command": "makecode.deleteAsset",
-          "when": "view == songExplorer",
+          "when": "view == imageExplorer || view == tilemapExplorer || view == animationExplorer || view == songExplorer",
           "group": "inline"
         }
       ]
@@ -302,14 +263,17 @@
     "watch-web": "webpack --watch",
     "package-web": "webpack --mode production --devtool hidden-source-map",
     "lint": "eslint src --ext ts",
-    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=."
+    "run-in-browser": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=.",
+    "generate-l10n": "vscode-l10n-dev export --outDir ./l10n ./src",
+    "generate-l10n-ploc": "vscode-l10n-dev generate-pseudo -o ./l10n ./l10n/bundle.l10n.json ./package.nls.json"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.0",
-    "@types/vscode": "^1.72.0",
+    "@types/vscode": "^1.74.0",
     "@types/webpack-env": "^1.18.0",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
+    "@vscode/l10n-dev": "^0.0.22",
     "@vscode/test-web": "^0.0.30",
     "assert": "^2.0.0",
     "eslint": "^8.24.0",
@@ -321,8 +285,8 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
-    "path-browserify": "^1.0.1",
+    "makecode-browser": "^1.0.0",
     "makecode-core": "^1.0.2",
-    "makecode-browser": "^1.0.0"
+    "path-browserify": "^1.0.1"
   }
 }

@@ -40,7 +40,7 @@ export class AssetEditor {
             return;
         }
 
-        const panel = vscode.window.createWebviewPanel(AssetEditor.viewType, "Microsoft MakeCode Asset Editor", {
+        const panel = vscode.window.createWebviewPanel(AssetEditor.viewType, vscode.l10n.t("Microsoft MakeCode Asset Editor"), {
             viewColumn: vscode.ViewColumn.Beside,
             preserveFocus: true,
         }, {
