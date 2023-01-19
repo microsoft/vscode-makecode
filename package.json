@@ -167,38 +167,32 @@
         {
           "id": "makecodeActions",
           "name": "%makecode.actionsExplorer.title%",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Actions"
+          "icon": "media/logo.svg"
         },
         {
           "id": "imageExplorer",
           "name": "%makecode.imageExplorer.title%",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Images"
+          "icon": "media/logo.svg"
         },
         {
           "id": "animationExplorer",
           "name": "%makecode.animationExplorer.title%",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Animations"
+          "icon": "media/logo.svg"
         },
         {
           "id": "tileExplorer",
           "name": "%makecode.tileExplorer.title%",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Tiles"
+          "icon": "media/logo.svg"
         },
         {
           "id": "tilemapExplorer",
           "name": "%makecode.tilemapExplorer.title%",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Tilemaps"
+          "icon": "media/logo.svg"
         },
         {
           "id": "songExplorer",
           "name": "%makecode.songExplorer.title%",
-          "icon": "media/logo.svg",
-          "contextualTitle": "Songs"
+          "icon": "media/logo.svg"
         }
       ]
     },
