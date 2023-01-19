@@ -249,7 +249,7 @@
         },
         {
           "command": "makecode.deleteAsset",
-          "when": "view == imageExplorer || view == tileExplorer || view == tilemapExplorer || view == animationExplorer || view == songExplorer",
+          "when": "view == imageExplorer || view == tilemapExplorer || view == animationExplorer || view == songExplorer",
           "group": "inline"
         }
       ]
