@@ -95,6 +95,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     maybeShowConfigNotificationAsync();
     maybeShowDependenciesNotificationAsync();
+
+    // Set a context key to indicate that we have activated, so context menu commands can show
+    vscode.commands.executeCommand('setContext', 'makecode.extensionActive', true);
 }
 
 async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.WorkspaceFolder | undefined> {

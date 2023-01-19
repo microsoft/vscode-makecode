@@ -210,7 +210,7 @@
     "menus": {
       "editor/context": [
         {
-          "when": "resourceLangId == typescript",
+          "when": "resourceLangId == typescript && makecode.extensionActive",
           "command": "makecode.simulate",
           "group": "navigation"
         }
