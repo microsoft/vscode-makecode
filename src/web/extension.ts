@@ -309,15 +309,18 @@ async function createAssetCommand(type: string) {
 }
 
 async function duplicateAssetCommand(node: JResTreeNode) {
+    tickEvent("duplicateAsset");
     AssetEditor.createOrShow();
     AssetEditor.currentSimulator?.duplicateAssetAsync(node.kind, node.id!);
 }
 
 async function deleteAssetCommand(node: JResTreeNode) {
+    tickEvent("deleteAsset");
     await deleteAssetAsync(node);
 }
 
 async function refreshAssetsCommand(justFireEvent: boolean) {
+    tickEvent("refreshAssets");
     if (justFireEvent) {
         fireChangeEvent();
     }
@@ -369,6 +372,7 @@ async function createCommand()  {
 }
 
 async function openAssetEditor(context: vscode.ExtensionContext, uri: vscode.Uri) {
+    tickEvent("openAsset");
     AssetEditor.createOrShow();
     AssetEditor.currentSimulator?.openURIAsync(uri);
 }
