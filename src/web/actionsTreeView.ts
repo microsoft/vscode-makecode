@@ -8,6 +8,22 @@ interface ActionTreeNode {
 
 const actions: ActionTreeNode[] = [
     {
+        label: vscode.l10n.t("Create an empty project"),
+        icon: new vscode.ThemeIcon("preview"),
+        command: {
+            title: vscode.l10n.t("Create an empty project"),
+            command: "makecode.create"
+        }
+    },
+    {
+        label: vscode.l10n.t("Import project from URL"),
+        icon: new vscode.ThemeIcon("cloud-download"),
+        command: {
+            title: vscode.l10n.t("Import project from URL"),
+            command: "makecode.importUrl"
+        }
+    },
+    {
         label: vscode.l10n.t("Start MakeCode simulator"),
         icon: new vscode.ThemeIcon("play-circle"),
         command: {
