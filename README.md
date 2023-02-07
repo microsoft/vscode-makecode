@@ -18,7 +18,7 @@ This repo contains a vscode web extension for creating and editing MakeCode Proj
 
 ### Run your project in the simulator
 
-To run your project in the simulator, run the "MakeCode: Simulate project" command.
+To run your project in the simulator, run the "MakeCode: Start MakeCode simulator" command.
 This will also start a file watcher that will automatically reload the simulator whenever you change a file.
 To use your keyboard to control the simulator, make sure you have the simulator pane focused.
 
@@ -83,7 +83,7 @@ For example, to add the [character-animations](https://github.com/microsoft/arca
 }
 ```
 
-After you save `pxt.json`, run the "MakeCode: Download project dependencies" command to update your project's pxt_modules 
+After you save `pxt.json`, run the "MakeCode: Install project dependencies" command to update your project's pxt_modules
 
 ## Local development of pxt-vscode-web
 
@@ -142,8 +142,8 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 
 ## Trademarks
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
+This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft
+trademarks or logos is subject to and must follow
 [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 Any use of third-party trademarks or logos are subject to those third-party's policies.
