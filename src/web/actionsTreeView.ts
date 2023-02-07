@@ -32,11 +32,11 @@ const actions: ActionTreeNode[] = [
         }
     },
     {
-        label: vscode.l10n.t("Install project dependencies"),
-        icon: new vscode.ThemeIcon("sync"),
+        label: vscode.l10n.t("Create a share link"),
+        icon: new vscode.ThemeIcon("export"),
         command: {
-            title: vscode.l10n.t("Install project dependencies"),
-            command: "makecode.install"
+            title: vscode.l10n.t("Create a share link"),
+            command: "makecode.shareProject"
         }
     },
     {
@@ -48,21 +48,21 @@ const actions: ActionTreeNode[] = [
         }
     },
     {
-        label: vscode.l10n.t("Create a share link"),
-        icon: new vscode.ThemeIcon("export"),
-        command: {
-            title: vscode.l10n.t("Create a share link"),
-            command: "makecode.shareProject"
-        }
-    },
-    {
         label: vscode.l10n.t("Add an extension"),
         icon: new vscode.ThemeIcon("add"),
         command: {
             title: vscode.l10n.t("Add an extension"),
             command: "makecode.addDependency"
         }
-    }
+    },
+    {
+        label: vscode.l10n.t("Install project dependencies"),
+        icon: new vscode.ThemeIcon("sync"),
+        command: {
+            title: vscode.l10n.t("Install project dependencies"),
+            command: "makecode.install"
+        }
+    },
 ]
 
 export class ActionsTreeViewProvider implements vscode.TreeDataProvider<ActionTreeNode> {
