@@ -16,9 +16,11 @@ import { BuildOptions } from "makecode-core/built/commands";
 import { getHardwareVariantsAsync } from "./hardwareVariants";
 import { shareProjectAsync } from "./shareLink";
 import { readTextFileAsync, writeTextFileAsync } from "./util";
-
+import TelemetryReporter from "@vscode/extension-telemetry";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
+let applicationInsights: TelemetryReporter;
+
 export function activate(context: vscode.ExtensionContext) {
     setHost(createVsCodeHost());
     console.log("Congratulations, your extension 'pxt-vscode-web' is now active in the web extension host!");
@@ -88,6 +90,10 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.registerTreeDataProvider("songExplorer", new JResTreeProvider("song"))
     );
 
+    const appInsightsKey = "9801ed01-c40f-46ec-aa40-2a1742a9e71c";
+    applicationInsights = new TelemetryReporter(appInsightsKey);
+    context.subscriptions.push(applicationInsights);
+
     BuildWatcher.watcher.addEventListener("error", showError);
 
     diagnosticsCollection = vscode.languages.createDiagnosticCollection("MakeCode");
@@ -141,6 +147,8 @@ async function buildCommand() {
         return;
     }
 
+    tickEvent("vscode.build");
+
     clearBuildErrors();
 
     const opts: BuildOptions = {
@@ -168,6 +176,8 @@ export async function installCommand() {
     if (!workspace) {
         return;
     }
+
+    tickEvent("vscode.install");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -210,6 +220,8 @@ async function importUrlCommand() {
     if (!input) {
         return;
     }
+
+    tickEvent("vscode.importUrl");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -271,6 +283,8 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
         return;
     }
 
+    tickEvent("vscode.simulate");
+
     if (!BuildWatcher.watcher.isEnabled()) {
         const runSimulator = async () => {
             if (!Simulator.currentSimulator) {
@@ -294,6 +308,7 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
 
 async function createAssetCommand(type: string) {
     AssetEditor.createOrShow();
+    tickEvent("vscode.createAsset", { type: type })
     AssetEditor.currentSimulator?.createAssetAsync(type);
 }
 
@@ -330,6 +345,8 @@ async function createCommand()  {
     if (!workspace) {
         return;
     }
+
+    tickEvent("vscode.create");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -368,6 +385,8 @@ async function shareCommandAsync() {
         return;
     }
 
+    tickEvent("vscode.shareProject");
+
     const link = await shareProjectAsync(workspace);
 
     if (link) {
@@ -390,6 +409,8 @@ async function addDependencyCommandAsync() {
     if (!input) {
         return;
     }
+
+    tickEvent("vscode.addDependency");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -518,4 +539,16 @@ export function reportBuildErrors(res: CompileResult) {
         const uri = vscode.Uri.joinPath(activeWorkspace().uri, filename);
         diagnosticsCollection.set(uri, diagnostics[filename]);
     }
+}
+
+function tickEvent(
+    eventName: string,
+    properties?: { [key: string]: string },
+    measurements?: { [key: string]: number }
+) {
+    applicationInsights?.sendTelemetryEvent(
+        eventName,
+        properties,
+        measurements
+    );
 }
