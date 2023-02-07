@@ -47,11 +47,6 @@
         "category": "%makecode.category.title%"
       },
       {
-        "command": "makecode.choosehw",
-        "title": "%makecode.choosehw.title%",
-        "category": "%makecode.category.title%"
-      },
-      {
         "command": "makecode.install",
         "title": "%makecode.install.title%",
         "category": "%makecode.category.title%"
@@ -252,6 +247,36 @@
           "command": "makecode.deleteAsset",
           "when": "view == imageExplorer || view == tilemapExplorer || view == animationExplorer || view == songExplorer",
           "group": "inline"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "makecode.duplicateAsset",
+          "when": "false"
+        },
+        {
+          "command": "makecode.deleteAsset",
+          "when": "false"
+        },
+        {
+          "command": "makecode.createAnimation",
+          "when": "false"
+        },
+        {
+          "command": "makecode.createImage",
+          "when": "false"
+        },
+        {
+          "command": "makecode.createSong",
+          "when": "false"
+        },
+        {
+          "command": "makecode.createTile",
+          "when": "false"
+        },
+        {
+          "command": "makecode.createTilemap",
+          "when": "false"
         }
       ]
     }

@@ -49,7 +49,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     addCmd("makecode.build", buildCommand);
     addCmd("makecode.simulate", () => simulateCommand(context));
-    addCmd("makecode.choosehw", choosehwCommand);
     addCmd("makecode.create", createCommand);
     addCmd("makecode.install", installCommand);
     addCmd("makecode.clean", cleanCommand);
@@ -337,10 +336,6 @@ async function refreshAssetsCommand(justFireEvent: boolean) {
     else {
         await syncJResAsync();
     }
-}
-
-async function choosehwCommand() {
-    console.log("Choose hardware command");
 }
 
 interface HardwareQuickpick extends vscode.QuickPickItem {
