@@ -95,6 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.registerTreeDataProvider("songExplorer", new JResTreeProvider("song"))
     );
 
+    // This key is not sensitive, and is publicly available in client side apps logging to AI
     const appInsightsKey = "9801ed01-c40f-46ec-aa40-2a1742a9e71c";
     applicationInsights = new TelemetryReporter("ms-edu.pxt-vscode-web", "v0.0.4", appInsightsKey);
     context.subscriptions.push(applicationInsights);
