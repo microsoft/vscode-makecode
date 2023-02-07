@@ -531,7 +531,7 @@ export function reportBuildErrors(res: CompileResult) {
     }
 }
 
-function tickEvent(
+export function tickEvent(
     eventName: string,
     properties?: { [key: string]: string },
     measurements?: { [key: string]: number }
