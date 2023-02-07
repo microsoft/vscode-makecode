@@ -59,7 +59,7 @@ export class VFS implements vscode.FileSystemProvider {
 
     private _emitter = new vscode.EventEmitter<vscode.FileChangeEvent[]>()
     private _bufferedEvents: vscode.FileChangeEvent[] = []
-    private _fireSoonHandle?: NodeJS.Timer
+    private _fireSoonHandle?: any;
 
     readonly onDidChangeFile: vscode.Event<vscode.FileChangeEvent[]> = this._emitter.event
 
