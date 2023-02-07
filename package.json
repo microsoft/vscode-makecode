@@ -25,7 +25,8 @@
   },
   "activationEvents": [
     "onCommand:makecode.create",
-    "workspaceContains:./pxt.json"
+    "workspaceContains:./pxt.json",
+    "onFileSystem:mkcdfs"
   ],
   "browser": "./dist/web/extension.js",
   "contributes": {
@@ -285,6 +286,7 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "@types/path-browserify": "^1.0.0",
     "makecode-browser": "^1.0.0",
     "makecode-core": "^1.0.2",
     "path-browserify": "^1.0.1"
