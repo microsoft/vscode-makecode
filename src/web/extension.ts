@@ -16,18 +16,25 @@ import { BuildOptions } from "makecode-core/built/commands";
 import { getHardwareVariantsAsync } from "./hardwareVariants";
 import { shareProjectAsync } from "./shareLink";
 import { readTextFileAsync, writeTextFileAsync } from "./util";
-
+import TelemetryReporter from "@vscode/extension-telemetry";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
+let applicationInsights: TelemetryReporter;
+
 export function activate(context: vscode.ExtensionContext) {
     setHost(createVsCodeHost());
     console.log("Congratulations, your extension 'pxt-vscode-web' is now active in the web extension host!");
 
     const addCmd = (id: string, fn: () => Promise<void>) => {
-        const cmd = vscode.commands.registerCommand(id, () => fn()
-            .catch( err => {
+        const cmd = vscode.commands.registerCommand(id, () => {
+            const mkcdTickPrefix = "makecode.";
+            if (id.startsWith(mkcdTickPrefix)) {
+                tickEvent(id.slice(mkcdTickPrefix.length));
+            }
+            return fn().catch(err => {
                 console.error("MakeCode Ext Exception", err);
-            }));
+            });
+        });
         context.subscriptions.push(cmd);
     };
 
@@ -87,6 +94,11 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider("songExplorer", new JResTreeProvider("song"))
     );
+
+    // This key is not sensitive, and is publicly available in client side apps logging to AI
+    const appInsightsKey = "9801ed01-c40f-46ec-aa40-2a1742a9e71c";
+    applicationInsights = new TelemetryReporter("ms-edu.pxt-vscode-web", "v0.0.4", appInsightsKey);
+    context.subscriptions.push(applicationInsights);
 
     BuildWatcher.watcher.addEventListener("error", showError);
 
@@ -298,15 +310,18 @@ async function createAssetCommand(type: string) {
 }
 
 async function duplicateAssetCommand(node: JResTreeNode) {
+    tickEvent("duplicateAsset");
     AssetEditor.createOrShow();
     AssetEditor.currentSimulator?.duplicateAssetAsync(node.kind, node.id!);
 }
 
 async function deleteAssetCommand(node: JResTreeNode) {
+    tickEvent("deleteAsset");
     await deleteAssetAsync(node);
 }
 
 async function refreshAssetsCommand(justFireEvent: boolean) {
+    tickEvent("refreshAssets");
     if (justFireEvent) {
         fireChangeEvent();
     }
@@ -358,6 +373,7 @@ async function createCommand()  {
 }
 
 async function openAssetEditor(context: vscode.ExtensionContext, uri: vscode.Uri) {
+    tickEvent("openAsset");
     AssetEditor.createOrShow();
     AssetEditor.currentSimulator?.openURIAsync(uri);
 }
@@ -518,4 +534,16 @@ export function reportBuildErrors(res: CompileResult) {
         const uri = vscode.Uri.joinPath(activeWorkspace().uri, filename);
         diagnosticsCollection.set(uri, diagnostics[filename]);
     }
+}
+
+export function tickEvent(
+    eventName: string,
+    properties?: { [key: string]: string },
+    measurements?: { [key: string]: number }
+) {
+    applicationInsights?.sendTelemetryEvent(
+        eventName,
+        properties,
+        measurements
+    );
 }
