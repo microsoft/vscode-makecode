@@ -16,6 +16,7 @@ import { BuildOptions } from "makecode-core/built/commands";
 import { getHardwareVariantsAsync } from "./hardwareVariants";
 import { shareProjectAsync } from "./shareLink";
 import { readTextFileAsync, writeTextFileAsync } from "./util";
+import { VFS } from "./vfs";
 import TelemetryReporter from "@vscode/extension-telemetry";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
@@ -42,13 +43,16 @@ export function activate(context: vscode.ExtensionContext) {
     AssetEditor.register(context);
     BuildWatcher.register(context);
 
+    const vfs = new VFS(context);
+    context.subscriptions.push(vscode.workspace.registerFileSystemProvider("mkcdfs", vfs, { isCaseSensitive: true }))
+    // vscode.workspace.updateWorkspaceFolders(0, 0, { uri: vscode.Uri.parse('mkcdfs:S78999-78036-21918-11287'), name: "MakeCode Project" });
+
     addCmd("makecode.build", buildCommand);
     addCmd("makecode.simulate", () => simulateCommand(context));
     addCmd("makecode.choosehw", choosehwCommand);
     addCmd("makecode.create", createCommand);
     addCmd("makecode.install", installCommand);
     addCmd("makecode.clean", cleanCommand);
-    addCmd("makecode.importUrl", importUrlCommand);
     addCmd("makecode.shareProject", shareCommandAsync);
     addCmd("makecode.addDependency", addDependencyCommandAsync);
     addCmd("makecode.removeDependency", removeDependencyCommandAsync);
@@ -68,14 +72,14 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.refreshAssets", refreshAssetsCommand)
     );
-
+    context.subscriptions.push(
+        vscode.commands.registerCommand("makecode.importUrl", importUrlCommand)
+    );
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.openAsset", uri => {
             openAssetEditor(context, uri);
         })
     );
-
-
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider("makecodeActions", new ActionsTreeViewProvider())
     );
@@ -207,21 +211,26 @@ async function cleanCommand() {
     });
 }
 
-async function importUrlCommand() {
+export async function importUrlCommand(url?: string, useWorkspace?: vscode.WorkspaceFolder) {
     console.log("Import URL command");
 
-    const workspace = await chooseWorkspaceAsync(false);
+    let workspace = useWorkspace || (await chooseWorkspaceAsync(false));
     if (!workspace) {
         return;
     }
 
-    const input = await vscode.window.showInputBox({
-        prompt: vscode.l10n.t("Paste a shared project URL or GitHub repo")
-    });
+    let toOpen = url;
 
-    if (!input) {
-        return;
+    if (!toOpen) {
+        toOpen = await vscode.window.showInputBox({
+            prompt: vscode.l10n.t("Paste a shared project URL or GitHub repo")
+        });
+
+        if (!toOpen) {
+            return;
+        }
     }
+
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -229,7 +238,7 @@ async function importUrlCommand() {
         cancellable: false
     }, async progress => {
         try {
-            await downloadSharedProjectAsync(workspace, input);
+            await downloadSharedProjectAsync(workspace!, toOpen!);
         }
         catch (e) {
             showError(vscode.l10n.t("Unable to download project"));
@@ -240,14 +249,14 @@ async function importUrlCommand() {
             message: vscode.l10n.t("Creating tsconfig.json...")
         });
 
-        await writeTSConfigAsync(workspace.uri);
+        await writeTSConfigAsync(workspace!.uri);
 
         progress.report({
             message: vscode.l10n.t("Installing dependencies...")
         });
 
         try {
-            await installDependenciesAsync(workspace);
+            await installDependenciesAsync(workspace!);
         }
         catch (e) {
             showError(vscode.l10n.t("Unable to install project dependencies"));

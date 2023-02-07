@@ -79,6 +79,13 @@ async function cwdAsync() {
 }
 
 async function listFilesAsync(directory: string, filename: string) {
+    if (activeWorkspace().uri.scheme === "mkcdfs") {
+        if (await existsAsync("pxt.json")) {
+            return ["pxt.json"];
+        }
+        return [];
+    }
+
     const files = await vscode.workspace.findFiles(directory + "/**/" + filename);
 
     return files.map(uri => uri.fsPath);
@@ -152,6 +159,7 @@ export function httpRequestCoreAsync(options: HttpRequestOptions) {
 }
 
 function resolvePath(path: string) {
+    path = path.replace("\\/", "");
     return vscode.Uri.joinPath(activeWorkspace().uri, path);
 }
 
