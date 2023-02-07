@@ -147,7 +147,7 @@ async function buildCommand() {
         return;
     }
 
-    tickEvent("vscode.build");
+    tickEvent("build");
 
     clearBuildErrors();
 
@@ -177,7 +177,7 @@ export async function installCommand() {
         return;
     }
 
-    tickEvent("vscode.install");
+    tickEvent("install");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -221,7 +221,7 @@ async function importUrlCommand() {
         return;
     }
 
-    tickEvent("vscode.importUrl");
+    tickEvent("importUrl");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -283,7 +283,7 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
         return;
     }
 
-    tickEvent("vscode.simulate");
+    tickEvent("simulate");
 
     if (!BuildWatcher.watcher.isEnabled()) {
         const runSimulator = async () => {
@@ -308,7 +308,7 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
 
 async function createAssetCommand(type: string) {
     AssetEditor.createOrShow();
-    tickEvent("vscode.createAsset", { type: type })
+    tickEvent("createAsset", { type: type })
     AssetEditor.currentSimulator?.createAssetAsync(type);
 }
 
@@ -346,7 +346,7 @@ async function createCommand()  {
         return;
     }
 
-    tickEvent("vscode.create");
+    tickEvent("create");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -385,7 +385,7 @@ async function shareCommandAsync() {
         return;
     }
 
-    tickEvent("vscode.shareProject");
+    tickEvent("shareProject");
 
     const link = await shareProjectAsync(workspace);
 
@@ -410,7 +410,7 @@ async function addDependencyCommandAsync() {
         return;
     }
 
-    tickEvent("vscode.addDependency");
+    tickEvent("addDependency");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
