@@ -26,10 +26,15 @@ export function activate(context: vscode.ExtensionContext) {
     console.log("Congratulations, your extension 'pxt-vscode-web' is now active in the web extension host!");
 
     const addCmd = (id: string, fn: () => Promise<void>) => {
-        const cmd = vscode.commands.registerCommand(id, () => fn()
-            .catch( err => {
+        const cmd = vscode.commands.registerCommand(id, () => {
+            const mkcdTickPrefix = "makecode.";
+            if (id.startsWith(mkcdTickPrefix)) {
+                tickEvent(id.slice(mkcdTickPrefix.length));
+            }
+            return fn().catch(err => {
                 console.error("MakeCode Ext Exception", err);
-            }));
+            });
+        });
         context.subscriptions.push(cmd);
     };
 
@@ -147,8 +152,6 @@ async function buildCommand() {
         return;
     }
 
-    tickEvent("build");
-
     clearBuildErrors();
 
     const opts: BuildOptions = {
@@ -176,8 +179,6 @@ export async function installCommand() {
     if (!workspace) {
         return;
     }
-
-    tickEvent("install");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -220,8 +221,6 @@ async function importUrlCommand() {
     if (!input) {
         return;
     }
-
-    tickEvent("importUrl");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -283,8 +282,6 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
         return;
     }
 
-    tickEvent("simulate");
-
     if (!BuildWatcher.watcher.isEnabled()) {
         const runSimulator = async () => {
             if (!Simulator.currentSimulator) {
@@ -308,7 +305,6 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
 
 async function createAssetCommand(type: string) {
     AssetEditor.createOrShow();
-    tickEvent("createAsset", { type: type })
     AssetEditor.currentSimulator?.createAssetAsync(type);
 }
 
@@ -345,8 +341,6 @@ async function createCommand()  {
     if (!workspace) {
         return;
     }
-
-    tickEvent("create");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -385,8 +379,6 @@ async function shareCommandAsync() {
         return;
     }
 
-    tickEvent("shareProject");
-
     const link = await shareProjectAsync(workspace);
 
     if (link) {
@@ -409,8 +401,6 @@ async function addDependencyCommandAsync() {
     if (!input) {
         return;
     }
-
-    tickEvent("addDependency");
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
