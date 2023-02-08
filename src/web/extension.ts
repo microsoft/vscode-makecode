@@ -212,6 +212,7 @@ async function cleanCommand() {
 
 export async function importUrlCommand(url?: string, useWorkspace?: vscode.WorkspaceFolder) {
     console.log("Import URL command");
+    tickEvent("importUrl");
 
     let workspace = useWorkspace || (await chooseWorkspaceAsync(false));
     if (!workspace) {
