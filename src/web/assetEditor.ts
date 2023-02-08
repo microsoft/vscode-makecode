@@ -179,7 +179,8 @@ export class AssetEditor {
                     type: "open",
                     assetType: this.editing.assetType,
                     assetId: this.editing.assetId,
-                    files: await readProjectJResAsync()
+                    files: await readProjectJResAsync(),
+                    palette: await readProjectPaletteAsync()
                 });
                 break;
             case "duplicate":
@@ -187,14 +188,16 @@ export class AssetEditor {
                     type: "duplicate",
                     assetType: this.editing.assetType,
                     assetId: this.editing.assetId,
-                    files: await readProjectJResAsync()
+                    files: await readProjectJResAsync(),
+                    palette: await readProjectPaletteAsync()
                 });
                 break;
             case "create":
                 this.sendMessageAsync({
                     type: "create",
                     assetType: this.editing.assetType,
-                    files: await readProjectJResAsync()
+                    files: await readProjectJResAsync(),
+                    palette: await readProjectPaletteAsync()
                 });
                 break;
         }
@@ -256,6 +259,12 @@ async function readProjectJResAsync() {
     }
 
     return fileSystem;
+}
+
+async function readProjectPaletteAsync() {
+    const config = await readFileAsync("./pxt.json", "utf8");
+    const parsed = JSON.parse(config);
+    if (parsed.palette) return parsed.palette as string[];
 }
 
 async function saveFilesAsync(files: {[index: string]: string}) {
