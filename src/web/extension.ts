@@ -115,22 +115,37 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand('setContext', 'makecode.extensionActive', true);
 }
 
-async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.WorkspaceFolder | undefined> {
-    if (!vscode.workspace.workspaceFolders?.length) {
-        vscode.window.showInformationMessage(vscode.l10n.t("Open a workspace to use this command"));
-        return;
-    }
-
+async function chooseWorkspaceAsync(kind: "empty" | "project" | "any"): Promise<vscode.WorkspaceFolder | undefined> {
     const folders = [];
+    let hasWorkspaceOpen = false;
 
-    for (const folder of vscode.workspace.workspaceFolders) {
-        if (!onlyProjects || await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt.json"))) {
-            folders.push(folder);
+    if (vscode.workspace.workspaceFolders) {
+        hasWorkspaceOpen = !!vscode.workspace.workspaceFolders.length;
+        for (const folder of vscode.workspace.workspaceFolders) {
+            if (kind === "any") {
+                folders.push(folder);
+            }
+            else {
+                const pxtJSONExists = await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt.json"));
+
+                if ((kind === "project" && pxtJSONExists) || (kind === "empty" && !pxtJSONExists)) {
+                    folders.push(folder);
+                }
+            }
         }
     }
 
+
     if (folders.length === 0) {
-        showError(vscode.l10n.t("You must have a MakeCode project open to use this command"));
+        if (kind === "project") {
+            showError(vscode.l10n.t("You need to open a MakeCode project to use this command."));
+        }
+        else if (kind === "empty" && hasWorkspaceOpen) {
+            showError(vscode.l10n.t("The open workspace already contains a MakeCode project. Open an empty folder to use this command."));
+        }
+        else {
+            showError(vscode.l10n.t("You need to open a folder to use this command."));
+        }
         return;
     }
     else if (folders.length === 1) {
@@ -151,7 +166,7 @@ async function chooseWorkspaceAsync(onlyProjects: boolean): Promise<vscode.Works
 async function buildCommand() {
     console.log("Build command");
 
-    const workspace = await chooseWorkspaceAsync(true);
+    const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
         return;
     }
@@ -179,7 +194,7 @@ async function buildCommand() {
 export async function installCommand() {
     console.log("Install command");
 
-    const workspace = await chooseWorkspaceAsync(true);
+    const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
         return;
     }
@@ -196,7 +211,7 @@ export async function installCommand() {
 async function cleanCommand() {
     console.log("Clean command");
 
-    const workspace = await chooseWorkspaceAsync(true);
+    const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
         return;
     }
@@ -214,7 +229,7 @@ export async function importUrlCommand(url?: string, useWorkspace?: vscode.Works
     console.log("Import URL command");
     tickEvent("importUrl");
 
-    let workspace = useWorkspace || (await chooseWorkspaceAsync(false));
+    let workspace = useWorkspace || (await chooseWorkspaceAsync("empty"));
     if (!workspace) {
         return;
     }
@@ -284,7 +299,7 @@ async function pickHardwareVariantAsync(workspace: vscode.WorkspaceFolder) {
 }
 
 export async function simulateCommand(context: vscode.ExtensionContext) {
-    const workspace = await chooseWorkspaceAsync(false);
+    const workspace = await chooseWorkspaceAsync("project");
     if (workspace) {
         setActiveWorkspace(workspace);
     }
@@ -346,7 +361,7 @@ interface HardwareQuickpick extends vscode.QuickPickItem {
 async function createCommand()  {
     console.log("Create command");
 
-    const workspace = await chooseWorkspaceAsync(false);
+    const workspace = await chooseWorkspaceAsync("empty");
     if (!workspace) {
         return;
     }
@@ -384,7 +399,7 @@ async function openAssetEditor(context: vscode.ExtensionContext, uri: vscode.Uri
 }
 
 async function shareCommandAsync() {
-    const workspace = await chooseWorkspaceAsync(true);
+    const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
         return;
     }
@@ -399,7 +414,7 @@ async function shareCommandAsync() {
 }
 
 async function addDependencyCommandAsync() {
-    const workspace = await chooseWorkspaceAsync(true);
+    const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
         return;
     }
@@ -428,7 +443,7 @@ async function addDependencyCommandAsync() {
 }
 
 async function removeDependencyCommandAsync() {
-    const workspace = await chooseWorkspaceAsync(true);
+    const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
         return;
     }
