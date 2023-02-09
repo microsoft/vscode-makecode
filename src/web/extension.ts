@@ -188,6 +188,8 @@ async function buildCommand() {
         if (result.diagnostics.length) {
             reportBuildErrors(result);
         }
+
+        await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
     });
 }
 
@@ -205,6 +207,9 @@ export async function installCommand() {
         cancellable: false
     }, async progress => {
         await installDependenciesAsync(workspace);
+
+        await vscode.commands.executeCommand("makecode.refreshAssets");
+        await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
     });
 }
 
@@ -222,6 +227,7 @@ async function cleanCommand() {
         cancellable: false
     }, async progress => {
         await cleanProjectFolderAsync(workspace);
+        await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
     });
 }
 
@@ -276,6 +282,9 @@ export async function importUrlCommand(url?: string, useWorkspace?: vscode.Works
         catch (e) {
             showError(vscode.l10n.t("Unable to install project dependencies"));
         }
+
+        await vscode.commands.executeCommand("makecode.refreshAssets");
+        await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
     });
 }
 
@@ -389,6 +398,9 @@ async function createCommand()  {
         catch (e) {
             showError(vscode.l10n.t("Unable to install project dependencies"));
         }
+
+        await vscode.commands.executeCommand("makecode.refreshAssets");
+        await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
     });
 }
 
@@ -488,6 +500,9 @@ async function removeDependencyCommandAsync() {
         }
 
         await installDependenciesAsync(workspace);
+
+        await vscode.commands.executeCommand("makecode.refreshAssets");
+        await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
     })
 }
 
