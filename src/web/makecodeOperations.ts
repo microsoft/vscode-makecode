@@ -43,6 +43,10 @@ export function getAppTargetAsync(folder: vscode.WorkspaceFolder, cancellationTo
     return enqueueOperationAsync(folder, () => cmd.getAppTargetAsync({}), cancellationToken);
 }
 
+export function getTargetConfigAsync(folder: vscode.WorkspaceFolder, cancellationToken?: vscode.CancellationToken) {
+    return enqueueOperationAsync(folder, () => cmd.getTargetConfigAsync({}), cancellationToken);
+}
+
 export function addDependencyAsync(folder: vscode.WorkspaceFolder, repo: string, cancellationToken?: vscode.CancellationToken) {
     return enqueueOperationAsync(folder, () => cmd.addCommand(repo, undefined as any /* the name is optional */, {}), cancellationToken);
 }

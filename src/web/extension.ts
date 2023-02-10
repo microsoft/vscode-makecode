@@ -10,7 +10,7 @@ import { JResTreeProvider, JResTreeNode, fireChangeEvent, deleteAssetAsync, sync
 import { AssetEditor } from "./assetEditor";
 import { BuildWatcher } from "./buildWatcher";
 import { maybeShowConfigNotificationAsync, maybeShowDependenciesNotificationAsync, writeTSConfigAsync } from "./projectWarnings";
-import { addDependencyAsync, buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, installDependenciesAsync, listHardwareVariantsAsync } from "./makecodeOperations";
+import { addDependencyAsync, buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, getTargetConfigAsync, installDependenciesAsync, listHardwareVariantsAsync } from "./makecodeOperations";
 import { ActionsTreeViewProvider } from "./actionsTreeView";
 import { BuildOptions } from "makecode-core/built/commands";
 import { getHardwareVariantsAsync } from "./hardwareVariants";
@@ -397,14 +397,57 @@ async function shareCommandAsync() {
     }
 }
 
+export interface ExtensionInfo {
+    id: string;
+    label: string;
+    detail?: string;
+}
+
 async function addDependencyCommandAsync() {
     const workspace = await chooseWorkspaceAsync(true);
     if (!workspace) {
         return;
     }
 
-    const input = await vscode.window.showInputBox({
-        prompt: vscode.l10n.t("Enter the GitHub repo of the extension to add")
+    const targetConfig = await getTargetConfigAsync(workspace);
+    const approvedRepoLib = targetConfig?.packages?.approvedRepoLib ?? {};
+    const builtInRepo = targetConfig?.packages?.builtinExtensionsLib ?? {};
+    const preferredExts = Object.keys(builtInRepo)
+        .filter(builtin => builtInRepo[builtin]?.preferred)
+        .concat(Object.keys(approvedRepoLib)
+            .filter(repo => approvedRepoLib[repo]?.preferred)
+        );
+
+    const qp = vscode.window.createQuickPick<ExtensionInfo>();
+    const defaultPrefferedExtensions = preferredExts.map(ext => ({
+        id: ext,
+        label: ext
+    }));
+
+    qp.items = defaultPrefferedExtensions;
+    qp.placeholder = vscode.l10n.t("Enter the GitHub repo or name of the extension to add");
+
+    const input = await new Promise<string>((resolve, reject) => {
+        qp.onDidChangeValue(() => {
+            if (!qp.items.find(item => item.label === qp.value)) {
+                // inject to allow custom values to be entered
+                const userEnteredSuggestion = {
+                    id: qp.value,
+                    label: qp.value,
+                };
+                qp.items = [
+                    userEnteredSuggestion,
+                    ...defaultPrefferedExtensions
+                ];
+            }
+        });
+        qp.onDidAccept(() => {
+            const selected = qp.selectedItems[0];
+            qp.dispose();
+
+            resolve(selected?.id);
+        });
+        qp.show();
     });
 
     if (!input) {
