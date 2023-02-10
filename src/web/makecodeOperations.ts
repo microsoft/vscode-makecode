@@ -28,11 +28,26 @@ export function cleanProjectFolderAsync(folder: vscode.WorkspaceFolder, cancella
 }
 
 export function createEmptyProjectAsync(folder: vscode.WorkspaceFolder, projectKind: string, cancellationToken?: vscode.CancellationToken) {
-    return enqueueOperationAsync(folder, () => cmd.initCommand(projectKind, [], {}), cancellationToken);
+    return enqueueOperationAsync(
+        folder,
+        () => cmd.initCommand(projectKind, [], {
+            vscodeProject: true,
+            gitIgnore: true,
+        }),
+        cancellationToken
+    );
 }
 
 export function downloadSharedProjectAsync(folder: vscode.WorkspaceFolder, url: string, cancellationToken?: vscode.CancellationToken) {
-    return enqueueOperationAsync(folder, () => cmd.downloadCommand(url, {}), cancellationToken);
+    return enqueueOperationAsync(
+        folder,
+        () => cmd.initCommand("shared", [], {
+            vscodeProject: true,
+            gitIgnore: true,
+            importUrl: url,
+        }),
+        cancellationToken
+    );
 }
 
 export function listHardwareVariantsAsync(folder: vscode.WorkspaceFolder, cancellationToken?: vscode.CancellationToken) {
