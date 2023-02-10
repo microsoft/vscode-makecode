@@ -409,14 +409,24 @@ async function addDependencyCommandAsync() {
         return;
     }
 
+    const pxtJson = await getPxtJson(workspace);
+    const deps = pxtJson?.dependencies ?? {};
+    const currentBuiltinDeps = Object.keys(deps).filter(dep => deps[dep] === "*");
+    const currentGhDeps = Object.keys(deps)
+        .filter(dep => deps[dep].startsWith("github:"))
+        .map(dep => /^github:([^#]+)/.exec(deps[dep])?.[1]?.toLowerCase());
+
     const targetConfig = await getTargetConfigAsync(workspace);
     const approvedRepoLib = targetConfig?.packages?.approvedRepoLib ?? {};
     const builtInRepo = targetConfig?.packages?.builtinExtensionsLib ?? {};
     const preferredExts = Object.keys(builtInRepo)
-        .filter(builtin => builtInRepo[builtin]?.preferred)
+        .filter(builtin => builtInRepo[builtin]?.preferred && currentBuiltinDeps.indexOf(builtin) === -1)
         .concat(Object.keys(approvedRepoLib)
-            .filter(repo => approvedRepoLib[repo]?.preferred)
+            .filter(repo => approvedRepoLib[repo]?.preferred
+                && currentGhDeps.indexOf(repo) === -1
+            )
         );
+
 
     const qp = vscode.window.createQuickPick<ExtensionInfo>();
     const defaultPreferredExtensions = preferredExts.map(ext => ({
@@ -442,9 +452,8 @@ async function addDependencyCommandAsync() {
             }
         });
         qp.onDidAccept(() => {
-            const selected = qp.selectedItems[0];
+            const selected = qp.selectedItems[0] || qp.value;
             qp.dispose();
-
             resolve(selected?.id);
         });
         qp.show();
@@ -469,21 +478,34 @@ async function addDependencyCommandAsync() {
     });
 }
 
+async function getPxtJson(workspace: vscode.WorkspaceFolder) {
+    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
+
+    const config = await readTextFileAsync(configPath);
+    const parsed = JSON.parse(config) as pxt.PackageConfig;
+    return parsed;
+}
+
+async function setPxtJson(workspace: vscode.WorkspaceFolder, pxtJson: pxt.PackageConfig) {
+    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
+    await writeTextFileAsync(
+        configPath,
+        JSON.stringify(pxtJson, null, 4)
+    );
+}
+
 async function removeDependencyCommandAsync() {
     const workspace = await chooseWorkspaceAsync(true);
     if (!workspace) {
         return;
     }
 
-    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
+    const pxtJson = await getPxtJson(workspace);
 
-    const config = await readTextFileAsync(configPath);
-    const parsed = JSON.parse(config) as pxt.PackageConfig;
-
-    const extensions: vscode.QuickPickItem[] = Object.keys(parsed.dependencies).map(depName => {
+    const extensions: vscode.QuickPickItem[] = Object.keys(pxtJson.dependencies).map(depName => {
         return {
             label: depName,
-            description: parsed.dependencies[depName]
+            description: pxtJson.dependencies[depName]
         }
     });
 
@@ -495,7 +517,7 @@ async function removeDependencyCommandAsync() {
     if (!toRemove?.length) return;
 
     for (const ext of toRemove) {
-        delete parsed.dependencies[ext.label];
+        delete pxtJson.dependencies[ext.label];
     }
 
     vscode.window.withProgress({
@@ -503,7 +525,7 @@ async function removeDependencyCommandAsync() {
         title: vscode.l10n.t("Removing Extensions..."),
         cancellable: false
     }, async () => {
-        await writeTextFileAsync(configPath, JSON.stringify(parsed, null, 4));
+        await setPxtJson(workspace, pxtJson);
 
         try {
             vscode.workspace.fs.delete(vscode.Uri.joinPath(workspace.uri, "pxt_modules"), {
