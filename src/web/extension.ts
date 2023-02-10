@@ -419,12 +419,12 @@ async function addDependencyCommandAsync() {
         );
 
     const qp = vscode.window.createQuickPick<ExtensionInfo>();
-    const defaultPrefferedExtensions = preferredExts.map(ext => ({
+    const defaultPreferredExtensions = preferredExts.map(ext => ({
         id: ext,
         label: ext
     }));
 
-    qp.items = defaultPrefferedExtensions;
+    qp.items = defaultPreferredExtensions;
     qp.placeholder = vscode.l10n.t("Enter the GitHub repo or name of the extension to add");
 
     const input = await new Promise<string>((resolve, reject) => {
@@ -437,7 +437,7 @@ async function addDependencyCommandAsync() {
                 };
                 qp.items = [
                     userEnteredSuggestion,
-                    ...defaultPrefferedExtensions
+                    ...defaultPreferredExtensions
                 ];
             }
         });
