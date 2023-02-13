@@ -408,31 +408,48 @@ async function addDependencyCommandAsync() {
     if (!workspace) {
         return;
     }
-
-    const pxtJson = await getPxtJson(workspace);
-    const deps = pxtJson?.dependencies ?? {};
-    const currentBuiltinDeps = Object.keys(deps).filter(dep => deps[dep] === "*");
-    const currentGhDeps = Object.keys(deps)
-        .filter(dep => deps[dep].startsWith("github:"))
-        .map(dep => /^github:([^#]+)/.exec(deps[dep])?.[1]?.toLowerCase());
-
-    const targetConfig = await getTargetConfigAsync(workspace);
-    const approvedRepoLib = targetConfig?.packages?.approvedRepoLib ?? {};
-    const builtInRepo = targetConfig?.packages?.builtinExtensionsLib ?? {};
-    const preferredExts = Object.keys(builtInRepo)
-        .filter(builtin => builtInRepo[builtin]?.preferred && currentBuiltinDeps.indexOf(builtin) === -1)
-        .concat(Object.keys(approvedRepoLib)
-            .filter(repo => approvedRepoLib[repo]?.preferred
-                && currentGhDeps.indexOf(repo) === -1
-            )
-        );
-
-
     const qp = vscode.window.createQuickPick<ExtensionInfo>();
-    const defaultPreferredExtensions = preferredExts.map(ext => ({
-        id: ext,
-        label: ext
-    }));
+    qp.busy = true;
+    let defaultPreferredExtensions: ExtensionInfo[] = [];
+    const getExtensionInfoAsync = async () => {
+        const pxtJson = await getPxtJson(workspace);
+        const deps = pxtJson?.dependencies ?? {};
+        const currentBuiltinDeps = Object.keys(deps).filter(dep => deps[dep] === "*");
+        const currentGhDeps = Object.keys(deps)
+            .filter(dep => deps[dep].startsWith("github:"))
+            .map(dep => /^github:([^#]+)/.exec(deps[dep])?.[1]?.toLowerCase());
+
+        const targetConfig = await getTargetConfigAsync(workspace);
+        const approvedRepoLib = targetConfig?.packages?.approvedRepoLib ?? {};
+        const builtInRepo = targetConfig?.packages?.builtinExtensionsLib ?? {};
+        const preferredExts = Object.keys(builtInRepo)
+            .filter(builtin => builtInRepo[builtin]?.preferred && currentBuiltinDeps.indexOf(builtin) === -1)
+            .concat(Object.keys(approvedRepoLib)
+                .filter(repo => approvedRepoLib[repo]?.preferred
+                    && currentGhDeps.indexOf(repo) === -1
+                )
+            );
+        defaultPreferredExtensions = preferredExts.map(ext => ({
+            id: ext,
+            label: ext
+        }));
+        const newQpItems = [
+            ...defaultPreferredExtensions
+        ];
+        if (!!qp.value) {
+            const userEnteredSuggestion = {
+                id: qp.value,
+                label: qp.value,
+            };
+            newQpItems.unshift(userEnteredSuggestion);
+        }
+        qp.items = newQpItems;
+        qp.busy = false;
+    }
+
+    // Kick this off, but don't wait;
+    // user could theoretically enter a repo and submit before this completes.
+    /** await **/ getExtensionInfoAsync();
 
     qp.items = defaultPreferredExtensions;
     qp.placeholder = vscode.l10n.t("Enter the GitHub repo or name of the extension to add");
