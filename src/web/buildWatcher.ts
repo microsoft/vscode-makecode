@@ -27,7 +27,6 @@ export class BuildWatcher {
     private constructor(protected context: vscode.ExtensionContext) {
         this.buildOpts = {
             javaScript: true,
-            update: true,
             watch: true
         };
     }
@@ -149,6 +148,10 @@ export class BuildWatcher {
 
                     if (result.diagnostics.length) {
                         reportBuildErrors(result);
+                        for (const errorHandler of this.errorListeners) {
+                            errorHandler(result.diagnostics);
+                        }
+                        return;
                     }
 
                     if (!this.running) {return;}
