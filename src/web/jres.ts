@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { activeWorkspace, findFilesAsync } from "./host";
 import { readTextFileAsync } from "./util";
 
 
@@ -114,7 +115,7 @@ export async function deleteAssetAsync(node: JResTreeNode) {
 
 async function readProjectJResAsync() {
     const nodes: JResTreeNode[] = [];
-    const files = await vscode.workspace.findFiles("**/*.jres");
+    const files = await findFilesAsync("jres", activeWorkspace().uri, false);
 
     for (const file of files) {
         if (file.fsPath.indexOf("pxt_modules") !== -1 || file.fsPath.indexOf("node_modules") !== -1) {

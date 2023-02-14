@@ -44,8 +44,7 @@ export function activate(context: vscode.ExtensionContext) {
     BuildWatcher.register(context);
 
     const vfs = new VFS(context);
-    context.subscriptions.push(vscode.workspace.registerFileSystemProvider("mkcdfs", vfs, { isCaseSensitive: true }))
-    // vscode.workspace.updateWorkspaceFolders(0, 0, { uri: vscode.Uri.parse('mkcdfs:S78999-78036-21918-11287'), name: "MakeCode Project" });
+    context.subscriptions.push(vscode.workspace.registerFileSystemProvider("mkcdfs", vfs, { isCaseSensitive: true }));
 
     addCmd("makecode.build", buildCommand);
     addCmd("makecode.simulate", () => simulateCommand(context));
@@ -115,7 +114,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand('setContext', 'makecode.extensionActive', true);
 }
 
-async function chooseWorkspaceAsync(kind: "empty" | "project" | "any"): Promise<vscode.WorkspaceFolder | undefined> {
+async function chooseWorkspaceAsync(kind: "empty" | "project" | "any", silent = false): Promise<vscode.WorkspaceFolder | undefined> {
     const folders = [];
     let hasWorkspaceOpen = false;
 
@@ -137,14 +136,16 @@ async function chooseWorkspaceAsync(kind: "empty" | "project" | "any"): Promise<
 
 
     if (folders.length === 0) {
-        if (kind === "project") {
-            showError(vscode.l10n.t("You need to open a MakeCode project to use this command."));
-        }
-        else if (kind === "empty" && hasWorkspaceOpen) {
-            showError(vscode.l10n.t("The open workspace already contains a MakeCode project. Open an empty folder to use this command."));
-        }
-        else {
-            showError(vscode.l10n.t("You need to open a folder to use this command."));
+        if (!silent) {
+            if (kind === "project") {
+                showError(vscode.l10n.t("You need to open a MakeCode project to use this command."));
+            }
+            else if (kind === "empty" && hasWorkspaceOpen) {
+                showError(vscode.l10n.t("The open workspace already contains a MakeCode project. Open an empty folder to use this command."));
+            }
+            else {
+                showError(vscode.l10n.t("You need to open a folder to use this command."));
+            }
         }
         return;
     }
@@ -235,8 +236,18 @@ export async function importUrlCommand(url?: string, useWorkspace?: vscode.Works
     console.log("Import URL command");
     tickEvent("importUrl");
 
-    let workspace = useWorkspace || (await chooseWorkspaceAsync("empty"));
+    const match = url && /^(?:S?\d{4}[\d\-]+|_[a-zA-Z0-9]{10,})$/.exec(url);
+    let workspace = useWorkspace || (await chooseWorkspaceAsync("empty", !!match));
     if (!workspace) {
+        if (match) {
+            vscode.workspace.updateWorkspaceFolders(0, 0,
+                {
+                    uri: vscode.Uri.parse("mkcdfs:/" + url),
+                    name: vscode.l10n.t("Imported Project ({0})", url)
+                }
+            );
+            await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
+        }
         return;
     }
 
