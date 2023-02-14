@@ -316,8 +316,7 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
         const clearListeners = () => {
             BuildWatcher.watcher.stop();
             BuildWatcher.watcher.removeEventListener("build-completed", runSimulator);
-
-            BuildWatcher.watcher.addEventListener("build-completed", runSimulator);
+            BuildWatcher.watcher.removeEventListener("error", handleError);
         }
         runSimulator = async () => {
             if (!Simulator.currentSimulator) {
