@@ -487,7 +487,7 @@ async function addDependencyCommandAsync() {
                 qp.items = [
                     userEnteredSuggestion,
                     ...defaultPreferredExtensions
-                ];
+                ].filter(el => !!el.id);
             }
         });
         qp.onDidAccept(() => {
