@@ -148,10 +148,6 @@ export class BuildWatcher {
 
                     if (result.diagnostics.length) {
                         reportBuildErrors(result);
-                        for (const errorHandler of this.errorListeners) {
-                            errorHandler(result.diagnostics);
-                        }
-                        return;
                     }
 
                     if (!this.running) {return;}
