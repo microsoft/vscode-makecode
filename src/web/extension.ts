@@ -267,12 +267,6 @@ export async function importUrlCommand(url?: string, useWorkspace?: vscode.Works
         }
 
         progress.report({
-            message: vscode.l10n.t("Creating tsconfig.json...")
-        });
-
-        await writeTSConfigAsync(workspace!.uri);
-
-        progress.report({
             message: vscode.l10n.t("Installing dependencies...")
         });
 
