@@ -84,6 +84,16 @@ export class Simulator {
         this.panel.webview.html = simulatorHTML;
     }
 
+    setPanelTitle(title: string) {
+        this.panel.title = title;
+    }
+
+    stopSimulator() {
+        this.postMessage({
+            type: "stop-sim"
+        });
+    }
+
     handleSimulatorMessage(message: any) {
         switch (message.type) {
             case "fetch-js":
