@@ -10,7 +10,7 @@ import { JResTreeProvider, JResTreeNode, fireChangeEvent, deleteAssetAsync, sync
 import { AssetEditor } from "./assetEditor";
 import { BuildWatcher } from "./buildWatcher";
 import { maybeShowConfigNotificationAsync, maybeShowDependenciesNotificationAsync, writeTSConfigAsync } from "./projectWarnings";
-import { addDependencyAsync, buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, installDependenciesAsync, listHardwareVariantsAsync } from "./makecodeOperations";
+import { addDependencyAsync, buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, getTargetConfigAsync, installDependenciesAsync, listHardwareVariantsAsync } from "./makecodeOperations";
 import { ActionsTreeViewProvider } from "./actionsTreeView";
 import { BuildOptions } from "makecode-core/built/commands";
 import { getHardwareVariantsAsync } from "./hardwareVariants";
@@ -425,14 +425,83 @@ async function shareCommandAsync() {
     }
 }
 
+export interface ExtensionInfo {
+    id: string;
+    label: string;
+    detail?: string;
+}
+
 async function addDependencyCommandAsync() {
     const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
         return;
     }
+    const qp = vscode.window.createQuickPick<ExtensionInfo>();
+    qp.busy = true;
+    let defaultPreferredExtensions: ExtensionInfo[] = [];
+    const getExtensionInfoAsync = async () => {
+        const pxtJson = await getPxtJson(workspace);
+        const deps = pxtJson?.dependencies ?? {};
+        const currentBuiltinDeps = Object.keys(deps).filter(dep => deps[dep] === "*");
+        const currentGhDeps = Object.keys(deps)
+            .filter(dep => deps[dep].startsWith("github:"))
+            .map(dep => /^github:([^#]+)/.exec(deps[dep])?.[1]?.toLowerCase());
 
-    const input = await vscode.window.showInputBox({
-        prompt: vscode.l10n.t("Enter the GitHub repo of the extension to add")
+        const targetConfig = await getTargetConfigAsync(workspace);
+        const approvedRepoLib = targetConfig?.packages?.approvedRepoLib ?? {};
+        const builtInRepo = targetConfig?.packages?.builtinExtensionsLib ?? {};
+        const preferredExts = Object.keys(builtInRepo)
+            .filter(builtin => builtInRepo[builtin]?.preferred && currentBuiltinDeps.indexOf(builtin) === -1)
+            .concat(Object.keys(approvedRepoLib)
+                .filter(repo => approvedRepoLib[repo]?.preferred
+                    && currentGhDeps.indexOf(repo) === -1
+                )
+            );
+        defaultPreferredExtensions = preferredExts.map(ext => ({
+            id: ext,
+            label: ext
+        }));
+        const newQpItems = [
+            ...defaultPreferredExtensions
+        ];
+        if (!!qp.value) {
+            const userEnteredSuggestion = {
+                id: qp.value,
+                label: qp.value,
+            };
+            newQpItems.unshift(userEnteredSuggestion);
+        }
+        qp.items = newQpItems;
+        qp.busy = false;
+    }
+
+    // Kick this off, but don't wait;
+    // user could theoretically enter a repo and submit before this completes.
+    /** await **/ getExtensionInfoAsync();
+
+    qp.items = defaultPreferredExtensions;
+    qp.placeholder = vscode.l10n.t("Enter the GitHub repo or name of the extension to add");
+
+    const input = await new Promise<string>((resolve, reject) => {
+        qp.onDidChangeValue(() => {
+            if (!qp.items.find(item => item.label === qp.value)) {
+                // inject to allow custom values to be entered
+                const userEnteredSuggestion = {
+                    id: qp.value,
+                    label: qp.value,
+                };
+                qp.items = [
+                    userEnteredSuggestion,
+                    ...defaultPreferredExtensions
+                ];
+            }
+        });
+        qp.onDidAccept(() => {
+            const selected = qp.selectedItems[0] || qp.value;
+            qp.dispose();
+            resolve(selected?.id);
+        });
+        qp.show();
     });
 
     if (!input) {
@@ -454,21 +523,34 @@ async function addDependencyCommandAsync() {
     });
 }
 
+async function getPxtJson(workspace: vscode.WorkspaceFolder) {
+    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
+
+    const config = await readTextFileAsync(configPath);
+    const parsed = JSON.parse(config) as pxt.PackageConfig;
+    return parsed;
+}
+
+async function setPxtJson(workspace: vscode.WorkspaceFolder, pxtJson: pxt.PackageConfig) {
+    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
+    await writeTextFileAsync(
+        configPath,
+        JSON.stringify(pxtJson, null, 4)
+    );
+}
+
 async function removeDependencyCommandAsync() {
     const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
         return;
     }
 
-    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
+    const pxtJson = await getPxtJson(workspace);
 
-    const config = await readTextFileAsync(configPath);
-    const parsed = JSON.parse(config) as pxt.PackageConfig;
-
-    const extensions: vscode.QuickPickItem[] = Object.keys(parsed.dependencies).map(depName => {
+    const extensions: vscode.QuickPickItem[] = Object.keys(pxtJson.dependencies).map(depName => {
         return {
             label: depName,
-            description: parsed.dependencies[depName]
+            description: pxtJson.dependencies[depName]
         }
     });
 
@@ -480,7 +562,7 @@ async function removeDependencyCommandAsync() {
     if (!toRemove?.length) return;
 
     for (const ext of toRemove) {
-        delete parsed.dependencies[ext.label];
+        delete pxtJson.dependencies[ext.label];
     }
 
     vscode.window.withProgress({
@@ -488,7 +570,7 @@ async function removeDependencyCommandAsync() {
         title: vscode.l10n.t("Removing Extensions..."),
         cancellable: false
     }, async () => {
-        await writeTextFileAsync(configPath, JSON.stringify(parsed, null, 4));
+        await setPxtJson(workspace, pxtJson);
 
         try {
             vscode.workspace.fs.delete(vscode.Uri.joinPath(workspace.uri, "pxt_modules"), {
