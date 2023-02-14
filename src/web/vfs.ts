@@ -96,7 +96,7 @@ export class VFS implements vscode.FileSystemProvider {
                     await this.initializePromises[parts[0]];
                 }
             }
-            else if (/^(?:S?\d{4}[\d\-]+|_[a-zA-Z0-9]{10,}\.code-workspace)$/.test(parts[0])) {
+            else if (/^(?:(?:S?\d{4}[\d\-]+|_[a-zA-Z0-9]{10,})\.code-workspace)$/.test(parts[0])) {
                 if (!this.initializedDirs[parts[0]]) {
                     if (!this.initializePromises[parts[0]]) {
                         this.initializePromises[parts[0]] = this.initializeWorkspace(parts[0])

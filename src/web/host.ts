@@ -1,6 +1,7 @@
 import { Host, HttpRequestOptions, HttpResponse } from "makecode-core/built/host";
 import { BrowserLanguageService } from "makecode-browser/built/languageService";
 import * as vscode from "vscode";
+import * as path from "path-browserify"
 
 let _activeWorkspace: vscode.WorkspaceFolder;
 
@@ -79,16 +80,15 @@ async function cwdAsync() {
 }
 
 async function listFilesAsync(directory: string, filename: string) {
-    if (activeWorkspace().uri.scheme === "mkcdfs") {
-        if (await existsAsync("pxt.json")) {
-            return ["pxt.json"];
+    const root = vscode.Uri.joinPath(activeWorkspace().uri, directory);
+    const files = await findFilesAsync(filename, root, true);
+
+    return files.map(uri => {
+        if (uri.fsPath.startsWith(root.fsPath)) {
+            return uri.fsPath.replace(root.fsPath, "").replace(/\\/g, "/")
         }
-        return [];
-    }
-
-    const files = await vscode.workspace.findFiles(directory + "/**/" + filename);
-
-    return files.map(uri => uri.fsPath);
+        return uri.fsPath;
+    });
 }
 
 export function httpRequestCoreAsync(options: HttpRequestOptions) {
@@ -191,4 +191,44 @@ export function activeWorkspace() {
         _activeWorkspace = vscode.workspace.workspaceFolders![0];
     }
     return _activeWorkspace;
+}
+
+export async function findFilesAsync(extension: string, root: vscode.Uri, matchWholeName: boolean, maxDepth = 5) {
+    // For some reason, vscode.workspace.findFiles doesn't work on virtual filesystems. If we aren't on a
+    // virtual file system, we can still use it.
+    if (root.scheme === "file") {
+        return await vscode.workspace.findFiles("**/" + (matchWholeName ? extension : `*.${extension}`))
+    }
+
+    if (maxDepth === 0) return [];
+
+    const files = await vscode.workspace.fs.readDirectory(root);
+    const result: vscode.Uri[] = [];
+    const recursivePromises: Promise<vscode.Uri[]>[] = [];
+    for (const file of files) {
+        const [fileName, type] = file;
+
+        const uri = vscode.Uri.joinPath(root, fileName);
+
+        if (type === vscode.FileType.Directory) {
+            recursivePromises.push(findFilesAsync(extension, uri, matchWholeName, maxDepth - 1))
+        }
+        else if (type === vscode.FileType.File) {
+            if (matchWholeName) {
+                if (fileName === extension) {
+                    result.push(uri);
+                }
+            }
+            else if (fileName.endsWith("." + extension)) {
+                result.push(uri);
+            }
+        }
+    }
+
+    const subdirs = await Promise.all(recursivePromises);
+    for (const dir of subdirs) {
+        result.push(...dir);
+    }
+
+    return result;
 }
