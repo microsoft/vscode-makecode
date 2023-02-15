@@ -322,17 +322,33 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
     }
 
     if (!BuildWatcher.watcher.isEnabled()) {
-        const runSimulator = async () => {
+        let runSimulator: () => Promise<void>;
+        let handleError: () => Promise<void>;
+        const clearListeners = () => {
+            BuildWatcher.watcher.stop();
+            BuildWatcher.watcher.removeEventListener("build-completed", runSimulator);
+            BuildWatcher.watcher.removeEventListener("error", handleError);
+        }
+        runSimulator = async () => {
             if (!Simulator.currentSimulator) {
-                BuildWatcher.watcher.stop();
-                BuildWatcher.watcher.removeEventListener("build-completed", runSimulator);
+                clearListeners();
                 return;
             }
 
             Simulator.createOrShow(context);
+            Simulator.currentSimulator.setPanelTitle(vscode.l10n.t("Arcade Simulator"));
             Simulator.currentSimulator.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
         };
+        handleError = async () => {
+            if (!Simulator.currentSimulator) {
+                clearListeners();
+                return;
+            }
+            Simulator.currentSimulator?.setPanelTitle(vscode.l10n.t("{0} Arcade Simulator", "⚠️"));
+            Simulator.currentSimulator?.stopSimulator();
+        }
         BuildWatcher.watcher.addEventListener("build-completed", runSimulator);
+        BuildWatcher.watcher.addEventListener("error", handleError);
         BuildWatcher.watcher.startWatching(workspace);
     }
     else {
