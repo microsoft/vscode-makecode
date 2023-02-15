@@ -27,7 +27,6 @@ export class BuildWatcher {
     private constructor(protected context: vscode.ExtensionContext) {
         this.buildOpts = {
             javaScript: true,
-            update: true,
             watch: true
         };
     }
