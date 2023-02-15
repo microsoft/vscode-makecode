@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { readFileAsync, writeFileAsync } from "./host";
+import { activeWorkspace, findFilesAsync, readFileAsync, writeFileAsync } from "./host";
 import { syncJResAsync } from "./jres";
 import { readTextFileAsync } from "./util";
 
@@ -225,7 +225,7 @@ async function getAssetEditorHtmlAsync(webview: vscode.Webview) {
 }
 
 async function readProjectJResAsync() {
-    const files = await vscode.workspace.findFiles("**/*.jres");
+    const files = await findFilesAsync("jres", activeWorkspace().uri, false);
     const fileSystem: {[index: string]: string} = {};
 
     for (const file of files) {
