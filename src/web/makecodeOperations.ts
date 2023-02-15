@@ -33,6 +33,7 @@ export function createEmptyProjectAsync(folder: vscode.WorkspaceFolder, projectK
         () => cmd.initCommand(projectKind, [], {
             vscodeProject: true,
             gitIgnore: true,
+            update: true,
         }),
         cancellationToken
     );
@@ -45,6 +46,7 @@ export function downloadSharedProjectAsync(folder: vscode.WorkspaceFolder, url: 
             vscodeProject: true,
             gitIgnore: true,
             importUrl: url,
+            update: true,
         }),
         cancellationToken
     );
