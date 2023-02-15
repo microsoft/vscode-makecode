@@ -5,6 +5,11 @@ import { readTextFileAsync } from "./util";
 
 const apiRoot = "https://pxt.azureedge.net";
 
+const disallowedHardwareVariants = [
+    "Arcade table",
+    "Cardboard Panel"
+]
+
 export interface HardwareVariant {
     id: string;
     label: string;
@@ -21,7 +26,12 @@ export async function getHardwareVariantsAsync(workspace: vscode.WorkspaceFolder
     const res: HardwareVariant[] = [];
 
     for (const card of info) {
-        if (!variants.some(v => v.name === card.variant) || !card.name || !card.description) continue;
+        if (
+            !variants.some(v => v.name === card.variant) ||
+            !card.name ||
+            !card.description ||
+            disallowedHardwareVariants.indexOf(card.name) !== -1
+        ) continue;
 
         res.push({
             label: card.name,
@@ -48,9 +58,9 @@ async function fetchHardwareInfoAsync(workspace: vscode.WorkspaceFolder) {
     const parsed = JSON.parse(config) as pxt.PackageConfig;
     const res: pxt.CodeCard[] = [];
 
-    if (!parsed.supportedTargets) return res;
+    const supportedTargets = parsed.supportedTargets || ["arcade"];
 
-    for (const target of parsed.supportedTargets) {
+    for (const target of supportedTargets) {
         const md = await fetchHardwareMarkdownAsync(target);
         if (!md) continue;
 
