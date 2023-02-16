@@ -2,7 +2,7 @@
   "name": "pxt-vscode-web",
   "publisher": "ms-edu",
   "displayName": "Microsoft MakeCode Arcade",
-  "description": "Learn code and make games. Create retro arcade style video games, art, and music inside VS Code.",
+  "description": "Make games and learn code. Create retro arcade style video games, art, and music inside VS Code.",
   "version": "0.0.7",
   "engines": {
     "vscode": "^1.74.0"
