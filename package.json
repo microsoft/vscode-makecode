@@ -279,6 +279,16 @@
           "when": "false"
         }
       ]
+    },
+    "configuration": {
+      "title": "MakeCode Arcade",
+      "properties": {
+        "makecode.showCompileNotification": {
+          "type": "boolean",
+          "default": true,
+          "description": "%makecode.configuration.showCompileDescription%"
+        }
+      }
     }
   },
   "scripts": {
@@ -315,7 +325,7 @@
     "@types/path-browserify": "^1.0.0",
     "@vscode/extension-telemetry": "0.6.2",
     "makecode-browser": "^1.1.0",
-    "makecode-core": "^1.3.0",
+    "makecode-core": "^1.4.0",
     "path-browserify": "^1.0.1"
   }
 }

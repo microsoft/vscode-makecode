@@ -24,5 +24,6 @@
   "makecode.animationExplorer.title": "Animations",
   "makecode.tileExplorer.title": "Tiles",
   "makecode.tilemapExplorer.title": "Tilemaps",
-  "makecode.songExplorer.title": "Songs"
+  "makecode.songExplorer.title": "Songs",
+  "makecode.configuration.showCompileDescription": "Show a notification after compiling a MakeCode project"
 }

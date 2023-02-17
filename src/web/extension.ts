@@ -191,6 +191,25 @@ async function buildCommand() {
         }
 
         await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
+
+        if (!result.binaryPath) return;
+
+        const showNotifcationConfig = vscode.workspace.getConfiguration().get("makecode.showCompileNotification")
+        if (!showNotifcationConfig) return;
+
+        setTimeout(async () => {
+            const dontShowAgain = vscode.l10n.t("Don't show this again");
+            const selection = await vscode.window.showInformationMessage(
+                vscode.l10n.t("Compiled file written to {0}", result.binaryPath),
+                vscode.l10n.t("Done"),
+                dontShowAgain
+            );
+
+            if (selection === dontShowAgain) {
+                await vscode.workspace.getConfiguration().update("makecode.showCompileNotification", false, vscode.ConfigurationTarget.Global)
+            }
+        }, 0)
+
     });
 }
 
