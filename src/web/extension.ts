@@ -24,7 +24,7 @@ let applicationInsights: TelemetryReporter;
 
 export function activate(context: vscode.ExtensionContext) {
     setHost(createVsCodeHost());
-    console.log("Congratulations, your extension 'pxt-vscode-web' is now active in the web extension host!");
+    console.log("Congratulations, your extension 'vscode-makecode' is now active in the web extension host!");
 
     const addCmd = (id: string, fn: () => Promise<void>) => {
         const cmd = vscode.commands.registerCommand(id, () => {
@@ -99,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // This key is not sensitive, and is publicly available in client side apps logging to AI
     const appInsightsKey = "9801ed01-c40f-46ec-aa40-2a1742a9e71c";
-    applicationInsights = new TelemetryReporter("ms-edu.pxt-vscode-web", "v0.0.4", appInsightsKey);
+    applicationInsights = new TelemetryReporter("ms-edu.vscode-makecode", "v0.0.4", appInsightsKey);
     context.subscriptions.push(applicationInsights);
 
     BuildWatcher.watcher.addEventListener("error", showError);

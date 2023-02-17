@@ -85,7 +85,7 @@ For example, to add the [character-animations](https://github.com/microsoft/arca
 
 After you save `pxt.json`, run the "MakeCode: Install project dependencies" command to update your project's pxt_modules
 
-## Local development of pxt-vscode-web
+## Local development of vscode-makecode
 
 Prerequisites:
 1. Install node

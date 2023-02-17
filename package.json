@@ -1,5 +1,5 @@
 {
-  "name": "pxt-vscode-web",
+  "name": "vscode-makecode",
   "publisher": "ms-edu",
   "displayName": "Microsoft MakeCode Arcade",
   "description": "Make games and learn code. Create retro arcade style video games, art, and music inside VS Code.",
@@ -21,7 +21,7 @@
   "preview": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/pxt-vscode-web"
+    "url": "https://github.com/microsoft/vscode-makecode"
   },
   "activationEvents": [
     "onCommand:makecode.create",
