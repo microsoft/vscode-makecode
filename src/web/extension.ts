@@ -200,7 +200,7 @@ async function buildCommand() {
         setTimeout(async () => {
             const dontShowAgain = vscode.l10n.t("Don't show this again");
             const selection = await vscode.window.showInformationMessage(
-                vscode.l10n.t("Compiled file written to {0}", result.binaryPath),
+                vscode.l10n.t("Compiled file written to {0}", result.binaryPath!),
                 vscode.l10n.t("Done"),
                 dontShowAgain
             );
