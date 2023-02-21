@@ -1,5 +1,5 @@
 {
-  "name": "vscode-makecode",
+  "name": "pxt-vscode-web",
   "publisher": "ms-edu",
   "displayName": "Microsoft MakeCode Arcade",
   "description": "Make games and learn code. Create retro arcade style video games, art, and music inside VS Code.",
