@@ -21,7 +21,7 @@
   "preview": true,
   "repository": {
     "type": "git",
-    "url": "https://github.com/microsoft/pxt-vscode-web"
+    "url": "https://github.com/microsoft/vscode-makecode"
   },
   "activationEvents": [
     "onCommand:makecode.create",

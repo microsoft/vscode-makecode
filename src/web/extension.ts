@@ -24,7 +24,7 @@ let applicationInsights: TelemetryReporter;
 
 export function activate(context: vscode.ExtensionContext) {
     setHost(createVsCodeHost());
-    console.log("Congratulations, your extension 'pxt-vscode-web' is now active in the web extension host!");
+    console.log("Congratulations, your extension 'vscode-makecode' is now active in the web extension host!");
 
     const addCmd = (id: string, fn: () => Promise<void>) => {
         const cmd = vscode.commands.registerCommand(id, () => {
