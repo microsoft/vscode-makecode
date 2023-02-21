@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { activeWorkspace, findFilesAsync, readFileAsync, writeFileAsync } from "./host";
 import { syncJResAsync } from "./jres";
-import { readTextFileAsync } from "./util";
+import { readTextFileAsync, throttle } from "./util";
 
 let extensionContext: vscode.ExtensionContext;
 // const assetUrl = "http://localhost:3232/asseteditor.html";
@@ -30,6 +30,9 @@ export class AssetEditor {
     public static readonly viewType = "mkcdasset";
     public static currentSimulator: AssetEditor | undefined;
     public simStateTimer: any;
+    public throttledSave: (files: {
+        [index: string]: string;
+    }) => void = throttle(saveFilesAsync, 300);
 
     public static createOrShow() {
         let column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : vscode.ViewColumn.One;
@@ -145,7 +148,7 @@ export class AssetEditor {
                 const saved = await this.sendMessageAsync({
                     type: "save"
                 });
-                await saveFilesAsync(saved.files);
+                this.throttledSave(saved.files);
                 break;
         }
     }
