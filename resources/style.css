@@ -29,17 +29,3 @@ button {
     height: 100%;
     width: 100%;
 }
-
-.asset-editor-toast {
-    position: absolute;
-    background-color: #333333;
-    color: white;
-    bottom: 1rem;
-    left: 50%;
-    transform: translateX(-50%);
-    border-radius: 0.5rem;
-}
-
-.asset-editor-toast div {
-    padding: 1rem;
-}
