@@ -5,13 +5,15 @@ import * as vscode from "vscode";
 // function on the leading edge, instead of the trailing.
 export function throttle(func: (...args: any[]) => any, wait: number, immediate?: boolean): any {
     let timeout: any;
+    let lastArgs: IArguments | undefined;
     return function (this: any) {
         const context = this;
-        const args = arguments;
+        lastArgs = arguments;
         const later = () => {
             timeout = null;
             if (!immediate) {
-                func.apply(context, args as any);
+                func.apply(context, lastArgs as any);
+                lastArgs = undefined;
             }
         };
         const callNow = immediate && !timeout;
@@ -19,7 +21,8 @@ export function throttle(func: (...args: any[]) => any, wait: number, immediate?
             timeout = setTimeout(later, wait);
         }
         if (callNow) {
-            func.apply(context, args as any);
+            func.apply(context, lastArgs as any);
+            lastArgs = undefined;
         }
     };
 }
