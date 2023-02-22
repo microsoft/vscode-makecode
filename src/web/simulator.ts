@@ -141,6 +141,15 @@ export class SimulatorSerializer implements vscode.WebviewPanelSerializer {
     }
 }
 
+const vscodeExtensionExtraLoaderJs = `
+window.addEventListener("DOMContentLoaded", () => {
+    const fs = document.getElementById("fullscreen");
+    if (fs) {
+        fs.remove();
+    }
+});
+`;
+
 
 async function getSimHtmlAsync() {
     const index = simloaderFiles["index.html"];
@@ -161,6 +170,9 @@ async function getSimHtmlAsync() {
             return `
             <script type="text/javascript">
                 ${loaderJs}
+            </script>
+            <script type="text/javascript">
+                ${vscodeExtensionExtraLoaderJs}
             </script>
             `;
         }
