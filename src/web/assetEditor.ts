@@ -287,6 +287,10 @@ async function saveFilesAsync(files: {[index: string]: string}) {
 
     await writeFileAsync("./pxt.json", JSON.stringify(parsed, null, 4), "utf8");
     await syncJResAsync();
+
+    if (didChangeConfig) {
+        await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
+    }
 }
 
 /**

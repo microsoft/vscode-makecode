@@ -280,6 +280,21 @@
         }
       ]
     },
+    "languages": [
+      {
+        "id": "json",
+        "extensions": [
+          ".jres",
+          ".g.jres"
+        ]
+      },
+      {
+        "id": "html",
+        "extensions": [
+          ".blocks"
+        ]
+      }
+    ],
     "configuration": {
       "title": "MakeCode Arcade",
       "properties": {
