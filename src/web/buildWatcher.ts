@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 import { BuildOptions } from "makecode-core/built/commands";
-import { delay, throttle } from './util';
+import { delay, debounce } from './util';
 import { clearBuildErrors, reportBuildErrors } from './extension';
 import { buildProjectAsync } from './makecodeOperations';
 
@@ -38,24 +38,28 @@ export class BuildWatcher {
         this.folder = folder;
         this.running = true;
 
-        this.watcherDisposable = vscode.workspace.onDidSaveTextDocument(
-            throttle(
-                (doc: vscode.TextDocument) => {
-                    if (!this.running) {
-                        return;
-                    }
+        const debouncedBuild = debounce(
+            () => this.buildAsync(false),
+            1000
+        );
 
-                    // skip node_modules, pxt_modules, built, .git
-                    if (/\/?((node|pxt)_modules|built|\.git)/i.test(doc.fileName)) {
-                        return;
-                    }
-                    // only watch for source files
-                    if (!/\.(json|ts|asm|cpp|c|h|hpp)$/i.test(doc.fileName)) {
-                        return;
-                    }
-                    this.buildAsync(false);
-                },
-            500, true)
+        this.watcherDisposable = vscode.workspace.onDidSaveTextDocument(
+            (doc: vscode.TextDocument) => {
+                if (!this.running) {
+                    return;
+                }
+
+                // skip node_modules, pxt_modules, built, .git
+                if (/\/?((node|pxt)_modules|built|\.git)/i.test(doc.fileName)) {
+                    return;
+                }
+                // only watch for source files
+                if (!/\.(json|ts|asm|cpp|c|h|hpp)$/i.test(doc.fileName)) {
+                    return;
+                }
+
+                debouncedBuild();
+            }
         );
 
         this.context.subscriptions.push(this.watcherDisposable);
