@@ -98,8 +98,8 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     // This key is not sensitive, and is publicly available in client side apps logging to AI
-    const appInsightsKey = "9801ed01-c40f-46ec-aa40-2a1742a9e71c";
-    applicationInsights = new TelemetryReporter("ms-edu.pxt-vscode-web", "v0.0.4", appInsightsKey);
+    const appInsightsKey = "0c6ae279ed8443289764825290e4f9e2-1a736e7c-1324-4338-be46-fc2a58ae4d14-7255";
+    applicationInsights = new TelemetryReporter(appInsightsKey);
     context.subscriptions.push(applicationInsights);
 
     BuildWatcher.watcher.addEventListener("error", showError);
