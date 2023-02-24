@@ -1,89 +1,8 @@
-# Microsoft MakeCode extension for vscode.dev
+# Microsoft MakeCode extension for Visual Studio Code
 
-This repo contains a vscode web extension for creating and editing MakeCode Projects.
+This repo contains a VS Code web extension for creating and editing MakeCode Projects.
 
-## Using the extension
-
-### Create a new project
-
-1. Open an empty folder where you want your new project to live
-2. Run the "MakeCode: Create empty project" command from the command palette
-3. Select the desired MakeCode target from the list that appears
-
-### Import a share link
-
-1. Open an empty folder where you want your imported project to live
-2. Run the "MakeCode: Import project from URL" command
-3. Paste the share URL into the text input that appears and press enter
-
-### Run your project in the simulator
-
-To run your project in the simulator, run the "MakeCode: Start MakeCode simulator" command.
-This will also start a file watcher that will automatically reload the simulator whenever you change a file.
-To use your keyboard to control the simulator, make sure you have the simulator pane focused.
-
-#### Viewing the simulator console
-
-All serial messages and exceptions from the simulator are printed in vscode's output view pane.
-
-1. Open the "Output" view pane (View > Output in the top bar).
-2. In the top-right of the pane that appears, change the dropdown to "MakeCode".
-
-### Managing your project assets (images, tilemaps, animations, etc.)
-
-The asset explorer can be accessed by clicking the MakeCode logo located in vscode's "Action Bar".
-Inside the explorer, there are collapsible sections for each type of project asset.
-
-> Important: when editing an asset, be sure to press the "Done" button in the bottom right of the asset editor to save your work
-
-#### Creating an asset
-
-To create a new asset, hit the "Create File" icon next to the asset type in the asset explorer.
-
-#### Editing assets
-
-To edit an existing asset, click on its name in the asset explorer.
-
-To duplicate or delete the asset, click on the icons that appear next to its name when you hover over it.
-
-To rename the asset, change its name in the text input that appears in the bottom of the asset editor. If you don't see the text input, you may need to increase the width of the pane that the asset editor is in (this is a known bug).
-
-#### Referencing your assets inside your code
-
-To reference an asset you've created inside your code, use one of the tagged templates that MakeCode defines:
-
-```ts
-let myImage = assets.image`imageName`;
-let myAnimation = assets.animation`animName`;
-let myTile = assets.tile`tileName`;
-let myTilemap = assets.tilemap`tilemapName`;
-let mySong = assets.song`songName`;
-```
-
-### Adding a dependency to your project
-
-To add a MakeCode extension to your project, add an entry in the dependency map inside your project's `pxt.json`.
-
-For example, to add the [character-animations](https://github.com/microsoft/arcade-character-animations) extension the entry should look like this:
-
-```json
-{
-    "name": "Untitled",
-    "description": "",
-    "dependencies": {
-        "device": "*",
-        "arcade-character-animations": "github:microsoft/arcade-character-animations#v0.0.2"
-    },
-    "files": [
-        "main.blocks",
-        "main.ts",
-        "README.md",
-        "assets.json"
-    ]
-}
-```
-
-After you save `pxt.json`, run the "MakeCode: Install project dependencies" command to update your project's pxt_modules
+For information on using the extension, see [the getting started guide](./getting-started.md).
 
 ## Local development of vscode-makecode
 
@@ -125,6 +44,21 @@ Then use vsce to package the vsix
 ```
 vsce package
 ```
+
+### Linking pxt-mkc
+
+If you want to develop using your local clone of [pxt-mkc](https://github.com/microsoft/pxt-mkc), you need to link the `makecode-core` and `makecode-browser` packages.
+
+```
+cd pxt-mkc/packages/makecode-core
+yarn link
+cd ../makecode-browser
+yarn link
+cd ../../vscode-makecode
+yarn link makecode-core makecode-browser
+```
+
+Make sure you run `yarn compile` inside of `makecode-core` and `makecode-browser` to build the packages!
 
 ## Contributing
 
