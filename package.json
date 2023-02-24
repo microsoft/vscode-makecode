@@ -338,7 +338,7 @@
   },
   "dependencies": {
     "@types/path-browserify": "^1.0.0",
-    "@vscode/extension-telemetry": "0.6.2",
+    "@vscode/extension-telemetry": "^0.7.5",
     "makecode-browser": "^1.1.0",
     "makecode-core": "^1.4.0",
     "path-browserify": "^1.0.1"
