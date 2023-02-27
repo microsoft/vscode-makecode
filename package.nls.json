@@ -25,5 +25,6 @@
   "makecode.tileExplorer.title": "Tiles",
   "makecode.tilemapExplorer.title": "Tilemaps",
   "makecode.songExplorer.title": "Songs",
-  "makecode.configuration.showCompileDescription": "Show a notification after compiling a MakeCode project"
+  "makecode.configuration.showCompileDescription": "Show a notification after compiling a MakeCode project",
+  "makecode.viewsWelcome.welcomeMessage": "You need to open a folder to use the MakeCode Arcade extension!\n[Open Arcade Docs](https://github.com/microsoft/vscode-makecode#microsoft-makecode-extension-for-visual-studio-code)"
 }
