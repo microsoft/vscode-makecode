@@ -1,4 +1,6 @@
-# Microsoft MakeCode extension for Visual Studio Code
+# Microsoft MakeCode Arcade extension for Visual Studio Code
+
+A VS Code extension for making retro-style video games with [Microsoft MakeCode Arcade](https://arcade.makecode.com/). Code, create pixel art, and play your game in both native VS Code and [vscode.dev](https://insiders.vscode.dev/makecode)!
 
 ## Opening the MakeCode Asset Explorer
 
