@@ -304,7 +304,13 @@
           "description": "%makecode.configuration.showCompileDescription%"
         }
       }
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "workbench.explorer.emptyView",
+        "contents": "%makecode.viewsWelcome.welcomeMessage%"
+      }
+    ]
   },
   "scripts": {
     "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
