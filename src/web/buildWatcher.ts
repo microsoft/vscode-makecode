@@ -67,6 +67,10 @@ export class BuildWatcher {
     }
 
     stop() {
+        if (this.running) {
+            clearBuildErrors();
+        }
+
         this.running = false;
         if (this.watcherDisposable) {
             this.watcherDisposable.dispose();

@@ -339,18 +339,18 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
     else {
         return;
     }
-
+    let clearBuildListener: (() => void) | undefined;
     if (!BuildWatcher.watcher.isEnabled()) {
         let runSimulator: () => Promise<void>;
         let handleError: () => Promise<void>;
-        const clearListeners = () => {
+        clearBuildListener = () => {
             BuildWatcher.watcher.stop();
             BuildWatcher.watcher.removeEventListener("build-completed", runSimulator);
             BuildWatcher.watcher.removeEventListener("error", handleError);
         }
         runSimulator = async () => {
             if (!Simulator.currentSimulator) {
-                clearListeners();
+                clearBuildListener?.();
                 return;
             }
 
@@ -360,7 +360,7 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
         };
         handleError = async () => {
             if (!Simulator.currentSimulator) {
-                clearListeners();
+                clearBuildListener?.();
                 return;
             }
             Simulator.currentSimulator?.setPanelTitle(vscode.l10n.t("{0} Arcade Simulator", "⚠️"));
@@ -375,6 +375,9 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
     }
 
     Simulator.createOrShow(context);
+    if (clearBuildListener) {
+        Simulator.currentSimulator!.addDisposable(new vscode.Disposable(clearBuildListener));
+    }
 }
 
 async function createAssetCommand(type: string) {
