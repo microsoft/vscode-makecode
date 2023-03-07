@@ -38,9 +38,14 @@ export class BuildWatcher {
         this.folder = folder;
         this.running = true;
 
+        const debounceTimer = vscode.workspace.getConfiguration().get(
+            "makecode.simulatorBuildWatcherDebounce",
+            1500
+        );
+
         const debouncedBuild = debounce(
             () => this.buildAsync(false),
-            1000
+            debounceTimer
         );
 
         this.watcherDisposable = vscode.workspace.onDidSaveTextDocument(
