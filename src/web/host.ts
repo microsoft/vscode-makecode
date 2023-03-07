@@ -7,15 +7,15 @@ let _activeWorkspace: vscode.WorkspaceFolder;
 
 export function createVsCodeHost(): Host {
     return {
-        readFileAsync,
-        writeFileAsync,
-        mkdirAsync,
-        rmdirAsync,
-        existsAsync,
-        unlinkAsync,
-        cwdAsync,
+        readFileAsync: async (p, e) => readFileAsync(rmFolderPrefix(p), e as any),
+        writeFileAsync: async (p, c, e) => writeFileAsync(rmFolderPrefix(p), c, e),
+        mkdirAsync: async (p) => mkdirAsync(rmFolderPrefix(p)),
+        rmdirAsync: async (p, o) => rmdirAsync(rmFolderPrefix(p), o),
+        existsAsync: async (p) => existsAsync(rmFolderPrefix(p)),
+        unlinkAsync: async (p) => unlinkAsync(rmFolderPrefix(p)),
+        cwdAsync: async () => getFolderName(),
         symlinkAsync: async () => {},
-        listFilesAsync: listFilesAsync,
+        listFilesAsync: async (d, f) => listFilesAsync(rmFolderPrefix(d), f),
         requestAsync: httpRequestCoreAsync,
         createLanguageServiceAsync: async (editor) => new BrowserLanguageService(editor),
         getDeployDrivesAsync: async () => [],
@@ -63,7 +63,8 @@ async function rmdirAsync(path: string, options: any): Promise<void> {
 
 export async function existsAsync(path: string): Promise<boolean> {
     try {
-        const stat = await vscode.workspace.fs.stat(resolvePath(path));
+        const resolvedPath = resolvePath(path);
+        const stat = await vscode.workspace.fs.stat(resolvedPath);
         return true;
     }
     catch (e) {
@@ -75,8 +76,16 @@ async function unlinkAsync(path: string): Promise<void> {
     await vscode.workspace.fs.delete(resolvePath(path));
 }
 
-async function cwdAsync() {
-    return activeWorkspace().uri.fsPath;
+function getFolderName() {
+    return path.basename(activeWorkspace().uri.path);
+}
+
+function rmFolderPrefix(p: string) {
+    const cwd = getFolderName();
+    p = p.replace(/^[\/]+/, "")
+    if (p.startsWith(cwd))
+        return p.slice(cwd.length);
+    return p;
 }
 
 async function listFilesAsync(directory: string, filename: string) {
@@ -159,7 +168,6 @@ export function httpRequestCoreAsync(options: HttpRequestOptions) {
 }
 
 function resolvePath(path: string) {
-    path = path.replace("\\/", "");
     return vscode.Uri.joinPath(activeWorkspace().uri, path);
 }
 
