@@ -2,18 +2,6 @@
 
 A VS Code extension for making retro-style video games with [Microsoft MakeCode Arcade](https://arcade.makecode.com/). Code, create pixel art, and play your game in both native VS Code and [vscode.dev](https://insiders.vscode.dev/makecode)!
 
-## Opening the MakeCode Asset Explorer
-
-You can access the MakeCode Asset Explorer by clicking on the MakeCode icon in the Visual Studio Code action bar.
-
-![Screenshot of the VS code action bar with an arrow pointing to the MakeCode Arcade Asset Explorer](./images/action-bar.png)
-
-## Running actions in the MakeCode Asset Explorer
-
-At the top of the asset explorer you'll find a list of commands for managing MakeCode Arcade projects. Click on a command to run it!
-
-![Screenshot of the MakeCode Asset Explorer with a red box around the command list](./images/command-list.png)
-
 ## Starting a new project
 
 To start a new MakeCode project in VS Code, you first need to open an empty folder (File > Open Folder).
@@ -31,6 +19,18 @@ If you have a share link for a MakeCode Arcade project, you can also import it b
 If you have opened a GitHub repository that contains a MakeCode Arcade project, you'll need to install your project's dependencies for features like intellisense to work. Click the "Install project dependencies" command in the actions section of the MakeCode Asset Explorer to download and install them.
 
 > Note: You must be connected to the internet in order to download and install extensions
+
+## Opening the MakeCode Asset Explorer
+
+You can access the MakeCode Asset Explorer by clicking on the MakeCode icon in the Visual Studio Code action bar.
+
+![Screenshot of the VS code action bar with an arrow pointing to the MakeCode Arcade Asset Explorer](./images/action-bar.png)
+
+## Running actions in the MakeCode Asset Explorer
+
+At the top of the asset explorer you'll find a list of commands for managing MakeCode Arcade projects. Click on a command to run it!
+
+![Screenshot of the MakeCode Asset Explorer with a red box around the command list](./images/command-list.png)
 
 ## Anatomy of a MakeCode project
 
