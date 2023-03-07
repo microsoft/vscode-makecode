@@ -379,13 +379,13 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
 
 async function createAssetCommand(type: string) {
     AssetEditor.createOrShow();
-    AssetEditor.currentSimulator?.createAssetAsync(type);
+    AssetEditor.currentEditor?.createAssetAsync(type);
 }
 
 async function duplicateAssetCommand(node: JResTreeNode) {
     tickEvent("duplicateAsset");
     AssetEditor.createOrShow();
-    AssetEditor.currentSimulator?.duplicateAssetAsync(node.kind, node.id!);
+    AssetEditor.currentEditor?.duplicateAssetAsync(node.kind, node.id!);
 }
 
 async function deleteAssetCommand(node: JResTreeNode) {
@@ -447,7 +447,7 @@ async function createCommand()  {
 async function openAssetEditor(context: vscode.ExtensionContext, uri: vscode.Uri) {
     tickEvent("openAsset");
     AssetEditor.createOrShow();
-    AssetEditor.currentSimulator?.openURIAsync(uri);
+    AssetEditor.currentEditor?.openURIAsync(uri);
 }
 
 async function shareCommandAsync() {
