@@ -32,7 +32,10 @@ export class Simulator {
 
         if (Simulator.currentSimulator) {
             Simulator.currentSimulator.simState = null;
-            Simulator.currentSimulator.panel.reveal(vscode.ViewColumn.Beside, true);
+            Simulator.currentSimulator.panel.reveal(
+                undefined /** keep current column **/,
+                true
+            );
             return;
         }
 
