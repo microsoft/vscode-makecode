@@ -5,7 +5,7 @@ import { readTextFileAsync, throttle } from "./util";
 
 let extensionContext: vscode.ExtensionContext;
 // const assetUrl = "http://localhost:3232/asseteditor.html";
-const assetUrl = "https://arcade.makecode.com/--asseteditor";
+const assetUrl = "https://arcade.makecode.com/beta--asseteditor";
 
 interface EditingState {
     type: "edit";
