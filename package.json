@@ -302,6 +302,11 @@
           "type": "boolean",
           "default": true,
           "description": "%makecode.configuration.showCompileDescription%"
+        },
+        "makecode.simulatorBuildWatcherDebounce": {
+          "type": "number",
+          "default": 1500,
+          "description": "%makecode.configuration.simWatcherDebounceDescription%"
         }
       }
     },
