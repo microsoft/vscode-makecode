@@ -21,8 +21,10 @@ import TelemetryReporter from "@vscode/extension-telemetry";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
 let applicationInsights: TelemetryReporter;
+let extensionContext: vscode.ExtensionContext;
 
 export function activate(context: vscode.ExtensionContext) {
+    extensionContext = context;
     setHost(createVsCodeHost());
     console.log("Congratulations, your extension 'vscode-makecode' is now active in the web extension host!");
 
@@ -419,6 +421,19 @@ async function createCommand()  {
             showError(vscode.l10n.t("Unable to create project"));
             return;
         }
+
+        const mainTs = await vscode.workspace.fs.readFile(
+            vscode.Uri.joinPath(
+                extensionContext.extensionUri,
+                "resources",
+                "template-main.ts"
+            )
+        );
+
+        vscode.workspace.fs.writeFile(
+            vscode.Uri.joinPath(workspace.uri, "main.ts"),
+            mainTs
+        );
 
         await vscode.commands.executeCommand("makecode.refreshAssets");
         await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
