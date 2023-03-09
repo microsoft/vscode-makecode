@@ -194,12 +194,6 @@ export function activeWorkspace() {
 }
 
 export async function findFilesAsync(extension: string, root: vscode.Uri, matchWholeName: boolean, maxDepth = 5) {
-    // For some reason, vscode.workspace.findFiles doesn't work on virtual filesystems. If we aren't on a
-    // virtual file system, we can still use it.
-    if (root.scheme === "file") {
-        return await vscode.workspace.findFiles("**/" + (matchWholeName ? extension : `*.${extension}`))
-    }
-
     if (maxDepth === 0) return [];
 
     const files = await vscode.workspace.fs.readDirectory(root);
