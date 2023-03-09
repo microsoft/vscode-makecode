@@ -296,17 +296,6 @@ export async function importUrlCommand(url?: string, useWorkspace?: vscode.Works
             return;
         }
 
-        progress.report({
-            message: vscode.l10n.t("Installing dependencies...")
-        });
-
-        try {
-            await installDependenciesAsync(workspace!);
-        }
-        catch (e) {
-            showError(vscode.l10n.t("Unable to install project dependencies"));
-        }
-
         await vscode.commands.executeCommand("makecode.refreshAssets");
         await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
     });
@@ -429,17 +418,6 @@ async function createCommand()  {
         catch (e) {
             showError(vscode.l10n.t("Unable to create project"));
             return;
-        }
-
-        progress.report({
-            message: vscode.l10n.t("Installing dependencies...")
-        });
-
-        try {
-            await installDependenciesAsync(workspace);
-        }
-        catch (e) {
-            showError(vscode.l10n.t("Unable to install project dependencies"));
         }
 
         await vscode.commands.executeCommand("makecode.refreshAssets");
