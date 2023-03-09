@@ -28,7 +28,7 @@ type AssetEditorState = EditingState | DuplicatingState | CreatingState;
 
 export class AssetEditor {
     public static readonly viewType = "mkcdasset";
-    public static currentSimulator: AssetEditor | undefined;
+    public static currentEditor: AssetEditor | undefined;
     public simStateTimer: any;
     public throttledSave: (files: {
         [index: string]: string;
@@ -38,8 +38,11 @@ export class AssetEditor {
         let column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : vscode.ViewColumn.One;
         column = column! < 9 ? column! + 1 : column;
 
-        if (AssetEditor.currentSimulator) {
-            AssetEditor.currentSimulator.panel.reveal(vscode.ViewColumn.Beside, true);
+        if (AssetEditor.currentEditor) {
+            AssetEditor.currentEditor.panel.reveal(
+                undefined /** keep current column **/,
+                true
+            );
             return;
         }
 
@@ -52,7 +55,7 @@ export class AssetEditor {
             retainContextWhenHidden: true
         });
 
-        AssetEditor.currentSimulator = new AssetEditor(panel);
+        AssetEditor.currentEditor = new AssetEditor(panel);
     }
 
     public static register(context: vscode.ExtensionContext) {
@@ -61,7 +64,7 @@ export class AssetEditor {
     }
 
     public static revive(panel: vscode.WebviewPanel) {
-        AssetEditor.currentSimulator = new AssetEditor(panel);
+        AssetEditor.currentEditor = new AssetEditor(panel);
     }
 
     protected panel: vscode.WebviewPanel;
@@ -78,8 +81,8 @@ export class AssetEditor {
         });
 
         this.panel.onDidDispose(() => {
-            if (AssetEditor.currentSimulator === this) {
-                AssetEditor.currentSimulator = undefined;
+            if (AssetEditor.currentEditor === this) {
+                AssetEditor.currentEditor = undefined;
             }
 
             this.disposables.forEach(d => d.dispose());
@@ -210,7 +213,7 @@ export class AssetEditor {
 export class AssetEditorSerializer implements vscode.WebviewPanelSerializer {
     async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: any) {
         AssetEditor.revive(webviewPanel);
-        await AssetEditor.currentSimulator?.openAssetAsync(state.editing!.assetType, state.editing!.assetId);
+        await AssetEditor.currentEditor?.openAssetAsync(state.editing!.assetType, state.editing!.assetId);
     }
 }
 
