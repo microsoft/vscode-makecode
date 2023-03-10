@@ -428,7 +428,7 @@
     "@typescript-eslint/types" "5.53.0"
     eslint-visitor-keys "^3.3.0"
 
-"@vscode/extension-telemetry@0.7.5":
+"@vscode/extension-telemetry@^0.7.5":
   version "0.7.5"
   resolved "https://registry.yarnpkg.com/@vscode/extension-telemetry/-/extension-telemetry-0.7.5.tgz#bf965731816e08c3f146f96d901ec67954fc913b"
   integrity sha512-fJ5y3TcpqqkFYHneabYaoB4XAhDdVflVm+TDKshw9VOs77jkgNS4UA7LNXrWeO0eDne3Sh3JgURf+xzc1rk69w==
@@ -2090,17 +2090,24 @@ make-dir@^1.0.0:
   dependencies:
     pify "^3.0.0"
 
-makecode-browser@^1.1.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/makecode-browser/-/makecode-browser-1.2.0.tgz#c3c03ff1bdb38eff7c9d7919e73dc88bc5d817cc"
-  integrity sha512-PLo/MxzM2ykm5yZtH3+IaP3/2T3U2BIRct6vl9u31bS0jJ3YXLDMhsRI1vq9TBCfMXGqnSuVNCGIrVXLUf/kYg==
+makecode-browser@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/makecode-browser/-/makecode-browser-1.2.1.tgz#bba3a0cfc8dd944fc55ca402ae752697a9843577"
+  integrity sha512-JJ23PCBBiCEjlsHV03pZtnPZwzFhcdrVkz4bQhv8rfaQiStxC25lljA6Av6O46Cwa7UJ7ssZL82GpUo1DttL3A==
   dependencies:
     makecode-core "^1.3.0"
 
-makecode-core@^1.3.0, makecode-core@^1.4.0:
+makecode-core@^1.3.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.4.0.tgz#133da43da1cbb75e77be9deb3530ea338ff6f8ef"
   integrity sha512-Y18RuiPp8kX1obzpt3vbSQX1dGtJ7Xti9FDgpD/4z/lcHP38aS8KM+Se1iAgl8Ui0YFL8xBeFc6RA8sUCdqykQ==
+  dependencies:
+    chalk "^4.1.2"
+
+makecode-core@^1.4.2:
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.4.2.tgz#81784010939520f5f465c7f50533edb5b22d57c5"
+  integrity sha512-QiZwSDK5GuyY+mt9pR64q1XeDFQNXjaN92r9DFbweTZohSPV3CyukM9W1tHmpg026ms/iG+f3Wu2s1M5RPy6jQ==
   dependencies:
     chalk "^4.1.2"
 
