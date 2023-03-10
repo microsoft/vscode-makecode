@@ -95,7 +95,6 @@ export class AssetEditor {
         const parts = uri.path.split(".");
         const assetType = parts[1];
         const assetId = parts.slice(2).join(".");
-
         await this.openAssetAsync(assetType, assetId);
     }
 
