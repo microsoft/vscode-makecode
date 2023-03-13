@@ -476,7 +476,7 @@ async function createCommand()  {
             vscode.Uri.joinPath(
                 extensionContext.extensionUri,
                 "resources",
-                "template-main.ts"
+                "template-main.txt"
             )
         );
 
