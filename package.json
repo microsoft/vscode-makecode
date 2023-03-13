@@ -5,7 +5,7 @@
   "description": "Make games and learn code. Create retro arcade style video games, art, and music inside VS Code.",
   "version": "0.0.12",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.75.0"
   },
   "categories": [
     "Education"
