@@ -15,7 +15,7 @@ import { ActionsTreeViewProvider } from "./actionsTreeView";
 import { BuildOptions } from "makecode-core/built/commands";
 import { getHardwareVariantsAsync, getProjectTemplatesAsync } from "./makecodeGallery";
 import { shareProjectAsync } from "./shareLink";
-import { readTextFileAsync, writeTextFileAsync } from "./util";
+import { readTextFileAsync, showQuickPickAsync, writeTextFileAsync } from "./util";
 import { VFS } from "./vfs";
 import TelemetryReporter from "@vscode/extension-telemetry";
 
@@ -285,7 +285,7 @@ export async function importUrlCommand(url?: string, useWorkspace?: vscode.Works
     }
 
 
-    vscode.window.withProgress({
+    await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: isTemplate ? vscode.l10n.t("Downloading template...") : vscode.l10n.t("Downloading URL..."),
         cancellable: false
@@ -443,51 +443,59 @@ async function createCommand()  {
 
     getTemplateOptionsAsync();
 
-    const input = await new Promise<TemplateQuickpick>((resolve, reject) => {
-        qp.onDidAccept(() => {
-            const selected = qp.selectedItems[0];
-            qp.dispose();
-            resolve(selected);
-        });
-        qp.show();
-    });
+    const input = await showQuickPickAsync(qp);
 
     if (!input) return;
 
+    let projectName = await vscode.window.showInputBox({
+        prompt: vscode.l10n.t("Enter a name for this project"),
+        placeHolder: vscode.l10n.t("Untitled")
+    });
+
+    projectName = projectName || vscode.l10n.t("Untitled");
+
     if (input.shareId) {
         await importUrlCommand(input.shareId, workspace, true);
-        return;
+    }
+    else {
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: vscode.l10n.t("Creating empty project..."),
+            cancellable: false
+        }, async progress => {
+            try {
+                await createEmptyProjectAsync(workspace, "arcade");
+            }
+            catch (e) {
+                showError(vscode.l10n.t("Unable to create project"));
+                return;
+            }
+
+            const mainTs = await vscode.workspace.fs.readFile(
+                vscode.Uri.joinPath(
+                    extensionContext.extensionUri,
+                    "resources",
+                    "template-main.txt"
+                )
+            );
+
+            vscode.workspace.fs.writeFile(
+                vscode.Uri.joinPath(workspace.uri, "main.ts"),
+                mainTs
+            );
+
+            await vscode.commands.executeCommand("makecode.refreshAssets");
+            await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
+        });
     }
 
-    vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: vscode.l10n.t("Creating empty project..."),
-        cancellable: false
-    }, async progress => {
-        try {
-            await createEmptyProjectAsync(workspace, "arcade");
-        }
-        catch (e) {
-            showError(vscode.l10n.t("Unable to create project"));
-            return;
-        }
+    await renameProjectAsync(workspace, projectName);
+}
 
-        const mainTs = await vscode.workspace.fs.readFile(
-            vscode.Uri.joinPath(
-                extensionContext.extensionUri,
-                "resources",
-                "template-main.txt"
-            )
-        );
-
-        vscode.workspace.fs.writeFile(
-            vscode.Uri.joinPath(workspace.uri, "main.ts"),
-            mainTs
-        );
-
-        await vscode.commands.executeCommand("makecode.refreshAssets");
-        await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
-    });
+async function renameProjectAsync(workspace: vscode.WorkspaceFolder, newName: string) {
+    const config = await getPxtJson(workspace);
+    config.name = newName;
+    await setPxtJson(workspace, config);
 }
 
 async function openAssetEditor(context: vscode.ExtensionContext, uri: vscode.Uri) {

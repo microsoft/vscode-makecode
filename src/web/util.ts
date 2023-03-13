@@ -80,3 +80,14 @@ export function guidGen() {
     function f() { return (randomUint32() | 0x10000).toString(16).slice(-4); }
     return f() + f() + "-" + f() + "-4" + f().slice(-3) + "-" + f() + "-" + f() + f() + f();
 }
+
+export function showQuickPickAsync<U extends vscode.QuickPickItem>(qp: vscode.QuickPick<U>) {
+    return new Promise<U>((resolve, reject) => {
+        qp.onDidAccept(() => {
+            const selected = qp.selectedItems[0];
+            qp.dispose();
+            resolve(selected);
+        });
+        qp.show();
+    });
+}
