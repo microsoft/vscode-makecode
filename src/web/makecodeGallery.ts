@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { fileExistsAsync } from "./extension";
 import { httpRequestCoreAsync } from "./host";
 import { listHardwareVariantsAsync } from "./makecodeOperations";
 import { readTextFileAsync } from "./util";
@@ -21,11 +22,11 @@ export async function getHardwareVariantsAsync(workspace: vscode.WorkspaceFolder
 
     if (variants.length === 1) return [];
 
-    const info = await fetchHardwareInfoAsync(workspace);
+    const info = await fetchGalleriesAsync(workspace, "hardware");
 
     const res: HardwareVariant[] = [];
 
-    for (const card of info) {
+    for (const card of info.filter(c => !!c.variant)) {
         if (
             !variants.some(v => v.name === card.variant) ||
             !card.name ||
@@ -53,15 +54,16 @@ export async function getHardwareVariantsAsync(workspace: vscode.WorkspaceFolder
     return res;
 }
 
-async function fetchHardwareInfoAsync(workspace: vscode.WorkspaceFolder) {
-    const config = await readTextFileAsync(vscode.Uri.joinPath(workspace.uri, "pxt.json"));
-    const parsed = JSON.parse(config) as pxt.PackageConfig;
+export async function getProjectTemplatesAsync(workspace: vscode.WorkspaceFolder) {
+    return fetchGalleriesAsync(workspace, "js-templates")
+}
+
+async function fetchGalleriesAsync(workspace: vscode.WorkspaceFolder, mdName: string) {
+    const supportedTargets = await getSupportedTargetsAsync(workspace);
     const res: pxt.CodeCard[] = [];
 
-    const supportedTargets = parsed.supportedTargets || ["arcade"];
-
     for (const target of supportedTargets) {
-        const md = await fetchHardwareMarkdownAsync(target);
+        const md = await fetchMarkdownAsync(target, mdName);
         if (!md) continue;
 
         const galleries = parseGalleryMardown(md);
@@ -69,16 +71,27 @@ async function fetchHardwareInfoAsync(workspace: vscode.WorkspaceFolder) {
         if (!galleries.length) continue;
 
         for (const gallery of galleries) {
-            res.push(...gallery.cards.filter(card => !!card.variant));
+            res.push(...gallery.cards);
         }
     }
 
     return res;
 }
 
-async function fetchHardwareMarkdownAsync(target: string) {
+async function getSupportedTargetsAsync(workspace: vscode.WorkspaceFolder) {
+    if (await fileExistsAsync(vscode.Uri.joinPath(workspace.uri, "pxt.json"))) {
+        const config = await readTextFileAsync(vscode.Uri.joinPath(workspace.uri, "pxt.json"));
+        const parsed = JSON.parse(config) as pxt.PackageConfig;
+        if (parsed.supportedTargets) {
+            return parsed.supportedTargets;
+        }
+    }
+    return ["arcade"];
+}
+
+async function fetchMarkdownAsync(target: string, path: string) {
     const res = await httpRequestCoreAsync({
-        url: apiRoot + "/api/md/" + target + "/hardware"
+        url: apiRoot + "/api/md/" + target + "/" + path
     });
 
     if (res.statusCode === 200) return res.text;
