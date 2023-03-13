@@ -11,12 +11,11 @@
  *     assets.animation`myAnimationName`
  *     assets.song`mySongName`
  *
- * You can use sprites to draw images to the screen and give
- * them physics. Create sprites using the sprites.create()
- * function:
+ * New to MakeCode Arcade? Try creating a new project using one
+ * of the templates to learn about Sprites, Tilemaps, Animations,
+ * and more! Or check out the reference docs here:
  *
- *     const PlayerKind = SpriteKind.create();
- *     const playerSprite = sprites.create(assets.image`playerImage`, PlayerKind);
+ * https://arcade.makecode.com/reference
  */
 
 game.onUpdate(() => {

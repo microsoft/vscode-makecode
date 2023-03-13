@@ -13,7 +13,7 @@ import { maybeShowConfigNotificationAsync, maybeShowDependenciesNotificationAsyn
 import { addDependencyAsync, buildProjectAsync, cleanProjectFolderAsync, createEmptyProjectAsync, downloadSharedProjectAsync, getTargetConfigAsync, installDependenciesAsync, listHardwareVariantsAsync } from "./makecodeOperations";
 import { ActionsTreeViewProvider } from "./actionsTreeView";
 import { BuildOptions } from "makecode-core/built/commands";
-import { getHardwareVariantsAsync } from "./hardwareVariants";
+import { getHardwareVariantsAsync, getProjectTemplatesAsync } from "./makecodeGallery";
 import { shareProjectAsync } from "./shareLink";
 import { readTextFileAsync, writeTextFileAsync } from "./util";
 import { VFS } from "./vfs";
@@ -253,7 +253,7 @@ async function cleanCommand() {
     });
 }
 
-export async function importUrlCommand(url?: string, useWorkspace?: vscode.WorkspaceFolder) {
+export async function importUrlCommand(url?: string, useWorkspace?: vscode.WorkspaceFolder, isTemplate?: boolean) {
     console.log("Import URL command");
     tickEvent("importUrl");
 
@@ -287,7 +287,7 @@ export async function importUrlCommand(url?: string, useWorkspace?: vscode.Works
 
     vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: vscode.l10n.t("Downloading URL..."),
+        title: isTemplate ? vscode.l10n.t("Downloading template...") : vscode.l10n.t("Downloading URL..."),
         cancellable: false
     }, async progress => {
         try {
@@ -401,11 +401,61 @@ interface HardwareQuickpick extends vscode.QuickPickItem {
     id: string;
 }
 
+interface TemplateQuickpick extends vscode.QuickPickItem {
+    shareId?: string;
+}
+
 async function createCommand()  {
     console.log("Create command");
 
     const workspace = await chooseWorkspaceAsync("empty");
     if (!workspace) {
+        return;
+    }
+
+    const qp = vscode.window.createQuickPick<TemplateQuickpick>();
+    qp.busy = true;
+
+    const options: TemplateQuickpick[] = [
+        {
+            label: vscode.l10n.t("Blank project")
+        }
+    ];
+
+    qp.placeholder = vscode.l10n.t("Choose a template for this project");
+    qp.items = options;
+
+    const getTemplateOptionsAsync = async () => {
+        const templates = await getProjectTemplatesAsync(workspace);
+
+        qp.items = options.concat(
+            templates.map(
+                card => ({
+                    label: card.name!,
+                    shareId: card.url,
+                    description: card.description
+                })
+            )
+        );
+
+        qp.busy = false;
+    };
+
+    getTemplateOptionsAsync();
+
+    const input = await new Promise<TemplateQuickpick>((resolve, reject) => {
+        qp.onDidAccept(() => {
+            const selected = qp.selectedItems[0];
+            qp.dispose();
+            resolve(selected);
+        });
+        qp.show();
+    });
+
+    if (!input) return;
+
+    if (input.shareId) {
+        await importUrlCommand(input.shareId, workspace, true);
         return;
     }
 
