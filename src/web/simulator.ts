@@ -19,9 +19,6 @@ export class Simulator {
     }
 
     public static createOrShow(extCtx: vscode.ExtensionContext) {
-        let column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : vscode.ViewColumn.One;
-        column = column! < 9 ? column! + 1 : column;
-
         extensionContext = extCtx;
 
         if (Simulator.simconsole) {
@@ -40,7 +37,7 @@ export class Simulator {
         }
 
         const panel = vscode.window.createWebviewPanel(Simulator.viewType, vscode.l10n.t("Microsoft MakeCode Simulator"), {
-            viewColumn: vscode.ViewColumn.Beside,
+            viewColumn: vscode.ViewColumn.Two,
             preserveFocus: true,
         }, {
             // Enable javascript in the webview
@@ -121,6 +118,7 @@ export class Simulator {
                     }
                     Simulator.simconsole.appendLine(stackTrace);
                     Simulator.simconsole.show(false);
+                    this.stopSimulator();
                 }
         }
     }

@@ -47,7 +47,7 @@ export class AssetEditor {
         }
 
         const panel = vscode.window.createWebviewPanel(AssetEditor.viewType, vscode.l10n.t("Microsoft MakeCode Asset Editor"), {
-            viewColumn: vscode.ViewColumn.Beside,
+            viewColumn: vscode.ViewColumn.Two,
             preserveFocus: true,
         }, {
             // Enable javascript in the webview
