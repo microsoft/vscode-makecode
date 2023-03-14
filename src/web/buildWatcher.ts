@@ -48,25 +48,28 @@ export class BuildWatcher {
             debounceTimer
         );
 
-        this.watcherDisposable = vscode.workspace.onDidSaveTextDocument(
-            (doc: vscode.TextDocument) => {
-                if (!this.running) {
-                    return;
-                }
-
-                // skip node_modules, pxt_modules, built, .git
-                if (/\/?((node|pxt)_modules|built|\.git)/i.test(doc.fileName)) {
-                    return;
-                }
-                // only watch for source files
-                if (!/\.(json|ts|asm|cpp|c|h|hpp)$/i.test(doc.fileName)) {
-                    return;
-                }
-
-                debouncedBuild();
+        const fsWatcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(folder, "**"));
+        const watchHandler = (uri: vscode.Uri) => {
+            if (!this.running) {
+                return;
             }
-        );
 
+            // skip node_modules, pxt_modules, built, .git
+            if (/\/?((node|pxt)_modules|built|\.git)/i.test(uri.path)) {
+                return;
+            }
+            // only watch for source files
+            if (!/\.(json|jres|ts|asm|cpp|c|h|hpp)$/i.test(uri.path)) {
+                return;
+            }
+
+            debouncedBuild();
+        }
+
+        fsWatcher.onDidChange(watchHandler);
+        fsWatcher.onDidCreate(watchHandler);
+        fsWatcher.onDidDelete(watchHandler);
+        this.watcherDisposable = fsWatcher;
         this.context.subscriptions.push(this.watcherDisposable);
         this.buildAsync(true);
     }
