@@ -38,7 +38,9 @@ export async function readFileAsync(path: string, encoding?: "utf8") {
 }
 
 export async function writeFileAsync(path: string, content: any, encoding?: "base64" | "utf8"): Promise<void> {
-    if (typeof content === "string") {
+    if (encoding === "base64") {
+        content = Uint8Array.from(atob(content), c => c.charCodeAt(0));
+    } else if (typeof content === "string") {
         content = new TextEncoder().encode(content);
     }
 
