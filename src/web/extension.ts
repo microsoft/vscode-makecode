@@ -76,6 +76,9 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("makecode.importUrl", importUrlCommand)
     );
     context.subscriptions.push(
+        vscode.commands.registerCommand("makecode.openHelpDocs", openHelpDocs)
+    );
+    context.subscriptions.push(
         vscode.commands.registerCommand("makecode.openAsset", uri => {
             openAssetEditor(context, uri);
         })
@@ -680,6 +683,10 @@ async function removeDependencyCommandAsync() {
         await vscode.commands.executeCommand("makecode.refreshAssets");
         await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
     })
+}
+
+function openHelpDocs() {
+    vscode.env.openExternal(vscode.Uri.parse("https://github.com/microsoft/vscode-makecode#microsoft-makecode-extension-for-visual-studio-code"));
 }
 
 // This method is called when your extension is deactivated

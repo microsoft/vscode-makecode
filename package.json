@@ -147,6 +147,12 @@
           "light": "media/light/refresh.svg",
           "dark": "media/dark/refresh.svg"
         }
+      },
+      {
+        "command": "makecode.openHelpDocs",
+        "title": "%makecode.openHelpDocs.title%",
+        "category": "%makecode.category.title%",
+        "icon": "$(question)"
       }
     ],
     "viewsContainers": {
