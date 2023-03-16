@@ -752,9 +752,15 @@ export function tickEvent(
     properties?: { [key: string]: string },
     measurements?: { [key: string]: number }
 ) {
+    const baseProperties = {
+        "target": "arcade"
+    };
     applicationInsights?.sendTelemetryEvent(
         eventName,
-        properties,
+        {
+            ...baseProperties,
+            ...(properties || {})
+        },
         measurements
     );
 }
