@@ -13,27 +13,21 @@ export function codeActionsProvider() {
                 const line = document.lineAt(start.line);
                 const matchRegex = /assets\.(image|tile|tilemap|animation|song)`([a-z0-9]+)`/ig;
 
-                let match = matchRegex.exec(line.text);
+                let match: RegExpExecArray | null;
                 let output = [];
-                do {
-                    if (match) {
-                        const assetType = match[1].toLowerCase() as AssetKind;
-                        const givenAssetName = match[2];
+                while (match = matchRegex.exec(line.text)) {
+                    const assetType = match[1].toLowerCase() as AssetKind;
+                    const givenAssetName = match[2];
 
-                        const asset = jresNodes.find(node => node.name === givenAssetName || node.id === givenAssetName);
-                        output.push(
-                            asset?.uri
-                                ? editCodeAction(asset, givenAssetName)
-                                : createCodeAction(assetType, givenAssetName)
-                        );
-                    } else {
-                        break;
-                    }
-
-                } while (match = matchRegex.exec(line.text));
+                    const asset = jresNodes.find(node => node.name === givenAssetName || node.id === givenAssetName);
+                    output.push(
+                        asset?.uri
+                            ? editCodeAction(asset, givenAssetName)
+                            : createCodeAction(assetType, givenAssetName)
+                    );
+                }
 
                 return output;
-
             }
         },
         {
