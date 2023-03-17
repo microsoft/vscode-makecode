@@ -65,7 +65,7 @@ Some other files you might see in your project include:
 
 Some of the important fields include:
 
-* **name** - The name of the project. When you create a share link, this name is what people will see. Try to make it descriptive!
+* **name** - The name of the project. When you create a MakeCode share link, this name is what people will see. Try to make it descriptive!
 * **description** - A description of your project.
 * **dependencies** - This field contains all of the extensions used by your project. To add/remove an extension, see the sections below. By default, all arcade projects depend on the `device` extension; make sure not to remove it if you want your project to work with MakeCode Arcade!
 * **files** - This is a list of the files in your project. All `.ts`, `.jres`, `.g.ts`, `.g.jres`, and `.md` files should be listed here.
@@ -183,7 +183,7 @@ If your hardware is failing to show up as a USB drive when you plug it in, try t
 
 ## Sharing your project
 
-To create a share link for your project, click the "Create a share link" command in the MakeCode Asset Explorer. This will cause the output pane to open with a link that you can copy/paste. 
+To create a MakeCode share link for your project, click the "Create MakeCode Share Link" command in the MakeCode Asset Explorer. This will cause the output pane to open with a link that you can copy/paste.
 
 To change the name of your shared project, see the `pxt.json` section above.
 
