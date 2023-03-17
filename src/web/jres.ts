@@ -3,8 +3,9 @@ import { activeWorkspace, findFilesAsync } from "./host";
 import { readTextFileAsync } from "./util";
 
 
+export type AssetKind = "image" | "tile" | "tilemap" | "animation" | "song";
 export interface JResTreeNode {
-    kind: "image" | "tile" | "tilemap" | "animation" | "song";
+    kind: AssetKind;
     id?: string;
     name?: string;
     sourceFile?: vscode.Uri;
@@ -111,6 +112,11 @@ export async function deleteAssetAsync(node: JResTreeNode) {
 
     await vscode.workspace.fs.writeFile(node.sourceFile, new TextEncoder().encode(JSON.stringify(sourceJRes, null, 4)));
     await syncJResAsync();
+}
+
+
+export function getCurrentJresNodes() {
+    return model?.nodes;
 }
 
 async function readProjectJResAsync() {

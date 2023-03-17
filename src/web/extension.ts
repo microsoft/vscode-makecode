@@ -18,6 +18,7 @@ import { shareProjectAsync } from "./shareLink";
 import { readTextFileAsync, showQuickPickAsync, writeTextFileAsync } from "./util";
 import { VFS } from "./vfs";
 import TelemetryReporter from "@vscode/extension-telemetry";
+import { codeActionsProvider } from "./codeActionsProvider";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
 let applicationInsights: TelemetryReporter;
@@ -40,6 +41,9 @@ export function activate(context: vscode.ExtensionContext) {
         });
         context.subscriptions.push(cmd);
     };
+    context.subscriptions.push(
+        codeActionsProvider()
+    );
 
     Simulator.register(context);
     AssetEditor.register(context);
@@ -63,6 +67,9 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.createAnimation", () => createAssetCommand("animation"));
     addCmd("makecode.createSong", () => createAssetCommand("song"));
 
+    context.subscriptions.push(
+        vscode.commands.registerCommand("makecode.createAsset", createAssetCommand)
+    );
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.duplicateAsset", duplicateAssetCommand)
     );
@@ -374,9 +381,13 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
     }
 }
 
-async function createAssetCommand(type: string) {
+async function createAssetCommand(type: string, displayName?: string) {
+    if (displayName) {
+        // called directly
+        tickEvent("createasset");
+    }
     AssetEditor.createOrShow();
-    AssetEditor.currentEditor?.createAssetAsync(type);
+    AssetEditor.currentEditor?.createAssetAsync(type, displayName);
 }
 
 async function duplicateAssetCommand(node: JResTreeNode) {
