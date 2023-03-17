@@ -19,6 +19,10 @@ export function codeActionsProvider() {
                     const assetType = match[1].toLowerCase() as AssetKind;
                     const givenAssetName = match[2];
 
+                    if (assetType === "tile" && /transparency\d+/.test(givenAssetName)) {
+                        continue;
+                    }
+
                     const asset = jresNodes.find(node => node.name === givenAssetName || node.id === givenAssetName);
                     output.push(
                         asset?.uri
