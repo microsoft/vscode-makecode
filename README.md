@@ -8,11 +8,11 @@ To start a new MakeCode project in VS Code, you first need to open an empty fold
 
 > Note: In vscode.dev, the File menu is located in the hamburger button in the top-left corner of the page.
 
-Once you've opened a folder, you can create an empty project by clicking the "Create an empty project" command in the MakeCode Asset Explorer.
+Once you've opened a folder, you can create an empty project by clicking the "Create a New Project" command in the MakeCode Asset Explorer.
 
 ### Importing an existing MakeCode project
 
-If you have a share link for a MakeCode Arcade project, you can also import it by clicking the "Import project from URL" command and pasting the URL in the input that appears.
+If you have a share link for a MakeCode Arcade project, you can also import it by clicking the "Import Project from URL" command and pasting the URL in the input that appears.
 
 ### Opening an existing GitHub project
 
@@ -81,7 +81,7 @@ Whenever you create a new file that you want to be included in your project, you
 
 ![Screenshot of VS Code with the MakeCode simulator open and the "Start MakeCode simulator" command highlighted](./images/simulator-pane.png)
 
-Click the "Start MakeCode simulator" command in the MakeCode Asset Explorer to run your game inside of VS Code. A new view pane will open after the project has finished compiling and will automatically reload whenever you save a file in the open workspace.
+Click the "Start MakeCode Simulator" command in the MakeCode Asset Explorer to run your game inside of VS Code. A new view pane will open after the project has finished compiling and will automatically reload whenever you save a file in the open workspace.
 
 To use your keyboard to control the simulator, make sure you first click on the simulator pane so that it has focus.
 
@@ -136,7 +136,7 @@ let mySong = assets.song`songName`;
 
 ## Adding an extension to your project
 
-To add a MakeCode extension to your project, click the "Add an extension" command in the actions section of the MakeCode Asset Explorer. Then either select an extension from the list that appears or paste a GitHub URL for an extension repo in the text input and press Enter.
+To add a MakeCode extension to your project, click the "Add an Extension" command in the actions section of the MakeCode Asset Explorer. Then either select an extension from the list that appears or paste a GitHub URL for an extension repo in the text input and press Enter.
 
 > Note: You must be online to add an extension to your project
 
@@ -144,15 +144,15 @@ After you add an extension to your project, an entry for it will automatically a
 
 ### Removing an extension from a project
 
-To remove an extension, run the "MakeCode: Remove an extension" command in the VS Code command palette and select the extension to remove.
+To remove an extension, run the "MakeCode: Remove an Extension" command in the VS Code command palette and select the extension to remove.
 
 ### Reinstalling project extensions
 
-If you manually edited your project's `pxt.json` file and need to reinstall the project's dependencies, click the "Install project dependencies" command in the actions section of the MakeCode Asset Explorer.
+If you manually edited your project's `pxt.json` file and need to reinstall the project's dependencies, click the "Install Project Dependencies" command in the actions section of the MakeCode Asset Explorer.
 
 ## Downloading a project to hardware
 
-To compile your project and download it to hardware (e.g. a Meowbit), first run the "Compile project to uf2/hex" command in the actions section of the MakeCode Asset Explorer. Once the compile finishes, you can find the generated hex/uf2 file under the `built/` folder in your project workspace. Depending on what hardware you selected to compile for, the file may be under a subdirectory (e.g. `built/n3/binary.hex`). The file will be named either `binary.hex` or `binary.uf2`.
+To compile your project and download it to hardware (e.g. a Meowbit), first run the "Build Project for Hardware" command in the actions section of the MakeCode Asset Explorer. Once the compile finishes, you can find the generated hex/uf2 file under the `built/` folder in your project workspace. Depending on what hardware you selected to compile for, the file may be under a subdirectory (e.g. `built/n3/binary.hex`). The file will be named either `binary.hex` or `binary.uf2`.
 
 ### Flashing hardware from native VS Code
 

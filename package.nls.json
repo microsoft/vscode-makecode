@@ -1,6 +1,6 @@
 {
   "makecode.category.title": "MakeCode",
-  "makecode.build.title": "Compile Project to UF2",
+  "makecode.build.title": "Build Project for Hardware",
   "makecode.simulate.title": "Start MakeCode Simulator",
   "makecode.create.title": "Create a New Project",
   "makecode.choosehw.title": "Choose Hardware Board",

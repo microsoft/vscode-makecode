@@ -40,12 +40,12 @@ const actions: ActionTreeNode[] = [
         }
     },
     {
-        label: vscode.l10n.t("Compile Project to UF2"),
+        label: vscode.l10n.t("Build Project for Hardware"),
         icon: new vscode.ThemeIcon("desktop-download"),
         command: {
-            title: vscode.l10n.t("Compile Project to UF2"),
+            title: vscode.l10n.t("Build Project for Hardware"),
             command: "makecode.build"
-        }
+        },
     },
     {
         label: vscode.l10n.t("Add an Extension"),
