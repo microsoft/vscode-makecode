@@ -32,10 +32,10 @@ const actions: ActionTreeNode[] = [
         }
     },
     {
-        label: vscode.l10n.t("Copy MakeCode Project Link"),
+        label: vscode.l10n.t("Create MakeCode Share Link"),
         icon: new vscode.ThemeIcon("export"),
         command: {
-            title: vscode.l10n.t("Copy MakeCode Project Link"),
+            title: vscode.l10n.t("Create MakeCode Share Link"),
             command: "makecode.shareProject"
         }
     },

@@ -7,7 +7,7 @@
   "makecode.install.title": "Install project dependencies",
   "makecode.clean.title": "Clean built folders",
   "makecode.importUrl.title": "Import project from URL",
-  "makecode.shareProject.title": "Copy MakeCode Project Link",
+  "makecode.shareProject.title": "Create MakeCode Share Link",
   "makecode.addDependency.title": "Add extension to project",
   "makecode.removeDependency.title": "Remove extension from project",
   "makecode.createImage.title": "Create a new image asset",
