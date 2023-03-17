@@ -61,7 +61,7 @@ function createCodeAction(type: AssetKind, name: string) {
     return ({
         title: vscode.l10n.t("Create new {0} '{1}'", type, name),
         command: {
-            title: vscode.l10n.t("Create MakeCode asset"),
+            title: vscode.l10n.t("Create MakeCode Asset"),
             command: "makecode.createAsset",
             arguments: [
                 type,

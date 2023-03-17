@@ -8,26 +8,26 @@ interface ActionTreeNode {
 
 const actions: ActionTreeNode[] = [
     {
-        label: vscode.l10n.t("Create an empty project"),
+        label: vscode.l10n.t("Create a New Project"),
         icon: new vscode.ThemeIcon("preview"),
         command: {
-            title: vscode.l10n.t("Create an empty project"),
+            title: vscode.l10n.t("Create an New Project"),
             command: "makecode.create"
         }
     },
     {
-        label: vscode.l10n.t("Import project from URL"),
+        label: vscode.l10n.t("Import Project From URL"),
         icon: new vscode.ThemeIcon("cloud-download"),
         command: {
-            title: vscode.l10n.t("Import project from URL"),
+            title: vscode.l10n.t("Import Project From URL"),
             command: "makecode.importUrl"
         }
     },
     {
-        label: vscode.l10n.t("Start MakeCode simulator"),
+        label: vscode.l10n.t("Start MakeCode Simulator"),
         icon: new vscode.ThemeIcon("play-circle"),
         command: {
-            title: vscode.l10n.t("Start MakeCode simulator"),
+            title: vscode.l10n.t("Start MakeCode Simulator"),
             command: "makecode.simulate"
         }
     },
@@ -40,26 +40,26 @@ const actions: ActionTreeNode[] = [
         }
     },
     {
-        label: vscode.l10n.t("Compile project to uf2/hex"),
+        label: vscode.l10n.t("Build Project for Hardware"),
         icon: new vscode.ThemeIcon("desktop-download"),
         command: {
-            title: vscode.l10n.t("Build MakeCode project"),
+            title: vscode.l10n.t("Build Project for Hardware"),
             command: "makecode.build"
-        }
+        },
     },
     {
-        label: vscode.l10n.t("Add an extension"),
+        label: vscode.l10n.t("Add an Extension"),
         icon: new vscode.ThemeIcon("add"),
         command: {
-            title: vscode.l10n.t("Add an extension"),
+            title: vscode.l10n.t("Add an Extension"),
             command: "makecode.addDependency"
         }
     },
     {
-        label: vscode.l10n.t("Install project dependencies"),
+        label: vscode.l10n.t("Install Project Dependencies"),
         icon: new vscode.ThemeIcon("sync"),
         command: {
-            title: vscode.l10n.t("Install project dependencies"),
+            title: vscode.l10n.t("Install Project Dependencies"),
             command: "makecode.install"
         }
     },

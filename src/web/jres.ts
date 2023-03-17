@@ -51,7 +51,7 @@ export class JResTreeProvider implements vscode.TreeDataProvider<JResTreeNode> {
             label: element.name || kindToDisplayName(element.kind),
             resourceUri: element.uri,
             command: element.id ? {
-                title: vscode.l10n.t("Open MakeCode asset"),
+                title: vscode.l10n.t("Open MakeCode Asset"),
                 command: "makecode.openAsset",
                 arguments: [element.uri],
             } : undefined,
