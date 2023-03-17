@@ -534,7 +534,7 @@ async function shareCommandAsync() {
         }
         const output = vscode.window.createOutputChannel("MakeCode");
         output.show();
-        output.append(vscode.l10n.t("Congratulations! Your project is shared at ") + link)
+        output.append(vscode.l10n.t("Congratulations! Your project is shared at {0} and has been copied into your clipboard.", link));
     }
 }
 
