@@ -63,6 +63,14 @@ const actions: ActionTreeNode[] = [
             command: "makecode.install"
         }
     },
+    {
+        label: vscode.l10n.t("Open Arcade Docs"),
+        icon: new vscode.ThemeIcon("question"),
+        command: {
+            title: vscode.l10n.t("Open Arcade Docs"),
+            command: "makecode.openHelpDocs"
+        }
+    }
 ]
 
 export class ActionsTreeViewProvider implements vscode.TreeDataProvider<ActionTreeNode> {
