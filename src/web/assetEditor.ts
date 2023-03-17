@@ -22,6 +22,7 @@ interface DuplicatingState {
 interface CreatingState {
     type: "create";
     assetType: string;
+    displayName?: string;
 }
 
 type AssetEditorState = EditingState | DuplicatingState | CreatingState;
@@ -118,10 +119,11 @@ export class AssetEditor {
         await this.initWebviewHtmlAsync();
     }
 
-    async createAssetAsync(assetType: string) {
+    async createAssetAsync(assetType: string, displayName?: string) {
         this.editing = {
             type: "create",
-            assetType
+            assetType,
+            displayName,
         };
 
         await this.initWebviewHtmlAsync();
@@ -200,6 +202,7 @@ export class AssetEditor {
             case "create":
                 this.sendMessageAsync({
                     type: "create",
+                    displayName: this.editing.displayName,
                     assetType: this.editing.assetType,
                     files: await readProjectJResAsync(),
                     palette: await readProjectPaletteAsync()

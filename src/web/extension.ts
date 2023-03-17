@@ -18,6 +18,7 @@ import { shareProjectAsync } from "./shareLink";
 import { readTextFileAsync, writeTextFileAsync } from "./util";
 import { VFS } from "./vfs";
 import TelemetryReporter from "@vscode/extension-telemetry";
+import { codeActionsProvider } from "./codeActionsProvider";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
 let applicationInsights: TelemetryReporter;
@@ -39,50 +40,8 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(cmd);
     };
     context.subscriptions.push(
-        vscode.languages.registerCodeActionsProvider(
-            "typescript",
-            {
-                provideCodeActions(document, range, context, token) {
-                    const start = range.start;
-                    const line = document.lineAt(start.line);
-                    const imageAssetName = /assets\.image\(?[`'"]([a-z0-9]+)[`'"]\)?/i.exec(line.text)?.[1];
-                    if (imageAssetName) {
-                        const arg = `/asset.image.myImages.${imageAssetName}`;
-                        return [
-                            {
-                                title: vscode.l10n.t("Edit image '{0}'", imageAssetName),
-                                command: {
-                                    title: vscode.l10n.t("Open MakeCode asset"),
-                                    command: "makecode.openAsset",
-                                    arguments: [ {path: arg} ],
-                                },
-                                isPreferred: true
-                            }
-                        ]
-                    }
-                    return undefined;
-
-                }
-            },
-            {
-                providedCodeActionKinds: [
-                    vscode.CodeActionKind.Refactor,
-                    vscode.CodeActionKind.QuickFix
-                ]
-            }
-        )
+        codeActionsProvider()
     );
-    // context.subscriptions.unshift(
-    //     vscode.languages.registerCompletionItemProvider(
-    //         "typescript",
-    //         {
-    //             provideCompletionItems(document, position, token, context) {
-
-    //                 return undefined;
-    //             },
-    //         }
-    //     )
-    // )
 
     Simulator.register(context);
     AssetEditor.register(context);
@@ -106,6 +65,9 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.createAnimation", () => createAssetCommand("animation"));
     addCmd("makecode.createSong", () => createAssetCommand("song"));
 
+    context.subscriptions.push(
+        vscode.commands.registerCommand("makecode.createAsset", createAssetCommand)
+    );
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.duplicateAsset", duplicateAssetCommand)
     );
@@ -414,9 +376,13 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
     }
 }
 
-async function createAssetCommand(type: string) {
+async function createAssetCommand(type: string, displayName?: string) {
+    if (displayName) {
+        // called directly
+        tickEvent("createasset");
+    }
     AssetEditor.createOrShow();
-    AssetEditor.currentEditor?.createAssetAsync(type);
+    AssetEditor.currentEditor?.createAssetAsync(type, displayName);
 }
 
 async function duplicateAssetCommand(node: JResTreeNode) {

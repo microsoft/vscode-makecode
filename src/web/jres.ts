@@ -113,6 +113,11 @@ export async function deleteAssetAsync(node: JResTreeNode) {
     await syncJResAsync();
 }
 
+
+export function getCurrentJresNodes() {
+    return model?.nodes;
+}
+
 async function readProjectJResAsync() {
     const nodes: JResTreeNode[] = [];
     const files = await findFilesAsync("jres", activeWorkspace().uri, false);
