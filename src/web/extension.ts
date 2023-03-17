@@ -355,7 +355,6 @@ export async function simulateCommand(context: vscode.ExtensionContext) {
                 return;
             }
 
-            Simulator.createOrShow(context);
             Simulator.currentSimulator.setPanelTitle(vscode.l10n.t("Arcade Simulator"));
             Simulator.currentSimulator.simulateAsync(await readFileAsync("built/binary.js", "utf8"));
         };
