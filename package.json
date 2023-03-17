@@ -25,7 +25,7 @@
   },
   "activationEvents": [
     "onCommand:makecode.create",
-    "workspaceContains:./pxt.json",
+    "workspaceContains:**/pxt.json",
     "onFileSystem:mkcdfs"
   ],
   "browser": "./dist/web/extension.js",
