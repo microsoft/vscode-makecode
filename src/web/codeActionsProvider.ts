@@ -11,7 +11,7 @@ export function codeActionsProvider() {
                     return undefined;
                 const start = range.start;
                 const line = document.lineAt(start.line);
-                const matchRegex = /assets\.(image|tile|tilemap|animation|song)`([a-z0-9]+)`/ig;
+                const matchRegex = /assets\.(image|tile|tilemap|animation|song)`([a-z0-9 _-]+)`/ig;
 
                 let match: RegExpExecArray | null;
                 let output = [];
