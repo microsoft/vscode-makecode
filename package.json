@@ -173,27 +173,32 @@
         {
           "id": "imageExplorer",
           "name": "%makecode.imageExplorer.title%",
-          "icon": "media/logo.svg"
+          "icon": "media/logo.svg",
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "id": "animationExplorer",
           "name": "%makecode.animationExplorer.title%",
-          "icon": "media/logo.svg"
+          "icon": "media/logo.svg",
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "id": "tileExplorer",
           "name": "%makecode.tileExplorer.title%",
-          "icon": "media/logo.svg"
+          "icon": "media/logo.svg",
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "id": "tilemapExplorer",
           "name": "%makecode.tilemapExplorer.title%",
-          "icon": "media/logo.svg"
+          "icon": "media/logo.svg",
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "id": "songExplorer",
           "name": "%makecode.songExplorer.title%",
-          "icon": "media/logo.svg"
+          "icon": "media/logo.svg",
+          "when": "makecode.hasMakeCodeProjectOpen"
         }
       ]
     },
@@ -285,31 +290,31 @@
         },
         {
           "command": "makecode.build",
-          "when": "makecode.extensionActive"
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "command": "makecode.simulate",
-          "when": "makecode.extensionActive"
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "command": "makecode.clean",
-          "when": "makecode.extensionActive"
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "command": "makecode.shareProject",
-          "when": "makecode.extensionActive"
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "command": "makecode.addDependency",
-          "when": "makecode.extensionActive"
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "command": "makecode.removeDependency",
-          "when": "makecode.extensionActive"
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "command": "makecode.refreshAssets",
-          "when": "makecode.extensionActive"
+          "when": "makecode.hasMakeCodeProjectOpen"
         }
       ]
     },
