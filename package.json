@@ -24,7 +24,6 @@
     "url": "https://github.com/microsoft/vscode-makecode"
   },
   "activationEvents": [
-    "onCommand:makecode.create",
     "workspaceContains:**/pxt.json",
     "onFileSystem:mkcdfs"
   ],
@@ -283,6 +282,34 @@
         {
           "command": "makecode.createTilemap",
           "when": "false"
+        },
+        {
+          "command": "makecode.build",
+          "when": "makecode.extensionActive"
+        },
+        {
+          "command": "makecode.simulate",
+          "when": "makecode.extensionActive"
+        },
+        {
+          "command": "makecode.clean",
+          "when": "makecode.extensionActive"
+        },
+        {
+          "command": "makecode.shareProject",
+          "when": "makecode.extensionActive"
+        },
+        {
+          "command": "makecode.addDependency",
+          "when": "makecode.extensionActive"
+        },
+        {
+          "command": "makecode.removeDependency",
+          "when": "makecode.extensionActive"
+        },
+        {
+          "command": "makecode.refreshAssets",
+          "when": "makecode.extensionActive"
         }
       ]
     },
