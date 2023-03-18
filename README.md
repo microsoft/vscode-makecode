@@ -134,6 +134,10 @@ let myTilemap = assets.tilemap`tilemapName`;
 let mySong = assets.song`songName`;
 ```
 
+You can also create or edit an asset referenced in code using Code Actions:
+
+![Screenshot of code actions provided for a MakeCode Asset with red arrows pointing at the code actions icon and two sample code action suggestions.](./images/edit-asset-inline.png)
+
 ## Adding an extension to your project
 
 To add a MakeCode extension to your project, click the "Add an Extension" command in the actions section of the MakeCode Asset Explorer. Then either select an extension from the list that appears or paste a GitHub URL for an extension repo in the text input and press Enter.
