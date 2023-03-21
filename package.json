@@ -210,9 +210,9 @@
     "menus": {
       "editor/context": [
         {
-          "when": "resourceLangId == typescript && makecode.extensionActive",
+          "when": "resourceLangId == typescript && makecode.extensionActive && makecode.hasMakeCodeProjectOpen",
           "command": "makecode.simulate",
-          "group": "navigation"
+          "group": "debug"
         }
       ],
       "view/title": [
