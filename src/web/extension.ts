@@ -27,7 +27,6 @@ let extensionContext: vscode.ExtensionContext;
 export function activate(context: vscode.ExtensionContext) {
     extensionContext = context;
     setHost(createVsCodeHost());
-    console.log("Congratulations, your extension 'vscode-makecode' is now active in the web extension host!");
 
     const addCmd = (id: string, fn: () => Promise<void>) => {
         const cmd = vscode.commands.registerCommand(id, () => {
