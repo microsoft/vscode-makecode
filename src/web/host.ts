@@ -79,7 +79,7 @@ async function unlinkAsync(path: string): Promise<void> {
 }
 
 function getFolderName() {
-    return path.basename(activeWorkspace().uri.path);
+    return `mkcd:${path.basename(activeWorkspace().uri.path)}`;
 }
 
 function rmFolderPrefix(p: string) {
