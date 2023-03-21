@@ -125,8 +125,6 @@ export class Simulator {
 
     postMessage(msg: any) {
         this.panel.webview.postMessage(msg);
-        msg._fromVscode = true;
-        console.log("sending", msg);
     }
 
     addDisposable(d: vscode.Disposable) {
