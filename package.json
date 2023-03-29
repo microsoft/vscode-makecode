@@ -153,6 +153,11 @@
         "title": "%makecode.openHelpDocs.title%",
         "category": "%makecode.category.title%",
         "icon": "$(question)"
+      },
+      {
+        "command": "makecode.testBlocks",
+        "title": "%makecode.testBlocks.title%",
+        "category": "%makecode.category.title%"
       }
     ],
     "viewsContainers": {
