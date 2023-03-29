@@ -124,6 +124,7 @@ export class Simulator {
     }
 
     postMessage(msg: any) {
+        msg._fromVscode = true;
         this.panel.webview.postMessage(msg);
     }
 
