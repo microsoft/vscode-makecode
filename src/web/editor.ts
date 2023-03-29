@@ -1,10 +1,34 @@
 import * as vscode from "vscode";
+import { fileExistsAsync } from "./extension";
 import { activeWorkspace } from "./host";
-import { debounce, getPxtJson, guidGen, readTextFileAsync } from "./util";
+import { debounce, getPxtJson, guidGen, readTextFileAsync, writeTextFileAsync } from "./util";
 
 let extensionContext: vscode.ExtensionContext;
 // const editorUrl = "http://localhost:3232/?controller=1";
 const editorUrl = "https://arcade.makecode.com/?controller=1&skillmap=1";
+
+interface Header {
+    name: string;
+    meta: {};
+    editor: string;
+    pubId: string;
+    pubCurrent: boolean;
+    target: string;
+    targetVersion: string;
+    cloudUserId: string | null;
+    id: string;
+    recentUse: number;
+    modificationTime: number;
+    path: string;
+    cloudCurrent: boolean;
+    saveId: string | null;
+    extensionUnderTest?: string;
+}
+
+interface Project {
+    text: {[index: string]: string};
+    header: Header;
+}
 
 export class MakeCodeEditor {
     public static readonly viewType = "mkcdeditor";
@@ -55,7 +79,8 @@ export class MakeCodeEditor {
 
     protected watcherDisposable: vscode.Disposable | undefined;
     protected folder: vscode.WorkspaceFolder | undefined;
-    protected currentHeaderId: string | undefined;
+    protected extHeaderId: string | undefined;
+    protected testHeaderId: string | undefined;
 
     constructor(panel: vscode.WebviewPanel) {
         this.panel = panel;
@@ -121,7 +146,7 @@ export class MakeCodeEditor {
         fsWatcher.onDidDelete(watchHandler);
         this.watcherDisposable = fsWatcher;
         extensionContext.subscriptions.push(this.watcherDisposable);
-        this.sendProjectAsync(folder);
+        this.openTestProjectAsync();
     }
 
     stop() {
@@ -151,23 +176,43 @@ export class MakeCodeEditor {
 
     async handleHostMessage(message: any) {
         if (message.action === "workspacesync") {
-            message.projects = [];
+            const project = await this.readProjectAsync(this.folder || activeWorkspace());
+            const testProject = await this.readTestProjectAsync(this.folder || activeWorkspace());
+            message.projects = [project];
+
+            if (testProject) {
+                this.extHeaderId = testProject.header.extensionUnderTest;
+                this.testHeaderId = testProject.header.id;
+                message.projects.push(testProject);
+            }
+
+            if (this.extHeaderId) {
+                project.header.id = this.extHeaderId;
+            }
+            else {
+                this.extHeaderId = project.header.id;
+            }
+
+
             message._fromVscode = true;
             this.panel.webview.postMessage(message);
         }
+        else if (message.action === "workspacesave") {
+            const project = message.project as Project;
+            if (project?.header.extensionUnderTest === this.extHeaderId) {
+                this.saveTestProjectAsync(this.folder || activeWorkspace(), project);
+            }
+        }
     }
 
-    async sendProjectAsync(workspace: vscode.WorkspaceFolder) {
-        const text = await createProjectBlobAsync(workspace);
-        const header = createHeader();
-        await this.sendMessageAsync({
-            type: "pxteditor",
-            action: "importproject",
-            project: {
-                header,
-                text
-            }
-        });
+    async openTestProjectAsync() {
+        if (this.testHeaderId) {
+            await this.sendMessageAsync({
+                type: "pxteditor",
+                action: "openheader",
+                headerId: this.testHeaderId
+            });
+        }
     }
 
     sendMessageAsync(message: any) {
@@ -185,8 +230,18 @@ export class MakeCodeEditor {
     }
 
     protected async initWebviewHtmlAsync() {
+        const testProject = await this.readTestProjectAsync(this.folder || activeWorkspace());
+        if (testProject) {
+            this.testHeaderId = testProject.header.id;
+            this.extHeaderId = testProject.header.extensionUnderTest;
+        }
+        else if (!this.extHeaderId) {
+            this.extHeaderId = guidGen();
+        }
+
         this.panel.webview.html = "";
-        const simulatorHTML = await getMakeCodeEditorHtmlAsync(this.panel.webview);
+        const hash = this.testHeaderId ? "header:" + this.testHeaderId : "testproject:" + this.extHeaderId;
+        const simulatorHTML = await getMakeCodeEditorHtmlAsync(this.panel.webview, hash);
         this.panel.webview.html = simulatorHTML;
     }
 
@@ -195,8 +250,30 @@ export class MakeCodeEditor {
             await this.startWatching(activeWorkspace());
         }
         else {
-            this.sendProjectAsync(this.folder || activeWorkspace());
+            this.openTestProjectAsync();
         }
+    }
+
+    protected async readProjectAsync(workspace: vscode.WorkspaceFolder): Promise<Project> {
+        const text = await createProjectBlobAsync(workspace);
+        const header = createHeader();
+        return {
+            text,
+            header
+        }
+    }
+
+    protected async readTestProjectAsync(workspace: vscode.WorkspaceFolder): Promise<Project | undefined> {
+        const uri = vscode.Uri.joinPath(workspace.uri, ".pxt", "test_project");
+        if (await fileExistsAsync(uri)) {
+            return JSON.parse(await readTextFileAsync(uri));
+        }
+        return undefined;
+    }
+
+    protected async saveTestProjectAsync(workspace: vscode.WorkspaceFolder, project: Project) {
+        const uri = vscode.Uri.joinPath(workspace.uri, ".pxt", "test_project");
+        await writeTextFileAsync(uri, JSON.stringify(project));
     }
 }
 
@@ -207,7 +284,7 @@ export class MakeCodeEditorSerializer implements vscode.WebviewPanelSerializer {
 }
 
 
-async function getMakeCodeEditorHtmlAsync(webview: vscode.Webview) {
+async function getMakeCodeEditorHtmlAsync(webview: vscode.Webview, hash: string) {
     const uri = vscode.Uri.joinPath(extensionContext.extensionUri, "resources", "editorframe.html");
     const contents = await readTextFileAsync(uri);
 
@@ -216,7 +293,7 @@ async function getMakeCodeEditorHtmlAsync(webview: vscode.Webview) {
 
     return contents
         .replace(/@RES@\/([\w\-\.]+)/g, (f, fn) => pathURL(fn))
-        .replace("@EDITORURL@", editorUrl);
+        .replace("@EDITORURL@", editorUrl + "#" + hash);
 }
 
 async function createProjectBlobAsync(workspace: vscode.WorkspaceFolder) {
@@ -224,19 +301,16 @@ async function createProjectBlobAsync(workspace: vscode.WorkspaceFolder) {
     const config = await getPxtJson(workspace);
 
     const processFileAsync = async (file: string) => {
-        const outFile = file === "main.ts" ? "old_main.ts" : file;
-
         try {
             const contents = await readTextFileAsync(vscode.Uri.joinPath(workspace.uri, file));
-            project[outFile] = contents;
+            project[file] = contents;
         }
         catch (e) {
-            project[outFile] = "";
+            project[file] = "";
         }
     }
 
     for (const file of config.files) {
-        if (file === "main.blocks") continue;
         await processFileAsync(file);
     }
 
@@ -246,41 +320,26 @@ async function createProjectBlobAsync(workspace: vscode.WorkspaceFolder) {
         }
     }
 
-    if (!config.files.some(f => f === "main.blocks")) {
-        config.files.push("main.blocks");
-    }
-
-    if (config.files.some(f => f === "main.ts")) {
-        config.files.push("old_main.ts");
-    }
-    else {
-        config.files.push("main.ts");
-    }
-
-    config.preferredEditor = "blocksprj";
-
     project["pxt.json"] = JSON.stringify(config);
-    project["main.blocks"] = `<xml xmlns="http://www.w3.org/1999/xhtml"><variables></variables><block type="pxt-on-start" x="0" y="0"></block></xml>`;
-    project["main.ts"] = "";
 
     return project;
 }
 
-function createHeader() {
+function createHeader(): Header {
     return {
-        "name": "Untitled",
-        "meta": {},
-        "editor": "blocksprj",
-        "pubId": "",
-        "pubCurrent": false,
-        "target": "arcade",
-        "targetVersion": "1.12.26",
-        "cloudUserId": null,
-        "id": guidGen(),
-        "recentUse": Date.now(),
-        "modificationTime": Date.now(),
-        "path": "Untitled",
-        "cloudCurrent": false,
-        "saveId": null
+        name: "Untitled",
+        meta: {},
+        editor: "blocksprj",
+        pubId: "",
+        pubCurrent: false,
+        target: "arcade",
+        targetVersion: "1.12.26",
+        cloudUserId: null,
+        id: guidGen(),
+        recentUse: Date.now(),
+        modificationTime: Date.now(),
+        path: "Untitled",
+        cloudCurrent: false,
+        saveId: null
     }
 }
