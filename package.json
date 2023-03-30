@@ -320,6 +320,10 @@
         {
           "command": "makecode.refreshAssets",
           "when": "makecode.hasMakeCodeProjectOpen"
+        },
+        {
+          "command": "makecode.testBlocks",
+          "when": "makecode.hasMakeCodeProjectOpen"
         }
       ]
     },

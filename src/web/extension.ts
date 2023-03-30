@@ -137,11 +137,11 @@ export function activate(context: vscode.ExtensionContext) {
 async function maybeSetInMakeCodeProjectAsync() {
     const hasProjectFolder = await findOpenFolders("project");
     if (!!hasProjectFolder.length) {
-        setInMakeCodeProjectAsync();
+        setInMakeCodeProject();
     }
 }
 
-export function setInMakeCodeProjectAsync() {
+export function setInMakeCodeProject() {
     vscode.commands.executeCommand("setContext", "makecode.hasMakeCodeProjectOpen", true);
 }
 
@@ -263,6 +263,7 @@ export async function installCommand() {
 
         await vscode.commands.executeCommand("makecode.refreshAssets");
         await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
+        setInMakeCodeProject();
     });
 }
 
@@ -323,7 +324,7 @@ export async function importUrlCommand(url?: string, useWorkspace?: vscode.Works
     }, async progress => {
         try {
             await downloadSharedProjectAsync(workspace!, toOpen!);
-            setInMakeCodeProjectAsync()
+            setInMakeCodeProject()
         }
         catch (e) {
             showError(vscode.l10n.t("Unable to download project"));
@@ -524,7 +525,7 @@ async function createCommand()  {
         });
     }
 
-    setInMakeCodeProjectAsync();
+    setInMakeCodeProject();
     await renameProjectAsync(workspace, projectName);
 }
 
