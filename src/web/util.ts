@@ -60,6 +60,22 @@ export async function writeTextFileAsync(uri: vscode.Uri, contents: string) {
     await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(contents));
 }
 
+export async function getPxtJson(workspace: vscode.WorkspaceFolder) {
+    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
+
+    const config = await readTextFileAsync(configPath);
+    const parsed = JSON.parse(config) as pxt.PackageConfig;
+    return parsed;
+}
+
+export async function setPxtJson(workspace: vscode.WorkspaceFolder, pxtJson: pxt.PackageConfig) {
+    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
+    await writeTextFileAsync(
+        configPath,
+        JSON.stringify(pxtJson, null, 4)
+    );
+}
+
 
 function getRandomBuf(buf: Uint8Array) {
     if (crypto)

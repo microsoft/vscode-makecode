@@ -15,10 +15,11 @@ import { ActionsTreeViewProvider } from "./actionsTreeView";
 import { BuildOptions } from "makecode-core/built/commands";
 import { getHardwareVariantsAsync, getProjectTemplatesAsync } from "./makecodeGallery";
 import { shareProjectAsync } from "./shareLink";
-import { readTextFileAsync, showQuickPickAsync, writeTextFileAsync } from "./util";
+import { getPxtJson, readTextFileAsync, setPxtJson, showQuickPickAsync, writeTextFileAsync } from "./util";
 import { VFS } from "./vfs";
 import TelemetryReporter from "@vscode/extension-telemetry";
 import { codeActionsProvider } from "./codeActionsProvider";
+import { MakeCodeEditor } from "./editor";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
 let applicationInsights: TelemetryReporter;
@@ -47,6 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
     Simulator.register(context);
     AssetEditor.register(context);
     BuildWatcher.register(context);
+    MakeCodeEditor.register(context);
 
     const vfs = new VFS(context);
     context.subscriptions.push(vscode.workspace.registerFileSystemProvider("mkcdfs", vfs, { isCaseSensitive: true }));
@@ -65,6 +67,7 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.createTilemap", () => createAssetCommand("tilemap"));
     addCmd("makecode.createAnimation", () => createAssetCommand("animation"));
     addCmd("makecode.createSong", () => createAssetCommand("song"));
+    addCmd("makecode.testBlocks", testBlocksCommandAsync);
 
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.createAsset", createAssetCommand)
@@ -634,21 +637,7 @@ async function addDependencyCommandAsync() {
     });
 }
 
-async function getPxtJson(workspace: vscode.WorkspaceFolder) {
-    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
 
-    const config = await readTextFileAsync(configPath);
-    const parsed = JSON.parse(config) as pxt.PackageConfig;
-    return parsed;
-}
-
-async function setPxtJson(workspace: vscode.WorkspaceFolder, pxtJson: pxt.PackageConfig) {
-    const configPath = vscode.Uri.joinPath(workspace.uri, "pxt.json");
-    await writeTextFileAsync(
-        configPath,
-        JSON.stringify(pxtJson, null, 4)
-    );
-}
 
 async function removeDependencyCommandAsync() {
     const workspace = await chooseWorkspaceAsync("project");
@@ -701,6 +690,10 @@ async function removeDependencyCommandAsync() {
 
 function openHelpDocs() {
     vscode.env.openExternal(vscode.Uri.parse("https://github.com/microsoft/vscode-makecode#microsoft-makecode-extension-for-visual-studio-code"));
+}
+
+async function testBlocksCommandAsync() {
+    MakeCodeEditor.createOrShow();
 }
 
 // This method is called when your extension is deactivated
