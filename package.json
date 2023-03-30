@@ -3,7 +3,7 @@
   "publisher": "ms-edu",
   "displayName": "Microsoft MakeCode Arcade",
   "description": "Make games and learn code. Create retro arcade style video games, art, and music inside VS Code.",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -152,6 +152,11 @@
         "title": "%makecode.openHelpDocs.title%",
         "category": "%makecode.category.title%",
         "icon": "$(question)"
+      },
+      {
+        "command": "makecode.testBlocks",
+        "title": "%makecode.testBlocks.title%",
+        "category": "%makecode.category.title%"
       }
     ],
     "viewsContainers": {
@@ -389,7 +394,7 @@
     "@types/path-browserify": "^1.0.0",
     "@vscode/extension-telemetry": "^0.7.5",
     "makecode-browser": "^1.2.1",
-    "makecode-core": "^1.4.2",
+    "makecode-core": "^1.4.3",
     "path-browserify": "^1.0.1"
   }
 }

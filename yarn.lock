@@ -2104,10 +2104,10 @@ makecode-core@^1.3.0:
   dependencies:
     chalk "^4.1.2"
 
-makecode-core@^1.4.2:
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.4.2.tgz#81784010939520f5f465c7f50533edb5b22d57c5"
-  integrity sha512-QiZwSDK5GuyY+mt9pR64q1XeDFQNXjaN92r9DFbweTZohSPV3CyukM9W1tHmpg026ms/iG+f3Wu2s1M5RPy6jQ==
+makecode-core@^1.4.3:
+  version "1.4.3"
+  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.4.3.tgz#b4e44d97f531426184e440dfa529d4ac825453c4"
+  integrity sha512-kwmjoge33RdsEgKLsK65J7VzEixCI2cVTQnpT4QH92Kf9+b/kju/lbEHFQ4DarLOznYLbu5VVa2KheJZisPDsA==
   dependencies:
     chalk "^4.1.2"
 
