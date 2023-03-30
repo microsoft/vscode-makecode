@@ -78,8 +78,10 @@ async function unlinkAsync(path: string): Promise<void> {
     await vscode.workspace.fs.delete(resolvePath(path));
 }
 
+// pxt-mkc only has access under the current workspace folder (see resolvePath),
+// so give an alias for that path.
 function getFolderName() {
-    return path.basename(activeWorkspace().uri.path);
+    return `file:${path.basename(activeWorkspace().uri.path)}`;
 }
 
 function rmFolderPrefix(p: string) {
