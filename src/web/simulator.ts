@@ -11,6 +11,8 @@ export class Simulator {
     public static currentSimulator: Simulator | undefined;
     public simState: any;
     public simStateTimer: any;
+
+    private static event: vscode.EventEmitter<pxsim.SimulatorMessage> = new vscode.EventEmitter();
     private static simconsole: vscode.OutputChannel;
 
     public static register(extCtx: vscode.ExtensionContext) {
@@ -50,6 +52,14 @@ export class Simulator {
 
     public static revive(panel: vscode.WebviewPanel) {
         Simulator.currentSimulator = new Simulator(panel);
+    }
+
+    public static onEvent(handler: (event: pxsim.SimulatorMessage) => void): vscode.Disposable {
+        return Simulator.event.event(handler);
+    }
+
+    public static postMessage(message: pxsim.SimulatorMessage) {
+        Simulator.currentSimulator!.postMessage(message);
     }
 
     protected panel: vscode.WebviewPanel;
@@ -120,7 +130,10 @@ export class Simulator {
                     Simulator.simconsole.show(false);
                     this.stopSimulator();
                 }
+                break;
         }
+
+        Simulator.event.fire(message);
     }
 
     postMessage(msg: any) {
