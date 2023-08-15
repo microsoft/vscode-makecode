@@ -1,4 +1,4 @@
-import { ContinuedEvent, InitializedEvent, LoggingDebugSession, StoppedEvent, TerminatedEvent } from "@vscode/debugadapter";
+import { ContinuedEvent, DebugSession, StoppedEvent, TerminatedEvent } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { StoppedState, BreakpointMap } from "./state";
 import * as path from "path-browserify";
@@ -9,7 +9,7 @@ export interface SimLaunchArgs extends DebugProtocol.LaunchRequestArguments {
     projectDir: string;
 }
 
-export class SimDebugSession extends LoggingDebugSession {
+export class SimDebugSession extends DebugSession {
     // We only have one thread
     // TODO: We could theoretically visualize the individual fibers
     private static THREAD_ID = 1;
@@ -60,14 +60,21 @@ export class SimDebugSession extends LoggingDebugSession {
         this.shutdown();
     }
 
-    protected launchRequest(response: DebugProtocol.LaunchResponse, args: SimLaunchArgs): void {
+    protected async launchRequest(response: DebugProtocol.LaunchResponse, args: SimLaunchArgs) {
         if (!this.projectDir) {
             this.projectDir = path.normalize(args.projectDir);
             if (this.breakpoints) {
                 this.fixBreakpoints();
             }
         }
-        this.sendResponse(response);
+
+        try {
+            await this.driver.start();
+            this.sendResponse(response);
+        }
+        catch (e) {
+            this.sendErrorResponse(response, 1234);
+        }
     }
 
     protected setBreakPointsRequest(response: DebugProtocol.SetBreakpointsResponse, args: DebugProtocol.SetBreakpointsArguments): void {

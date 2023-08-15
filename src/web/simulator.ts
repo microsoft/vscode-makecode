@@ -12,7 +12,6 @@ export class Simulator {
     public simState: any;
     public simStateTimer: any;
 
-    private static event: vscode.EventEmitter<pxsim.SimulatorMessage> = new vscode.EventEmitter();
     private static simconsole: vscode.OutputChannel;
 
     public static register(extCtx: vscode.ExtensionContext) {
@@ -54,19 +53,13 @@ export class Simulator {
         Simulator.currentSimulator = new Simulator(panel);
     }
 
-    public static onEvent(handler: (event: pxsim.SimulatorMessage) => void): vscode.Disposable {
-        return Simulator.event.event(handler);
-    }
-
-    public static postMessage(message: pxsim.SimulatorMessage) {
-        Simulator.currentSimulator!.postMessage(message);
-    }
-
     protected panel: vscode.WebviewPanel;
     protected binaryJS: string | undefined;
     protected disposables: vscode.Disposable[];
+    protected eventEmitter: vscode.EventEmitter<pxsim.SimulatorMessage> = new vscode.EventEmitter();
+    event = this.eventEmitter.event;
 
-    private constructor(panel: vscode.WebviewPanel) {
+    constructor(panel: vscode.WebviewPanel) {
         this.panel = panel;
 
         this.panel.webview.onDidReceiveMessage(message => {
@@ -81,7 +74,9 @@ export class Simulator {
             this.disposables.forEach(d => d.dispose());
         });
 
-        this.disposables = [];
+        this.disposables = [
+            this.eventEmitter
+        ];
     }
 
     async simulateAsync(binaryJS: string) {
@@ -133,7 +128,7 @@ export class Simulator {
                 break;
         }
 
-        Simulator.event.fire(message);
+        this.eventEmitter.fire(message);
     }
 
     postMessage(msg: any) {

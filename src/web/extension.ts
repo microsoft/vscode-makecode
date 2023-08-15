@@ -20,6 +20,7 @@ import { VFS } from "./vfs";
 import TelemetryReporter from "@vscode/extension-telemetry";
 import { codeActionsProvider } from "./codeActionsProvider";
 import { MakeCodeEditor } from "./editor";
+import { SimDebugAdapterDescriptorFactory } from "./debugger/adapter";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
 let applicationInsights: TelemetryReporter;
@@ -49,6 +50,7 @@ export function activate(context: vscode.ExtensionContext) {
     AssetEditor.register(context);
     BuildWatcher.register(context);
     MakeCodeEditor.register(context);
+    SimDebugAdapterDescriptorFactory.register(context);
 
     const vfs = new VFS(context);
     context.subscriptions.push(vscode.workspace.registerFileSystemProvider("mkcdfs", vfs, { isCaseSensitive: true }));
@@ -128,7 +130,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand('setContext', 'makecode.extensionActive', true);
 }
 
-async function chooseWorkspaceAsync(kind: "empty" | "project" | "any", silent = false): Promise<vscode.WorkspaceFolder | undefined> {
+export async function chooseWorkspaceAsync(kind: "empty" | "project" | "any", silent = false): Promise<vscode.WorkspaceFolder | undefined> {
     const folders = [];
     let hasWorkspaceOpen = false;
 
@@ -198,7 +200,7 @@ async function buildCommand() {
         title: vscode.l10n.t("Building project..."),
         cancellable: false
     }, async () => {
-        const result = await buildProjectAsync(workspace, opts);
+        const result = (await buildProjectAsync(workspace, opts))!;
 
         if (result.diagnostics.length) {
             reportBuildErrors(result);

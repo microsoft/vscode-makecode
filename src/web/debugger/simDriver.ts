@@ -1,3 +1,5 @@
+import { chooseWorkspaceAsync } from "../extension";
+import { buildProjectAsync } from "../makecodeOperations";
 import { Simulator } from "../simulator";
 import * as vscode from "vscode";
 
@@ -36,6 +38,7 @@ export class SimDriver implements vscode.Disposable {
     protected handlers: SimulatorEventMapStore;
     protected breakpointsSet = false;
     protected disposables: vscode.Disposable[] = [];
+    protected simulator: Simulator | undefined;
 
     constructor() {
         this.handlers = {
@@ -44,8 +47,40 @@ export class SimDriver implements vscode.Disposable {
             "resume": [],
             "stateChange": []
         };
+    }
 
-        this.disposables.push(Simulator.onEvent(m => this.handleSimMessage(m)));
+    async start() {
+        if (this.simulator) return;
+
+        const workspace = await chooseWorkspaceAsync("project");
+
+        if (!workspace) {
+            throw new Error("No workspace selected");
+        }
+
+        const result = await buildProjectAsync(workspace, { debug: true });
+
+        if (!result?.success) {
+            throw new Error("Build failed");
+        }
+
+        const binaryPath = vscode.Uri.joinPath(workspace.uri, "built/binary.js");
+        const binary = new TextDecoder().decode(await vscode.workspace.fs.readFile(binaryPath));
+
+        const panel = vscode.window.createWebviewPanel(Simulator.viewType, vscode.l10n.t("Debug Microsoft MakeCode Simulator"), {
+            viewColumn: vscode.ViewColumn.Two,
+            preserveFocus: true,
+        }, {
+            // Enable javascript in the webview
+            enableScripts: true,
+            retainContextWhenHidden: true
+        });
+
+        this.simulator = new Simulator(panel);
+        this.disposables.push(this.simulator.event(m => this.handleSimMessage(m)));
+        this.disposables.push(panel);
+
+        await this.simulator.simulateAsync(binary);
     }
 
     addEventListener<K extends keyof SimulatorEventMap>(event: K, handler: (ev: SimulatorEventMap[K]) => void): void {
@@ -83,12 +118,12 @@ export class SimDriver implements vscode.Disposable {
                 return;
         }
 
-        Simulator.postMessage({ type: "debugger", subtype: msg, source: MESSAGE_SOURCE } as pxsim.DebuggerMessage);
+        this.simulator!.postMessage({ type: "debugger", subtype: msg, source: MESSAGE_SOURCE } as pxsim.DebuggerMessage);
     }
 
     setBreakpoints(breakPoints: number[]) {
         this.breakpointsSet = true;
-        Simulator.postMessage({
+        this.simulator!.postMessage({
             type: "debugger",
             source: MESSAGE_SOURCE,
             subtype: "config",
@@ -135,7 +170,7 @@ export class SimDriver implements vscode.Disposable {
 
     protected handleBreakpointMessage(message: pxsim.DebuggerBreakpointMessage) {
         if (message.exceptionMessage) {
-            Simulator.postMessage({ type: 'stop', source: MESSAGE_SOURCE });
+            this.simulator!.postMessage({ type: 'stop', source: MESSAGE_SOURCE });
             this.setState(SimulatorState.Suspended);
         }
         else {

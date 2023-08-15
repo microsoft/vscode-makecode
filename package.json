@@ -326,6 +326,15 @@
         "view": "workbench.explorer.emptyView",
         "contents": "%makecode.viewsWelcome.welcomeMessage%"
       }
+    ],
+    "debuggers": [
+      {
+        "type": "makecode-simulator-debugger",
+        "languages": [
+          "typescript"
+        ],
+        "label": "Debug MakeCode Simulator"
+      }
     ]
   },
   "scripts": {

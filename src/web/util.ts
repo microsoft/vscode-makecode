@@ -107,3 +107,40 @@ export function showQuickPickAsync<U extends vscode.QuickPickItem>(qp: vscode.Qu
         qp.show();
     });
 }
+
+type AsyncAction<T> = () => Promise<T>;
+type QueueActionType = () => Promise<void>;
+
+export class AsyncActionQueue {
+    protected queue: QueueActionType[];
+    protected isActing = false;
+
+    constructor() {
+        this.queue = [];
+    }
+
+    enqueue<T>(action: AsyncAction<T>): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            this.queue.push(async () => {
+                try {
+                    resolve(await action());
+                }
+                catch (e) {
+                    reject(e);
+                }
+            });
+            this.dequeue();
+        });
+    }
+
+    protected async dequeue() {
+        if (this.isActing || !this.queue.length) return;
+
+        const action = this.queue.shift()!;
+
+        this.isActing = true;
+        await action();
+        this.isActing = false;
+        this.dequeue();
+    }
+}
