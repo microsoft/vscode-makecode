@@ -110,7 +110,7 @@ export class Simulator {
             case "bulkserial":
                 const data: { data: string, time: number }[] = message.data;
                 for (const entry of data) {
-                    Simulator.simconsole.appendLine(entry.data);
+                    this.logConsole(entry.data);
                 }
                 break;
             case "debugger":
@@ -121,7 +121,7 @@ export class Simulator {
                         stackTrace += `   at ${fi.functionName} (${fi.fileName
                             }:${fi.line + 1}:${fi.column + 1})\n`;
                     }
-                    Simulator.simconsole.appendLine(stackTrace);
+                    this.logConsole(stackTrace);
                     Simulator.simconsole.show(false);
                     this.stopSimulator();
                 }
@@ -138,6 +138,13 @@ export class Simulator {
 
     addDisposable(d: vscode.Disposable) {
         this.disposables.push(d);
+    }
+
+    logConsole(message: string) {
+        if (!Simulator.simconsole) {
+            Simulator.simconsole = vscode.window.createOutputChannel("MakeCode");
+        }
+        Simulator.simconsole.appendLine(message);
     }
 }
 

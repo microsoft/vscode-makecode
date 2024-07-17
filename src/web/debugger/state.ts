@@ -1,4 +1,22 @@
 import { DebugProtocol } from "@vscode/debugprotocol";
+import { normalizePath } from "../host";
+import { SimDriver } from "./simDriver";
+
+interface LocationInfo {
+    fileName: string;
+    start: number;
+    length: number;
+    line?: number;
+    column?: number;
+    endLine?: number;
+    endColumn?: number;
+}
+
+export interface PxtBreakpoint extends LocationInfo {
+    id: number;
+    isDebuggerStmt: boolean;
+    binAddr?: number;
+}
 
 export interface SimFrame {
     locals: pxsim.Variables;
@@ -60,6 +78,7 @@ export class BreakpointMap {
     }
 
     public verifyBreakpoint(path: string, breakpoint: DebugProtocol.SourceBreakpoint): [number, DebugProtocol.Breakpoint] {
+        path = normalizePath(path);
         const breakpoints = this.fileMap[path];
 
         let best: [number, DebugProtocol.Breakpoint];
@@ -95,9 +114,9 @@ export class StoppedState {
     private _vars: { [index: number]: Lazy<DebugProtocol.Variable[]> } = {};
     private _globalScope: DebugProtocol.Scope;
 
-    constructor(private _message: pxsim.DebuggerBreakpointMessage, private _map: BreakpointMap, private _dir: string) {
+    constructor(private _message: pxsim.DebuggerBreakpointMessage, private _map: BreakpointMap, private driver: SimDriver) {
         const globalId = this.nextId();
-        this._vars[globalId] = this.getVariableValues(this._message.globals);
+        this._vars[globalId] = this.getScopeVariables(this._message.globals);
         this._globalScope = {
             name: "Globals",
             variablesReference: globalId,
@@ -137,7 +156,7 @@ export class StoppedState {
 
         if (frame) {
             const localId = this.nextId();
-            this._vars[localId] = this.getVariableValues(frame.locals);
+            this._vars[localId] = this.getScopeVariables(frame.locals);
             return [{
                 name: "Locals",
                 variablesReference: localId,
@@ -151,47 +170,60 @@ export class StoppedState {
     /**
      * Returns variable information (and object properties)
      */
-    getVariables(variablesReference: number): DebugProtocol.Variable[] {
+    async getVariables(variablesReference: number): Promise<DebugProtocol.Variable[]> {
         const lz = this._vars[variablesReference];
-        return (lz && lz.value) || [];
+        if (lz) {
+            return lz.value;
+        }
+        return [];
     }
 
-    private getVariableValues(v: pxsim.Variables): Lazy<DebugProtocol.Variable[]> {
-        return new Lazy(() => {
-            const result: DebugProtocol.Variable[] = [];
+    private getVariableReferences(id: number): Lazy<DebugProtocol.Variable[]> {
+        return new Lazy(async () => {
+            const vars = await this.driver.variablesAsync(id);
 
-            for (const name in v) {
-                const value = v[name];
-                let vString: string;
-                let variablesReference = 0;
-
-                if (value === null) {
-                    vString = "null";
-                }
-                else if (value === undefined) {
-                    vString = "undefined"
-                }
-                else if (typeof value === "object") {
-                    vString = "(object)";
-                    variablesReference = this.nextId();
-                    // Variables should be requested lazily, so reference loops aren't an issue
-                    this._vars[variablesReference] = this.getVariableValues(value);
-                }
-                else {
-                    vString = value.toString();
-                }
-
-                // Remove the metadata from the name
-                const displayName = name.substr(0, name.lastIndexOf("___"));
-
-                result.push({
-                    name: displayName,
-                    value: vString,
-                    variablesReference
-                });
-            }
-            return result;
+            return this.getVariableValues(vars.variables);
         });
+    }
+
+    private getVariableValues(v: pxsim.Variables): DebugProtocol.Variable[] {
+        const result: DebugProtocol.Variable[] = [];
+
+        for (const name of Object.keys(v)) {
+            const value = v[name];
+            let vString: string;
+            let variablesReference = 0;
+
+            if (value === null) {
+                vString = "null";
+            }
+            else if (value === undefined) {
+                vString = "undefined"
+            }
+            else if (typeof value === "object") {
+                vString = value.preview;
+                variablesReference = this.nextId();
+                // Variables should be requested lazily, so reference loops aren't an issue
+                this._vars[variablesReference] = this.getVariableReferences(value.id);
+            }
+            else {
+                vString = value.toString();
+            }
+
+            // Remove the metadata from the name
+            const displayName = name.indexOf("___") > -1 ? name.substr(0, name.lastIndexOf("___")) : name;
+
+            result.push({
+                name: displayName,
+                value: vString,
+                variablesReference
+            });
+        }
+        return result;
+    }
+
+    private getScopeVariables(v: pxsim.Variables) {
+        return new Lazy(async() => this.getVariableValues(v));
     }
 
     private nextId(): number {
@@ -200,12 +232,12 @@ export class StoppedState {
 }
 
 export class Lazy<T> {
-    private _value: T | undefined;
+    private _value: Promise<T> | undefined;
     private _evaluated = false;
 
-    constructor(private _func: () => T) { }
+    constructor(private _func: () => Promise<T>) { }
 
-    get value(): T {
+    get value(): Promise<T> {
         if (!this._evaluated) {
             this._value = this._func();
             this._evaluated = true;

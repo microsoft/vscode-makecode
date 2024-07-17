@@ -1,4 +1,4 @@
-import { ContinuedEvent, DebugSession, StoppedEvent, TerminatedEvent } from "@vscode/debugadapter";
+import { ContinuedEvent, DebugSession, InitializedEvent, StoppedEvent, TerminatedEvent } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { StoppedState, BreakpointMap } from "./state";
 import * as path from "path-browserify";
@@ -19,6 +19,7 @@ export class SimDebugSession extends DebugSession {
 
     private breakpoints?: BreakpointMap;
     private driver: SimDriver;
+    private startPromise: Promise<void>
 
     constructor() {
         super();
@@ -29,6 +30,8 @@ export class SimDebugSession extends DebugSession {
         this.driver.addEventListener("warning", w => this.onDebuggerWarning(w));
         this.driver.addEventListener("resume", () => this.onDebuggerResume());
         this.driver.addEventListener("stateChange", s => this.onStateChanged(s));
+
+        this.startPromise = this.startSimulator();
     }
 
     dispose() {
@@ -37,21 +40,79 @@ export class SimDebugSession extends DebugSession {
     }
 
     protected initializeRequest(response: DebugProtocol.InitializeResponse, args: DebugProtocol.InitializeRequestArguments): void {
-        if (!response.body) response.body = {};
-        response.body.supportsConditionalBreakpoints = false;
-        response.body.supportsHitConditionalBreakpoints = false;
-        response.body.supportsFunctionBreakpoints = false;
-        response.body.supportsEvaluateForHovers = false;
-        response.body.supportsStepBack = false;
-        response.body.supportsSetVariable = false;
-        response.body.supportsRestartFrame = false;
-        response.body.supportsStepInTargetsRequest = false;
-        response.body.supportsGotoTargetsRequest = false;
-        response.body.supportsCompletionsRequest = false;
 
-        // This default debug adapter implements the 'configurationDone' request.
-        response.body.supportsConfigurationDoneRequest = true;
+		// if (args.supportsProgressReporting) {
+		// 	this._reportProgress = true;
+		// }
+		// if (args.supportsInvalidatedEvent) {
+		// 	this._useInvalidatedEvent = true;
+		// }
 
+		// build and return the capabilities of this debug adapter:
+		response.body = response.body || {};
+
+		// the adapter implements the configurationDone request.
+		response.body.supportsConfigurationDoneRequest = true;
+
+		// make VS Code use 'evaluate' when hovering over source
+		response.body.supportsEvaluateForHovers = false;
+
+		// make VS Code show a 'step back' button
+		response.body.supportsStepBack = false;
+
+		// make VS Code support data breakpoints
+		response.body.supportsDataBreakpoints = false;
+
+		// make VS Code support completion in REPL
+		response.body.supportsCompletionsRequest = false;
+
+		// make VS Code send cancel request
+		response.body.supportsCancelRequest = true;
+
+		// make VS Code send the breakpointLocations request
+		response.body.supportsBreakpointLocationsRequest = false;
+
+		// make VS Code provide "Step in Target" functionality
+		response.body.supportsStepInTargetsRequest = false;
+
+		// the adapter defines two exceptions filters, one with support for conditions.
+		response.body.supportsExceptionFilterOptions = false;
+
+		// make VS Code send exceptionInfo request
+		response.body.supportsExceptionInfoRequest = false;
+
+		// make VS Code send setVariable request
+		response.body.supportsSetVariable = false;
+
+		// make VS Code send setExpression request
+		response.body.supportsSetExpression = false;
+
+		// make VS Code send disassemble request
+		response.body.supportsDisassembleRequest = false;
+		response.body.supportsSteppingGranularity = false;
+		response.body.supportsInstructionBreakpoints = false;
+
+		// make VS Code able to read and write variable memory
+		response.body.supportsReadMemoryRequest = false;
+		response.body.supportsWriteMemoryRequest = false;
+
+		response.body.supportSuspendDebuggee = false;
+		response.body.supportTerminateDebuggee = false;
+		response.body.supportsFunctionBreakpoints = false;
+		response.body.supportsDelayedStackTraceLoading = false;
+
+		this.sendResponse(response);
+
+		// since this debug adapter can accept configuration requests like 'setBreakpoint' at any time,
+		// we request them early by sending an 'initializeRequest' to the frontend.
+		// The frontend will end the configuration sequence by calling 'configurationDone' request.
+
+        this.startPromise.then(() => {
+            this.sendEvent(new InitializedEvent());
+        })
+	}
+
+    protected configurationDoneRequest(response: DebugProtocol.ConfigurationDoneResponse, args: DebugProtocol.ConfigurationDoneArguments, request?: DebugProtocol.Request): void {
         this.sendResponse(response);
     }
 
@@ -69,7 +130,7 @@ export class SimDebugSession extends DebugSession {
         }
 
         try {
-            await this.driver.start();
+            await this.startPromise;
             this.sendResponse(response);
         }
         catch (e) {
@@ -84,7 +145,7 @@ export class SimDebugSession extends DebugSession {
 
         args.breakpoints!.forEach(requestedBp => {
             if (this.breakpoints) {
-                const [id, bp] = this.breakpoints.verifyBreakpoint(path.relative(this.projectDir!, args.source!.path!), requestedBp);
+                const [id, bp] = this.breakpoints.verifyBreakpoint(args.source!.path!, requestedBp);
                 response.body.breakpoints.push(bp);
 
                 if (bp.verified) {
@@ -147,9 +208,10 @@ export class SimDebugSession extends DebugSession {
         this.sendResponse(response);
     }
 
-    protected variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments): void {
+    protected async variablesRequest(response: DebugProtocol.VariablesResponse, args: DebugProtocol.VariablesArguments) {
         if (this.state) {
-            response.body = { variables: this.state.getVariables(args.variablesReference) };
+            const variables = await this.state.getVariables(args.variablesReference);
+            response.body = { variables };
         }
 
         this.sendResponse(response);
@@ -157,7 +219,7 @@ export class SimDebugSession extends DebugSession {
 
     private onDebuggerBreakpoint(breakMsg: pxsim.DebuggerBreakpointMessage) {
         this.lastBreak = breakMsg;
-        this.state = new StoppedState(this.lastBreak, this.breakpoints!, this.projectDir!);
+        this.state = new StoppedState(this.lastBreak, this.breakpoints!, this.driver);
 
         if (breakMsg.exceptionMessage) {
             const message = breakMsg.exceptionMessage.replace(/___\d+/g, '');
@@ -203,5 +265,32 @@ export class SimDebugSession extends DebugSession {
             bp.column = this.convertDebuggerColumnToClient(bp.column!);
             bp.endColumn = this.convertDebuggerColumnToClient(bp.endColumn!);
         }
+    }
+
+    private async startSimulator() {
+        const pxtBreakpoints = await this.driver.start();
+
+        const breakpoints: [number, DebugProtocol.Breakpoint][] = [];
+
+        // The breakpoints are in the format returned by the compiler
+        // and need to be converted to the format used by the DebugProtocol
+        for (const bp of pxtBreakpoints) {
+            breakpoints.push([
+                bp.id,
+                {
+                    verified: true,
+                    line: bp.line,
+                    column: bp.column,
+                    endLine: bp.endLine,
+                    endColumn: bp.endColumn,
+                    source: {
+                        path: bp.fileName
+                    }
+                }
+            ]);
+        }
+
+        this.breakpoints = new BreakpointMap(breakpoints);
+        this.fixBreakpoints();
     }
 }

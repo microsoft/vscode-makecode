@@ -20,9 +20,11 @@ export function createVsCodeHost(): Host {
         createLanguageServiceAsync: async (editor) => new BrowserLanguageService(editor),
         getDeployDrivesAsync: async () => [],
         getEnvironmentVariable: () => "",
-        exitWithStatus: code => {
-            throw new Error(`Exit with status ${code}`);
-        },
+        exitWithStatus: ((code: number) => {
+            if (code) {
+                throw new Error(`Exit with status ${code}`);
+            }
+        }) as any,
         bufferToString: buffer => new TextDecoder().decode(buffer),
         stringToBuffer
     };
@@ -237,4 +239,11 @@ export async function findFilesAsync(extension: string, root: vscode.Uri, matchW
     }
 
     return result;
+}
+
+export function normalizePath(filePath: string) {
+    const folderPath = activeWorkspace().uri.fsPath.replace(/\\/g, "/").replace(/^c:/i, "");
+    filePath = filePath.replace(/\\/g, "/").replace(/^c:/i, "");
+
+    return path.relative(folderPath, filePath);;
 }

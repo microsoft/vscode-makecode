@@ -2,6 +2,8 @@ import { chooseWorkspaceAsync } from "../extension";
 import { buildProjectAsync } from "../makecodeOperations";
 import { Simulator } from "../simulator";
 import * as vscode from "vscode";
+import { PxtBreakpoint } from "./state";
+import { DebugProtocol } from "@vscode/debugprotocol";
 
 export enum SimulatorState {
     Unloaded,
@@ -39,6 +41,8 @@ export class SimDriver implements vscode.Disposable {
     protected breakpointsSet = false;
     protected disposables: vscode.Disposable[] = [];
     protected simulator: Simulator | undefined;
+    protected seq = 1000;
+    protected pendingMessages: {[index: number]: [pxsim.DebuggerMessage, (resp: any) => void]} = {};
 
     constructor() {
         this.handlers = {
@@ -49,8 +53,8 @@ export class SimDriver implements vscode.Disposable {
         };
     }
 
-    async start() {
-        if (this.simulator) return;
+    async start(): Promise<PxtBreakpoint[]> {
+        if (this.simulator) return [];
 
         const workspace = await chooseWorkspaceAsync("project");
 
@@ -58,7 +62,7 @@ export class SimDriver implements vscode.Disposable {
             throw new Error("No workspace selected");
         }
 
-        const result = await buildProjectAsync(workspace, { debug: true });
+        const result = await buildProjectAsync(workspace, { emitBreakpoints: true, watch: true, javaScript: true });
 
         if (!result?.success) {
             throw new Error("Build failed");
@@ -81,6 +85,8 @@ export class SimDriver implements vscode.Disposable {
         this.disposables.push(panel);
 
         await this.simulator.simulateAsync(binary);
+
+        return (result as any).breakpoints;
     }
 
     addEventListener<K extends keyof SimulatorEventMap>(event: K, handler: (ev: SimulatorEventMap[K]) => void): void {
@@ -131,11 +137,28 @@ export class SimDriver implements vscode.Disposable {
         } as pxsim.DebuggerConfigMessage)
     }
 
+    public async variablesAsync(id: number, fields?: string[]): Promise<pxsim.VariablesMessage> {
+        const resp = await this.sendRequestAsync({
+            type: "debugger",
+            source: MESSAGE_SOURCE,
+            subtype: "variables",
+            variablesReference: id as unknown,
+            fields
+        } as pxsim.VariablesRequestMessage);
+
+        return resp;
+    }
+
     dispose() {
         for (const disposable of this.disposables) disposable.dispose();
     }
 
     protected handleSimMessage(message: pxsim.SimulatorMessage) {
+        if ((message as pxsim.DebuggerMessage).req_seq) {
+            const [original, resolve] = this.pendingMessages[(message as pxsim.DebuggerMessage).req_seq!];
+            resolve(message);
+            delete this.pendingMessages[(message as pxsim.DebuggerMessage).req_seq!]
+        }
         switch (message.type) {
             case "debugger":
                 this.handleDebuggerMessage(message as pxsim.DebuggerMessage);
@@ -186,5 +209,14 @@ export class SimDriver implements vscode.Disposable {
 
     protected fireEvent<K extends keyof SimulatorEventMap>(event: K, ev: SimulatorEventMap[K]) {
         for (const handler of this.handlers[event]) handler(ev);
+    }
+
+    protected sendRequestAsync(request: pxsim.DebuggerMessage) {
+        return new Promise<any>(resolve => {
+            request.seq = this.seq++;
+
+            this.pendingMessages[request.seq] = [request, resolve];
+            this.simulator!.postMessage(request);
+        });
     }
 }
