@@ -18,7 +18,7 @@ export interface HardwareVariant {
 }
 
 export async function getHardwareVariantsAsync(workspace: vscode.WorkspaceFolder) {
-    const variants = await listHardwareVariantsAsync(workspace);
+    const variants = (await listHardwareVariantsAsync(workspace))!;
 
     if (variants.length === 1) return [];
 

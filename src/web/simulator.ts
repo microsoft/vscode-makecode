@@ -11,6 +11,7 @@ export class Simulator {
     public static currentSimulator: Simulator | undefined;
     public simState: any;
     public simStateTimer: any;
+
     private static simconsole: vscode.OutputChannel;
 
     public static register(extCtx: vscode.ExtensionContext) {
@@ -55,8 +56,10 @@ export class Simulator {
     protected panel: vscode.WebviewPanel;
     protected binaryJS: string | undefined;
     protected disposables: vscode.Disposable[];
+    protected eventEmitter: vscode.EventEmitter<pxsim.SimulatorMessage> = new vscode.EventEmitter();
+    event = this.eventEmitter.event;
 
-    private constructor(panel: vscode.WebviewPanel) {
+    constructor(panel: vscode.WebviewPanel) {
         this.panel = panel;
 
         this.panel.webview.onDidReceiveMessage(message => {
@@ -71,7 +74,9 @@ export class Simulator {
             this.disposables.forEach(d => d.dispose());
         });
 
-        this.disposables = [];
+        this.disposables = [
+            this.eventEmitter
+        ];
     }
 
     async simulateAsync(binaryJS: string) {
@@ -105,7 +110,7 @@ export class Simulator {
             case "bulkserial":
                 const data: { data: string, time: number }[] = message.data;
                 for (const entry of data) {
-                    Simulator.simconsole.appendLine(entry.data);
+                    this.logConsole(entry.data);
                 }
                 break;
             case "debugger":
@@ -116,11 +121,14 @@ export class Simulator {
                         stackTrace += `   at ${fi.functionName} (${fi.fileName
                             }:${fi.line + 1}:${fi.column + 1})\n`;
                     }
-                    Simulator.simconsole.appendLine(stackTrace);
+                    this.logConsole(stackTrace);
                     Simulator.simconsole.show(false);
                     this.stopSimulator();
                 }
+                break;
         }
+
+        this.eventEmitter.fire(message);
     }
 
     postMessage(msg: any) {
@@ -130,6 +138,13 @@ export class Simulator {
 
     addDisposable(d: vscode.Disposable) {
         this.disposables.push(d);
+    }
+
+    logConsole(message: string) {
+        if (!Simulator.simconsole) {
+            Simulator.simconsole = vscode.window.createOutputChannel("MakeCode");
+        }
+        Simulator.simconsole.appendLine(message);
     }
 }
 

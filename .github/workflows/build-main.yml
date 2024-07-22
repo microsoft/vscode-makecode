@@ -18,20 +18,17 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '16.x'
-      - name: yarn install
-        uses: bahmutov/npm-install@v1
-        with:
-          install-command: yarn install
+      - run: npm ci
       - name: Linting
-        run: yarn lint
+        run: npm run lint
       - name: Compiling
-        run: yarn compile-web
+        run: npm run compile-web
       - name: Testing
-        run: xvfb-run -a yarn test
+        run: xvfb-run -a npm run test
       - name: Production webpack
-        run: yarn package-web
+        run: npm run package-web
       - name: Build vsix
-        run: npx -p=vsce vsce package --yarn --out vscode-makecode-arcade.vsix
+        run: npx -p=vsce vsce package --out vscode-makecode-arcade.vsix
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:

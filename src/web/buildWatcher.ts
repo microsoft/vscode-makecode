@@ -162,6 +162,8 @@ export class BuildWatcher {
                     const result = await buildProjectAsync(this.folder!, this.buildOpts, token?.token);
                     token?.dispose();
 
+                    if (!result) return;
+
                     if (result.diagnostics.length) {
                         reportBuildErrors(result);
                         for (const errorHandler of this.errorListeners) {
