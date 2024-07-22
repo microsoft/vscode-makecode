@@ -12,8 +12,7 @@
 			"request": "launch",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--extensionDevelopmentKind=web",
-				"C:\\Users\\riknoll\\OneDrive - Microsoft\\Documents\\vscode-test10"
+				"--extensionDevelopmentKind=web"
 			],
 			"outFiles": [
 				"${workspaceFolder}/dist/web/**/*.js"

@@ -125,7 +125,7 @@ export class SimDebugSession extends DebugSession {
         if (!this.projectDir) {
             this.projectDir = path.normalize(args.projectDir);
             if (this.breakpoints) {
-                this.fixBreakpoints();
+                this.convertDebuggerBreakpointsToClient();
             }
         }
 
@@ -231,6 +231,7 @@ export class SimDebugSession extends DebugSession {
     }
 
     private onDebuggerWarning(warnMsg: pxsim.DebuggerWarningMessage) {
+        console.warn("Debugger Warning: ", warnMsg);
     }
 
     private onDebuggerResume() {
@@ -254,7 +255,7 @@ export class SimDebugSession extends DebugSession {
         }
     }
 
-    private fixBreakpoints() {
+    private convertDebuggerBreakpointsToClient() {
         // Fix breakpoint locations from the debugger's format to the client's
         for (const bpId in this.breakpoints!.idMap) {
             const bp = this.breakpoints!.idMap[bpId];
@@ -291,6 +292,6 @@ export class SimDebugSession extends DebugSession {
         }
 
         this.breakpoints = new BreakpointMap(breakpoints);
-        this.fixBreakpoints();
+        this.convertDebuggerBreakpointsToClient();
     }
 }

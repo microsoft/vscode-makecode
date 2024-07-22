@@ -3,7 +3,6 @@ import { buildProjectAsync } from "../makecodeOperations";
 import { Simulator } from "../simulator";
 import * as vscode from "vscode";
 import { PxtBreakpoint } from "./state";
-import { DebugProtocol } from "@vscode/debugprotocol";
 
 export enum SimulatorState {
     Unloaded,
@@ -26,7 +25,7 @@ export enum SimulatorDebuggerCommand {
 interface SimulatorEventMap {
     "breakpoint": pxsim.DebuggerBreakpointMessage;
     "warning": pxsim.DebuggerWarningMessage;
-    "resume": undefined;
+    "resume": never;
     "stateChange": SimulatorState;
 }
 
