@@ -14,13 +14,10 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: '16.x'
-      - name: yarn install
-        uses: bahmutov/npm-install@v1
-        with:
-          install-command: yarn install
+      - run: npm install
       - name: Linting
-        run: yarn lint
+        run: npm run lint
       - name: Compiling
-        run: yarn compile-web
+        run: npm run compile-web
       - name: Testing
-        run: xvfb-run -a yarn test
+        run: xvfb-run -a npm run test
