@@ -338,7 +338,7 @@
     ]
   },
   "scripts": {
-    "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
+    "test": "npx playwright install && vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
     "pretest": "npm run compile-web",
     "vscode:prepublish": "npm run package-web",
     "compile-web": "webpack",
