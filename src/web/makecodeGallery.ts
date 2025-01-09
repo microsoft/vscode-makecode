@@ -4,7 +4,7 @@ import { httpRequestCoreAsync } from "./host";
 import { listHardwareVariantsAsync } from "./makecodeOperations";
 import { readTextFileAsync } from "./util";
 
-const apiRoot = "https://pxt.azureedge.net";
+const apiRoot = "https://cdn.makecode.com";
 
 const disallowedHardwareVariants = [
     "Arcade table",
