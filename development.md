@@ -58,9 +58,9 @@ Make sure you run `yarn compile` inside of `makecode-core` and `makecode-browser
 
 The extension is published through an Azure DevOps Pipeline: [vscode-makecode release publishing pipeline](https://dev.azure.com/devdiv/DevDiv/_build?definitionId=18132)
 
-Click "Run Pipeline" in the upper left, then check or uncheck the `isPrerelease` box in the flyout that appears, depending on which you are releasing. The other fields should be okay with their default values.
+Click "Run Pipeline" in the upper right, then check (or uncheck) the `isPrerelease` box in the flyout that appears as needed. The other fields should be okay with their default values.
 
-You will likely need to update the PAT we use to auth to the vscode marketplace. To do this:
+You will likely need to update the PAT used to auth to the vscode marketplace. To do this:
 1. Go to your Azure DevOps User Settings -> Personal Access Tokens ([here](https://dev.azure.com/devdiv/_usersSettings/tokens)).
 2. Create a new PAT. Set the scope to "Custom Defined" and then scroll down to "Marketplace" and give "Read", "Publish", and "Manage" permissions to the PAT.
 3. With the new PAT, go to the "makecode-marketplace-pat" variable group under Pipelines -> Library. ([here](https://dev.azure.com/devdiv/DevDiv/_library?itemType=VariableGroups&view=VariableGroupView&variableGroupId=462&path=makecode-marketplace-pat))
