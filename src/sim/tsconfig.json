@@ -2,19 +2,16 @@
 	"compilerOptions": {
 		"module": "commonjs",
 		"target": "ES2020",
-		"outDir": "dist",
+		"outDir": "../../dist/sim",
 		"lib": [
-			"ES2020", "WebWorker"
+			"ES2020", "DOM"
 		],
 		"sourceMap": true,
-		"rootDir": "src",
+		"rootDir": ".",
 		"strict": true   /* enable all strict type-checking options */
 		/* Additional Checks */
 		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
 		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
 		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
-	},
-	"exclude": [
-		"./src/sim"
-	]
+	}
 }

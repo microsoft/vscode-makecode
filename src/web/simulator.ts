@@ -1,8 +1,11 @@
+/// <reference path="../localtypings/simulatorExtensionMessages.d.ts" />
+
 import * as vscode from "vscode";
 
 import { simloaderFiles } from "makecode-core/built/simloaderfiles";
-import { existsAsync, readFileAsync } from "./host";
+import { activeWorkspace, existsAsync, readFileAsync } from "./host";
 import { simulateCommand } from "./extension";
+import { getTargetConfigAsync } from "./makecodeOperations";
 
 let extensionContext: vscode.ExtensionContext;
 
@@ -77,7 +80,7 @@ export class Simulator {
     async simulateAsync(binaryJS: string) {
         this.binaryJS = binaryJS;
         this.panel.webview.html = "";
-        const simulatorHTML = await getSimHtmlAsync();
+        const simulatorHTML = await getSimHtmlAsync(this.panel.webview);
         if (this.simState == null) {
             this.simState = await extensionContext.workspaceState.get("simstate", {});
         }
@@ -120,6 +123,10 @@ export class Simulator {
                     Simulator.simconsole.show(false);
                     this.stopSimulator();
                 }
+                break;
+            case "simulator-extension":
+                this.handleSimExtensionMessage(message);
+                break;
         }
     }
 
@@ -128,8 +135,39 @@ export class Simulator {
         this.panel.webview.postMessage(msg);
     }
 
+    protected postResponse(msg: SimulatorExtensionResponse) {
+        this.panel.webview.postMessage(msg);
+    }
+
     addDisposable(d: vscode.Disposable) {
         this.disposables.push(d);
+    }
+
+    protected async handleSimExtensionMessage(message: SimulatorExtensionMessage) {
+        switch (message.action) {
+            case "targetConfig":
+                await this.handleTargetConfigRequestAsync(message);
+                break;
+        }
+    }
+
+    protected async handleTargetConfigRequestAsync(message: TargetConfigMessage) {
+        try {
+            const config = await getTargetConfigAsync(activeWorkspace());
+            this.postResponse({
+                ...message,
+                id: message.id!,
+                success: true,
+                config
+            });
+        }
+        catch (e) {
+            this.postResponse({
+                ...message,
+                id: message.id!,
+                success: false,
+            });
+        }
     }
 }
 
@@ -141,17 +179,28 @@ export class SimulatorSerializer implements vscode.WebviewPanelSerializer {
     }
 }
 
-const vscodeExtensionExtraLoaderJs = `
-window.addEventListener("DOMContentLoaded", () => {
-    const fs = document.getElementById("fullscreen");
-    if (fs) {
-        fs.remove();
-    }
-});
-`;
+
+const injectedCss = `
+#root.simx {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+#root.simx iframe {
+    position: relative;
+    height: unset;
+    min-height: 200px;
+    flex-grow: 1;
+}
+`
 
 
-async function getSimHtmlAsync() {
+
+async function getSimHtmlAsync(webview: vscode.Webview) {
     const index = simloaderFiles["index.html"];
     const loaderJs = simloaderFiles["loader.js"];
     let customJs = simloaderFiles["custom.js"];
@@ -164,6 +213,9 @@ async function getSimHtmlAsync() {
         customJs = await readFileAsync("assets/js/" + customPath, "utf8");
     }
 
+    const pathURL = (s: string) =>
+        webview.asWebviewUri(vscode.Uri.joinPath(extensionContext.extensionUri, "resources", s)).toString();
+
     // In order to avoid using a server, we inline the loader and custom js files
     return index.replace(/<\s*script\s+type="text\/javascript"\s+src="([^"]+)"\s*>\s*<\/\s*script\s*>/g, (substring, match) => {
         if (match === "loader.js") {
@@ -171,9 +223,10 @@ async function getSimHtmlAsync() {
             <script type="text/javascript">
                 ${loaderJs}
             </script>
-            <script type="text/javascript">
-                ${vscodeExtensionExtraLoaderJs}
-            </script>
+            <script type="text/javascript" src="${pathURL("sim.js")}"></script>
+            <style>
+                ${injectedCss}
+            </style>
             `;
         }
         else if (match === "custom.js") {
