@@ -3,7 +3,7 @@
   "publisher": "ms-edu",
   "displayName": "Microsoft MakeCode Arcade",
   "description": "Make games and learn code. Create retro arcade style video games, art, and music inside VS Code.",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "engines": {
     "vscode": "^1.75.0"
   },
