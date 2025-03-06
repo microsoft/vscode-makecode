@@ -5,7 +5,6 @@
     window.addEventListener("message", function (m) {
         if (m.data._fromVscode) {
             if (m.data.type === "fetch-html") {
-                console.log(m.data.srcDoc)
                 frame.srcdoc = m.data.srcDoc;
                 return;
             }
