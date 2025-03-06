@@ -4,6 +4,12 @@
 
     window.addEventListener("message", function (m) {
         if (m.data._fromVscode) {
+            if (m.data.type === "fetch-html") {
+                console.log(m.data.srcDoc)
+                frame.srcdoc = m.data.srcDoc;
+                return;
+            }
+
             frame.contentWindow.postMessage(m.data, "*");
 
             if (m.data.type === "open") {
@@ -20,5 +26,9 @@
     });
     document.addEventListener("DOMContentLoaded", function (event) {
         frame = document.getElementById("asset-editor-frame");
+
+        vscode.postMessage({
+            type: "fetch-html"
+        });
     });
 }())
