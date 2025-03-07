@@ -19,9 +19,9 @@
     tslib "^2.6.2"
 
 "@azure/core-rest-pipeline@^1.10.0":
-  version "1.19.0"
-  resolved "https://registry.yarnpkg.com/@azure/core-rest-pipeline/-/core-rest-pipeline-1.19.0.tgz#4cc60d3f2ee68cf0ef379851b4ed175f7932c8c5"
-  integrity sha512-bM3308LRyg5g7r3Twprtqww0R/r7+GyVxj4BafcmVPo4WQoGt5JXuaqxHEFjw2o3rvFZcUPiqJMg6WuvEEeVUA==
+  version "1.19.1"
+  resolved "https://registry.yarnpkg.com/@azure/core-rest-pipeline/-/core-rest-pipeline-1.19.1.tgz#e740676444777a04dc55656d8660131dfd926924"
+  integrity sha512-zHeoI3NCs53lLBbWNzQycjnYKsA1CVKlnzSNuSFcUDwBp8HHVObePxrM7HaX+Ha5Ks639H7chNC9HOaIhNS03w==
   dependencies:
     "@azure/abort-controller" "^2.0.0"
     "@azure/core-auth" "^1.8.0"
@@ -310,11 +310,11 @@
   integrity sha512-4VlGgo32k2EQ2wcCY3vEU28A0O13aOtHz3Xt2/2U5FAh9EfhD6t6DqL5Z6yAnRCntbTFDU4YfbpyzSlHNWycPw==
 
 "@playwright/browser-chromium@^1.48.1":
-  version "1.50.1"
-  resolved "https://registry.yarnpkg.com/@playwright/browser-chromium/-/browser-chromium-1.50.1.tgz#2a5a5e200e6de6b0b6782ffc63e65bc1d48b5753"
-  integrity sha512-odDVeETxPjB/TENtKVpfa/p7ZZ1/awda0tgknSDHNd4R2KrE1vrkNysc3rws3mh2ecQf6UOeI15eaUcNm5YxUg==
+  version "1.51.0"
+  resolved "https://registry.yarnpkg.com/@playwright/browser-chromium/-/browser-chromium-1.51.0.tgz#32b0c6eb0441a7cd85f06e596d0908cef0396316"
+  integrity sha512-ANaU19rQbK+lmmXhvBQQIZ6VHjtMxX99NBPeVBI5G7W/CI35UtWIlnmc+DEknbJd0fBWOhtWAzIBhFpDVgtWpA==
   dependencies:
-    playwright-core "1.50.1"
+    playwright-core "1.51.0"
 
 "@types/eslint-scope@^3.7.7":
   version "3.7.7"
@@ -365,9 +365,9 @@
   integrity sha512-I8EUhyrgfLrcTkzV3TSsGyl1tSuPrEDzr0yd5m90UgNxQkyDXULk3b6MlQqTCpZpNtWe1K0hzclnZkTcLBe2UQ==
 
 "@types/vscode@^1.74.0":
-  version "1.97.0"
-  resolved "https://registry.yarnpkg.com/@types/vscode/-/vscode-1.97.0.tgz#62ce3a32243019aaa4fc20cee2a3de06bc71af4f"
-  integrity sha512-ueE73loeOTe7olaVyqP9mrRI54kVPJifUPjblZo9fYcv1CuVLPOEKEkqW0GkqPC454+nCEoigLWnC2Pp7prZ9w==
+  version "1.98.0"
+  resolved "https://registry.yarnpkg.com/@types/vscode/-/vscode-1.98.0.tgz#5b6fa5bd99ba15313567d3847fb1177832fee08c"
+  integrity sha512-+KuiWhpbKBaG2egF+51KjbGWatTH5BbmWQjSLMDCssb4xF8FJnW4nGH4nuAdOOfMbpD0QlHtI+C3tPq+DoKElg==
 
 "@types/webpack-env@^1.18.0":
   version "1.18.8"
@@ -673,9 +673,9 @@ acorn-jsx@^5.3.2:
   integrity sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==
 
 acorn@^8.14.0, acorn@^8.8.2, acorn@^8.9.0:
-  version "8.14.0"
-  resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.14.0.tgz#063e2c70cac5fb4f6467f0b11152e04c682795b0"
-  integrity sha512-cl669nCJTZBsL97OF4kUQm5g5hC2uihk0NxY3WENAC0TYdILVkAyHymAntgxGkl7K+t0cXIrH5siy5S4XkFycA==
+  version "8.14.1"
+  resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.14.1.tgz#721d5dc10f7d5b5609a891773d47731796935dfb"
+  integrity sha512-OvQ/2pUDKmgfCg++xsTX1wGxfTaszcHVcTctW4UJB4hibJx2HXxxO5UmVgyjMa+ZDsiaf5wWLXYpRWMmBI0QHg==
 
 agent-base@^7.1.0, agent-base@^7.1.2:
   version "7.1.3"
@@ -1247,9 +1247,9 @@ ee-first@1.1.1:
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
 electron-to-chromium@^1.5.73:
-  version "1.5.112"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.112.tgz#8d3d95d4d5653836327890282c8eda5c6f26626d"
-  integrity sha512-oen93kVyqSb3l+ziUgzIOlWt/oOuy4zRmpwestMn4rhFWAoFJeFuCVte9F2fASjeZZo7l/Cif9TiyrdW4CwEMA==
+  version "1.5.113"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.113.tgz#1175b8ba4170541e44e9afa8b992e5bbfff0d150"
+  integrity sha512-wjT2O4hX+wdWPJ76gWSkMhcHAV2PTMX+QetUCPYEdCIe+cxmgzzSSiGRCKW8nuh4mwKZlpv0xvoW7OF2X+wmHg==
 
 emitter-listener@^1.0.1, emitter-listener@^1.1.1:
   version "1.1.2"
@@ -2167,17 +2167,17 @@ lru-cache@^11.0.0:
   resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-11.0.2.tgz#fbd8e7cf8211f5e7e5d91905c415a3f55755ca39"
   integrity sha512-123qHRfJBmo2jXDbo/a5YOQrJoHF/GNQTLzQ5+IdK5pWpceK17yRc6ozlWd25FxvGKQbIUs91fDFkXmDHTKcyA==
 
-makecode-browser@^1.3.1:
-  version "1.3.1"
-  resolved "https://registry.yarnpkg.com/makecode-browser/-/makecode-browser-1.3.1.tgz#e762dabf7565af8ea8df9c873ea70a61bdf2b441"
-  integrity sha512-VIlr4GG7Iz7om7b7Qz46Q1y+8h7RVgKB6S0ZpBhsPJbjM6cEDmAYWydGhq8NNFe/+NFAlSlnAnjQdbCklmpfuQ==
+makecode-browser@^1.3.2:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/makecode-browser/-/makecode-browser-1.3.2.tgz#655f1a62da2064e9aebd93c06df7e4011f7ea28b"
+  integrity sha512-mZ8Kpt3Ft/ls2Tpdb4YAJQSWffC4rDtdaW+Yh9HTVzfMgqwzd/cfxBgKGbvyFcFIONLU04fyjn8Jz5Ttn307Nw==
   dependencies:
-    makecode-core "^1.7.0"
+    makecode-core "^1.7.1"
 
-makecode-core@^1.7.0:
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.7.0.tgz#69cbe2a5c49e20356e606557e21d1e7da9d7f674"
-  integrity sha512-DTdqebx3XvFkAlj8uYViDj4lhBa0h3DFPC13mcFwWSTuLtPcqC92oDY1DfnMUGAbf808MQtwNg9r7y5sC0aE9Q==
+makecode-core@^1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.7.1.tgz#42b69d6bcc4f64e9c6f46ebfd91fa4568c509915"
+  integrity sha512-RM+wRcKsaO+KtIlYExFkjAlVQNcDrn4zRVHMUmahyyT9jRnYhWwb2w+wD3+tbCs/5vcmFTDsW4nd8O4MqFUkxg==
   dependencies:
     "@xmldom/xmldom" "^0.9.8"
     chalk "^4.1.2"
@@ -2522,17 +2522,17 @@ pkg-dir@^4.2.0:
   dependencies:
     find-up "^4.0.0"
 
-playwright-core@1.50.1:
-  version "1.50.1"
-  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.50.1.tgz#6a0484f1f1c939168f40f0ab3828c4a1592c4504"
-  integrity sha512-ra9fsNWayuYumt+NiM069M6OkcRb1FZSK8bgi66AtpFoWkg2+y0bJSNmkFrWhMbEBbVKC/EruAHH3g0zmtwGmQ==
+playwright-core@1.51.0:
+  version "1.51.0"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.51.0.tgz#bb23ea6bb6298242d088ae5e966ffcf8dc9827e8"
+  integrity sha512-x47yPE3Zwhlil7wlNU/iktF7t2r/URR3VLbH6EknJd/04Qc/PSJ0EY3CMXipmglLG+zyRxW6HNo2EGbKLHPWMg==
 
 playwright@^1.48.1:
-  version "1.50.1"
-  resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.50.1.tgz#2f93216511d65404f676395bfb97b41aa052b180"
-  integrity sha512-G8rwsOQJ63XG6BbKj2w5rHeavFjy5zynBA9zsJMMtBoe/Uf757oG12NXz6e6OirF7RCrTVAKFXbLmn1RbL7Qaw==
+  version "1.51.0"
+  resolved "https://registry.yarnpkg.com/playwright/-/playwright-1.51.0.tgz#9ba154497ba62bc6dc199c58ee19295eb35a4707"
+  integrity sha512-442pTfGM0xxfCYxuBa/Pu6B2OqxqqaYq39JS8QDMGThUvIOCd6s0ANDog3uwA0cHavVlnTQzGCN7Id2YekDSXA==
   dependencies:
-    playwright-core "1.50.1"
+    playwright-core "1.51.0"
   optionalDependencies:
     fsevents "2.3.2"
 
@@ -2942,9 +2942,9 @@ tar-stream@^3.1.5:
     streamx "^2.15.0"
 
 terser-webpack-plugin@^5.3.11:
-  version "5.3.12"
-  resolved "https://registry.yarnpkg.com/terser-webpack-plugin/-/terser-webpack-plugin-5.3.12.tgz#d9518c80493081bace668aa8613b22e4a838810c"
-  integrity sha512-jDLYqo7oF8tJIttjXO6jBY5Hk8p3A8W4ttih7cCEq64fQFWmgJ4VqAQjKr7WwIDlmXKEc6QeoRb5ecjZ+2afcg==
+  version "5.3.14"
+  resolved "https://registry.yarnpkg.com/terser-webpack-plugin/-/terser-webpack-plugin-5.3.14.tgz#9031d48e57ab27567f02ace85c7d690db66c3e06"
+  integrity sha512-vkZjpUjb6OMS7dhV+tILUW6BhpDR7P2L/aQSAv+Uwk+m8KATX9EccViHTJR2qDtACKPIYndLGCyl3FMo+r2LMw==
   dependencies:
     "@jridgewell/trace-mapping" "^0.3.25"
     jest-worker "^27.4.5"

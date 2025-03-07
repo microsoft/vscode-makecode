@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { activeWorkspace, findFilesAsync, readFileAsync, writeFileAsync } from "./host";
 import { syncJResAsync } from "./jres";
 import { readTextFileAsync, throttle } from "./util";
+import { getAssetEditorHtmlAsync } from "./makecodeOperations";
 
 let extensionContext: vscode.ExtensionContext;
 // const assetUrl = "http://localhost:3232/asseteditor.html";
@@ -70,6 +71,7 @@ export class AssetEditor {
 
     protected panel: vscode.WebviewPanel;
     protected editing: AssetEditorState | undefined;
+    protected assetEditorHtml: string | undefined;
     protected disposables: vscode.Disposable[];
     protected pendingMessages: {[index: string]: (res: any) => void} = {};
     protected nextId = 0;
@@ -137,6 +139,12 @@ export class AssetEditor {
         }
 
         switch (message.type) {
+            case "fetch-html":
+                this.postMessageCore({
+                    type: "fetch-html",
+                    srcDoc: this.assetEditorHtml
+                });
+                break;
             case "event":
                 this.handleSimulatorEventAsync(message);
                 break;
@@ -158,12 +166,11 @@ export class AssetEditor {
     }
 
     sendMessageAsync(message: any) {
-        message._fromVscode = true;
         message.id = this.nextId++;
 
         return new Promise<any>(resolve => {
             this.pendingMessages[message.id] = resolve;
-            this.panel.webview.postMessage(message);
+            this.postMessageCore(message);
         });
     }
 
@@ -171,9 +178,16 @@ export class AssetEditor {
         this.disposables.push(d);
     }
 
+    protected postMessageCore(message: any) {
+        message._fromVscode = true;
+        this.panel.webview.postMessage(message);
+    }
+
     protected async initWebviewHtmlAsync() {
         this.panel.webview.html = "";
-        const simulatorHTML = await getAssetEditorHtmlAsync(this.panel.webview);
+
+        this.assetEditorHtml = await getAssetEditorHtmlAsync(activeWorkspace());;
+        const simulatorHTML = await getAssetEditorLoaderHtmlAsync(this.panel.webview);
         this.panel.webview.html = simulatorHTML;
     }
 
@@ -220,16 +234,14 @@ export class AssetEditorSerializer implements vscode.WebviewPanelSerializer {
 }
 
 
-async function getAssetEditorHtmlAsync(webview: vscode.Webview) {
+async function getAssetEditorLoaderHtmlAsync(webview: vscode.Webview) {
     const uri = vscode.Uri.joinPath(extensionContext.extensionUri, "resources", "assetframe.html");
     const contents = await readTextFileAsync(uri);
 
     const pathURL = (s: string) =>
         webview.asWebviewUri(vscode.Uri.joinPath(extensionContext.extensionUri, "resources", s)).toString();
 
-    return contents
-        .replace(/@RES@\/([\w\-\.]+)/g, (f, fn) => pathURL(fn))
-        .replace("@ASSETURL@", assetUrl);
+    return contents.replace(/@RES@\/([\w\-\.]+)/g, (f, fn) => pathURL(fn));
 }
 
 async function readProjectJResAsync() {
