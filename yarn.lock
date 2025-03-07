@@ -2167,17 +2167,17 @@ lru-cache@^11.0.0:
   resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-11.0.2.tgz#fbd8e7cf8211f5e7e5d91905c415a3f55755ca39"
   integrity sha512-123qHRfJBmo2jXDbo/a5YOQrJoHF/GNQTLzQ5+IdK5pWpceK17yRc6ozlWd25FxvGKQbIUs91fDFkXmDHTKcyA==
 
-makecode-browser@^1.3.2:
-  version "1.3.2"
-  resolved "https://registry.yarnpkg.com/makecode-browser/-/makecode-browser-1.3.2.tgz#655f1a62da2064e9aebd93c06df7e4011f7ea28b"
-  integrity sha512-mZ8Kpt3Ft/ls2Tpdb4YAJQSWffC4rDtdaW+Yh9HTVzfMgqwzd/cfxBgKGbvyFcFIONLU04fyjn8Jz5Ttn307Nw==
+makecode-browser@^1.3.3:
+  version "1.3.3"
+  resolved "https://registry.yarnpkg.com/makecode-browser/-/makecode-browser-1.3.3.tgz#21ace05c31347d5c60771ee3a435ecf6f16037bb"
+  integrity sha512-4n7gkmIQALVuoXSEJgLyf2srEfh6H0Z82isZu2CuHvXbsqEUJziH6MyXdmlv+OJgLHihibWA0cUbs/UPgiSXjQ==
   dependencies:
-    makecode-core "^1.7.1"
+    makecode-core "^1.7.2"
 
-makecode-core@^1.7.1:
-  version "1.7.1"
-  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.7.1.tgz#42b69d6bcc4f64e9c6f46ebfd91fa4568c509915"
-  integrity sha512-RM+wRcKsaO+KtIlYExFkjAlVQNcDrn4zRVHMUmahyyT9jRnYhWwb2w+wD3+tbCs/5vcmFTDsW4nd8O4MqFUkxg==
+makecode-core@^1.7.2:
+  version "1.7.2"
+  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.7.2.tgz#9f35ffa652115f3acf874e575f9758a1299fc3cb"
+  integrity sha512-73/IGqwx3F0gIdS6HUn5n/pAlKuu/brJDaKg2glwPkroj20W3qpn/M1k8yUO5ShWZvy4p6kFt+TAfM9tZwKLHg==
   dependencies:
     "@xmldom/xmldom" "^0.9.8"
     chalk "^4.1.2"
