@@ -2,13 +2,11 @@
 
 Prerequisites:
 1. Install node
-2. Install yarn:
-    `npm install -g yarn`
 
-After you clone the repo, install the dependencies with yarn:
+After you clone the repo, install the dependencies with npm:
 
 ```
-yarn install
+npm install
 ```
 
 ## Running the extension locally
@@ -22,7 +20,7 @@ To debug the webviews in the extension host, run ctrl+shift+i to open the dev to
 To run the extension in the browser, run:
 
 ```
-yarn run-in-browser
+npm run run-in-browser
 ```
 
 ## Creating a vsix file
@@ -44,15 +42,11 @@ vsce package
 If you want to develop using your local clone of [pxt-mkc](https://github.com/microsoft/pxt-mkc), you need to link the `makecode-core` and `makecode-browser` packages.
 
 ```
-cd pxt-mkc/packages/makecode-core
-yarn link
-cd ../makecode-browser
-yarn link
-cd ../../vscode-makecode
-yarn link makecode-core makecode-browser
+npm link ../pxt-mkc/packages/makecode-core ../pxt-mkc/packages/makecode-browser
+cd pxt-mkc/packa
 ```
 
-Make sure you run `yarn compile` inside of `makecode-core` and `makecode-browser` to build the packages!
+Make sure you run `npm run build` inside of `makecode-core` and `makecode-browser` to build the packages!
 
 ## Publishing the Extension
 
