@@ -18,7 +18,7 @@
     "student"
   ],
   "icon": "media/logo-128x128.png",
-  "preview": true,
+  "preview": false,
   "repository": {
     "type": "git",
     "url": "https://github.com/microsoft/vscode-makecode"
