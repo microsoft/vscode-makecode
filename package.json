@@ -330,8 +330,8 @@
   },
   "scripts": {
     "test": "vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --extensionTestsPath=dist/web/test/suite/index.js",
-    "pretest": "yarn run compile-web",
-    "vscode:prepublish": "yarn run package-web",
+    "pretest": "npm run compile-web",
+    "vscode:prepublish": "npm run package-web",
     "compile-web": "webpack",
     "watch-web": "webpack --watch",
     "package-web": "webpack --mode production --devtool hidden-source-map",
