@@ -68,6 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.createAnimation", () => createAssetCommand("animation"));
     addCmd("makecode.createSong", () => createAssetCommand("song"));
     addCmd("makecode.testBlocks", testBlocksCommandAsync);
+    addCmd("makecode.testTutorial", testTutorialCommandAsync);
 
     context.subscriptions.push(
         vscode.commands.registerCommand("makecode.createAsset", createAssetCommand)
@@ -694,6 +695,40 @@ function openHelpDocs() {
 
 async function testBlocksCommandAsync() {
     MakeCodeEditor.createOrShow();
+}
+
+async function testTutorialCommandAsync() {
+    const workspace = await chooseWorkspaceAsync("project");
+    if (!workspace) {
+        return;
+    }
+
+    const pxtJson = await getPxtJson(workspace);
+    const mdFiles = pxtJson.files.filter(fn => fn.toLowerCase().endsWith(".md"));
+    let chosenTutorial: string;
+
+    if (!mdFiles.length) {
+        // no markdown files in project to pick from.
+        return;
+    } else if (mdFiles.length === 1) {
+        chosenTutorial = mdFiles[0];
+    } else {
+        const choice = await vscode.window.showQuickPick(
+            mdFiles,
+            { placeHolder: vscode.l10n.t("Choose a tutorial to preview") }
+        );
+
+        if (choice && mdFiles.indexOf(choice) >= 0) {
+            chosenTutorial = choice;
+        } else {
+            // did not select a tutorial / gave up during quick pick
+            return;
+        }
+    }
+
+    const tutorialUri = vscode.Uri.joinPath(workspace.uri, chosenTutorial);
+
+    MakeCodeEditor.createOrShow(tutorialUri);
 }
 
 // This method is called when your extension is deactivated
