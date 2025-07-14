@@ -5,7 +5,7 @@ import * as vscode from "vscode";
 import { simloaderFiles } from "makecode-core/built/simloaderfiles";
 import { activeWorkspace, existsAsync, readFileAsync } from "./host";
 import { simulateCommand } from "./extension";
-import { getTargetConfigAsync } from "./makecodeOperations";
+import { getSimHtmlAsync, getTargetConfigAsync } from "./makecodeOperations";
 
 let extensionContext: vscode.ExtensionContext;
 
@@ -57,6 +57,7 @@ export class Simulator {
 
     protected panel: vscode.WebviewPanel;
     protected binaryJS: string | undefined;
+    protected simHtml: string | undefined;
     protected disposables: vscode.Disposable[];
 
     private constructor(panel: vscode.WebviewPanel) {
@@ -80,7 +81,8 @@ export class Simulator {
     async simulateAsync(binaryJS: string) {
         this.binaryJS = binaryJS;
         this.panel.webview.html = "";
-        const simulatorHTML = await getSimHtmlAsync(this.panel.webview);
+        const simulatorHTML = await getSimLoaderHtmlAsync(this.panel.webview);
+        this.simHtml = await getSimHtmlAsync(activeWorkspace());
         if (this.simState == null) {
             this.simState = await extensionContext.workspaceState.get("simstate", {});
         }
@@ -102,7 +104,8 @@ export class Simulator {
             case "fetch-js":
                 this.postMessage({
                     ...message,
-                    text: this.binaryJS
+                    text: this.binaryJS,
+                    srcDoc: this.simHtml
                 });
                 break;
             case "bulkserial":
@@ -200,7 +203,7 @@ const injectedCss = `
 
 
 
-async function getSimHtmlAsync(webview: vscode.Webview) {
+async function getSimLoaderHtmlAsync(webview: vscode.Webview) {
     const index = simloaderFiles["index.html"];
     const loaderJs = simloaderFiles["loader.js"];
     let customJs = simloaderFiles["custom.js"];

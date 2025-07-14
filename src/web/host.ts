@@ -14,7 +14,7 @@ export function createVsCodeHost(): Host {
         existsAsync: async (p) => existsAsync(rmFolderPrefix(p)),
         unlinkAsync: async (p) => unlinkAsync(rmFolderPrefix(p)),
         cwdAsync: async () => getFolderName(),
-        symlinkAsync: async () => {},
+        symlinkAsync: async () => { },
         listFilesAsync: async (d, f) => listFilesAsync(rmFolderPrefix(d), f),
         requestAsync: httpRequestCoreAsync,
         createLanguageServiceAsync: async (editor) => new BrowserLanguageService(editor),
@@ -24,7 +24,8 @@ export function createVsCodeHost(): Host {
             throw new Error(`Exit with status ${code}`);
         },
         bufferToString: buffer => new TextDecoder().decode(buffer),
-        stringToBuffer
+        stringToBuffer,
+        base64EncodeBufferAsync
     };
 }
 
@@ -104,78 +105,65 @@ async function listFilesAsync(directory: string, filename: string) {
     });
 }
 
-export function httpRequestCoreAsync(options: HttpRequestOptions) {
-    return new Promise<HttpResponse>((resolve, reject) => {
-        let client: XMLHttpRequest;
-        let resolved = false;
+export async function httpRequestCoreAsync(options: HttpRequestOptions) {
+    const headers = options.headers || {};
+    const data = options.data;
+    const method = options.method || (data == null ? "GET" : "POST");
 
-        let headers = options.headers || {};
+    let buf: null | Uint8Array | string;
 
-        client = new XMLHttpRequest();
-        client.onreadystatechange = () => {
-            if (resolved) {return;} // Safari/iOS likes to call this thing more than once
+    if (data == null) {
+        buf = null;
+    } else if (data instanceof Uint8Array) {
+        buf = data;
+    } else if (typeof data === "object") {
+        buf = JSON.stringify(data);
+        headers["content-type"] = "application/json; charset=utf8";
+    } else if (typeof data === "string") {
+        buf = data;
+    } else {
+        throw new Error("bad data");
+    }
 
-            if (client.readyState === 4) {
-                resolved = true;
-                let res: HttpResponse = {
-                    statusCode: client.status,
-                    headers: {},
-                    buffer: (client as any).responseBody || client.response,
-                    text: client.responseText,
-                };
-
-                if (typeof res.buffer === "string") {
-                    res.buffer = new TextEncoder().encode(res.buffer);
-                }
-                const allHeaders = client.getAllResponseHeaders();
-                allHeaders.split(/\r?\n/).forEach(l => {
-                    let m = /^\s*([^:]+): (.*)/.exec(l);
-                    if (m) {
-                        res.headers[m[1].toLowerCase()] = m[2];
-                    }
-                });
-                resolve(res);
-            }
-        };
-
-        let data = options.data;
-        let method = options.method || (data == null ? "GET" : "POST");
-
-        let buf: any;
-
-        if (data == null) {
-            buf = null;
-        } else if (data instanceof Uint8Array) {
-            buf = data;
-        } else if (typeof data === "object") {
-            buf = JSON.stringify(data);
-            headers["content-type"] = "application/json; charset=utf8";
-        } else if (typeof data === "string") {
-            buf = data;
-        } else {
-            throw new Error("bad data");
-        }
-
-        client.open(method, options.url);
-
-        Object.keys(headers).forEach(k => {
-            client.setRequestHeader(k, headers[k]);
-        });
-
-        if (buf == null) {
-            client.send();
-        }
-        else {
-            client.send(buf);
-        }
+    const requestHeaders = new Headers();
+    Object.keys(headers).forEach(k => {
+        requestHeaders.set(k, headers[k]);
     });
+
+    const resp = await fetch(options.url, {
+        method,
+        headers: requestHeaders,
+        body: buf
+    });
+
+    const body = await resp.arrayBuffer();
+
+    let text: string | undefined;
+
+    try {
+        text = new TextDecoder().decode(body);
+    }
+    catch (e) {
+        // binary data
+    }
+
+    const res: HttpResponse = {
+        statusCode: resp.status,
+        headers: {},
+        buffer: new Uint8Array(body),
+        text,
+    };
+
+    resp.headers.forEach((value, key) => res.headers[key.toLowerCase()] = value);
+
+    return res;
 }
 
 function resolvePath(path: string) {
     return vscode.Uri.joinPath(activeWorkspace().uri, path);
 }
 
-export function stringToBuffer(str: string, encoding?: string){
+export function stringToBuffer(str: string, encoding?: string) {
     let contents: string;
     if (encoding === "base64") {
         try {
@@ -237,4 +225,15 @@ export async function findFilesAsync(extension: string, root: vscode.Uri, matchW
     }
 
     return result;
+}
+
+function base64EncodeBufferAsync(buffer: Uint8Array | ArrayBuffer): Promise<string> {
+    return new Promise<string>(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const url = reader.result as string;
+            resolve(url.slice(url.indexOf(',') + 1));
+        };
+        reader.readAsDataURL(new Blob([buffer]));
+    });
 }

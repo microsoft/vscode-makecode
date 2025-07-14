@@ -68,6 +68,14 @@ export function addDependencyAsync(folder: vscode.WorkspaceFolder, repo: string,
     return enqueueOperationAsync(folder, () => cmd.addCommand(repo, undefined as any /* the name is optional */, {}), cancellationToken);
 }
 
+export function getSimHtmlAsync(folder: vscode.WorkspaceFolder, cancellationToken?: vscode.CancellationToken) {
+    return enqueueOperationAsync(folder, () => cmd.getSimHTML({}), cancellationToken);
+}
+
+export function getAssetEditorHtmlAsync(folder: vscode.WorkspaceFolder, cancellationToken?: vscode.CancellationToken) {
+    return enqueueOperationAsync(folder, () => cmd.getAssetEditorHTML({}), cancellationToken);
+}
+
 /**
  * The mkc CLI uses global state, so we need to perform operations in a queue just in case the
  * user is doing things in multiple workspaces at once
