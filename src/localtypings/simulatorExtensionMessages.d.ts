@@ -21,6 +21,7 @@ interface TargetConfigMessage extends BaseMessage {
 interface TargetConfigResponse extends VSCodeResponse {
     action: "targetConfig";
     config: any;
+    webConfig: any;
 }
 
 type SimulatorExtensionMessage = TargetConfigMessage;

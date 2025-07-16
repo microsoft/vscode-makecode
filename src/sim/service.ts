@@ -10,7 +10,7 @@ export async function getTargetConfigAsync() {
         action: "targetConfig"
     }) as TargetConfigResponse;
 
-    return resp.config;
+    return resp;
 }
 
 function sendMessageAsync(message: SimulatorExtensionMessage): Promise<VSCodeResponse> {

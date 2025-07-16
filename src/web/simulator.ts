@@ -5,7 +5,7 @@ import * as vscode from "vscode";
 import { simloaderFiles } from "makecode-core/built/simloaderfiles";
 import { activeWorkspace, existsAsync, readFileAsync } from "./host";
 import { simulateCommand } from "./extension";
-import { getSimHtmlAsync, getTargetConfigAsync } from "./makecodeOperations";
+import { getSimHtmlAsync, getTargetConfigAsync, getWebConfigAsync } from "./makecodeOperations";
 
 let extensionContext: vscode.ExtensionContext;
 
@@ -157,11 +157,13 @@ export class Simulator {
     protected async handleTargetConfigRequestAsync(message: TargetConfigMessage) {
         try {
             const config = await getTargetConfigAsync(activeWorkspace());
+            const webConfig = await getWebConfigAsync(activeWorkspace());
             this.postResponse({
                 ...message,
                 id: message.id!,
                 success: true,
-                config
+                config,
+                webConfig
             });
         }
         catch (e) {

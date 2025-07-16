@@ -2174,6 +2174,14 @@ makecode-browser@^1.3.3:
   dependencies:
     makecode-core "^1.7.2"
 
+makecode-core@1.7.8:
+  version "1.7.8"
+  resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.7.8.tgz#50acdf5f00c25bfc9a2612fa0f48807392cfc831"
+  integrity sha512-tlzYTFkjK/XhUVysGFdJU4YR+coP0z+szTY/w3KE6jspf2/631dXuKOzXNkAcQQVNuYLHbOaGVEBS+WzDTxR3g==
+  dependencies:
+    "@xmldom/xmldom" "^0.9.8"
+    chalk "^4.1.2"
+
 makecode-core@^1.7.2:
   version "1.7.2"
   resolved "https://registry.yarnpkg.com/makecode-core/-/makecode-core-1.7.2.tgz#9f35ffa652115f3acf874e575f9758a1299fc3cb"

@@ -7,7 +7,7 @@ const PERMANENT = "permanent"
 
 
 let simFrames: {[index: string]: HTMLIFrameElement} = {};
-let _targetConfig: Promise<any>;
+let _targetConfig: Promise<TargetConfigResponse>;
 
 
 function nextId() {
@@ -22,12 +22,12 @@ export function handleMessagePacket(message: any, source?: Window) {
 
         if (!pendingFrames[channel]) {
             pendingFrames[channel] = (async () => {
-                const targetConfig = await targetConfigAsync();
-                const simInfo = targetConfig.packages.approvedRepoLib[channel];
+                const { config, webConfig } = await targetConfigAsync();
+                const simInfo = config.packages.approvedRepoLib[channel];
 
                 if (simInfo.simx) {
                     startSimulatorExtension(
-                        getSimxUrl(channel, simInfo.simx.index),
+                        getSimxUrl(webConfig, channel, simInfo.simx.index),
                         true,
                         undefined,
                         channel
@@ -58,13 +58,9 @@ function getSimFrame() {
     return document.getElementById("simframe") as HTMLIFrameElement;
 }
 
-function getSimUrl(): URL {
-    return new URL(getSimFrame().src);
-}
 
-
-function getSimxUrl(repo: string, index = "index.html") {
-    const simUrl = getSimUrl();
+function getSimxUrl(webConfig: any, repo: string, index = "index.html") {
+    const simUrl = new URL(webConfig.simUrl);
 
     // Ensure we preserve upload target path (/app/<sha>---simulator)
     const simPath = simUrl.pathname.replace(/---?.*/, "");
@@ -137,7 +133,7 @@ function getContainer() {
 
 async function targetConfigAsync() {
     if (!_targetConfig) {
-        _targetConfig = await getTargetConfigAsync();
+        _targetConfig = getTargetConfigAsync();
     }
 
     return _targetConfig;

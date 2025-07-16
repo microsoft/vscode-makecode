@@ -72,6 +72,10 @@ export function getSimHtmlAsync(folder: vscode.WorkspaceFolder, cancellationToke
     return enqueueOperationAsync(folder, () => cmd.getSimHTML({}), cancellationToken);
 }
 
+export function getWebConfigAsync(folder: vscode.WorkspaceFolder, cancellationToken?: vscode.CancellationToken) {
+    return enqueueOperationAsync(folder, () => cmd.getWebConfig({}), cancellationToken);
+}
+
 export function getAssetEditorHtmlAsync(folder: vscode.WorkspaceFolder, cancellationToken?: vscode.CancellationToken) {
     return enqueueOperationAsync(folder, () => cmd.getAssetEditorHTML({}), cancellationToken);
 }

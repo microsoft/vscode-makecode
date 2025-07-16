@@ -363,7 +363,7 @@
     "@types/path-browserify": "^1.0.0",
     "@vscode/extension-telemetry": "^0.7.5",
     "makecode-browser": "^1.3.3",
-    "makecode-core": "^1.7.2",
+    "makecode-core": "1.7.8",
     "path-browserify": "^1.0.1"
   }
 }
