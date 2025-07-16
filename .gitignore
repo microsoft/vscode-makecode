@@ -104,3 +104,6 @@ dist
 .tern-port
 
 .vscode-test-web
+
+resources/sim.js
+resources/sim.js.map
