@@ -33,7 +33,7 @@ jobs:
       - name: Build vsix
         run: npx -p=vsce vsce package --yarn --out vscode-makecode-arcade.vsix
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: extension
           path: vscode-makecode-arcade.vsix
