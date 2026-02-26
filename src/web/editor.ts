@@ -35,7 +35,7 @@ export class MakeCodeEditor {
     public static currentEditor: MakeCodeEditor | undefined;
     public simStateTimer: any;
 
-    public static createOrShow() {
+    public static createOrShow(tutorialUri?: vscode.Uri) {
         let column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : vscode.ViewColumn.One;
         column = column! < 9 ? column! + 1 : column;
 
@@ -43,6 +43,10 @@ export class MakeCodeEditor {
             MakeCodeEditor.currentEditor.panel.reveal(
                 undefined /** keep current column **/,
                 true
+            );
+            MakeCodeEditor.currentEditor.startWatching(
+                MakeCodeEditor.currentEditor.folder || activeWorkspace(),
+                tutorialUri
             );
             return;
         }
@@ -56,7 +60,7 @@ export class MakeCodeEditor {
             retainContextWhenHidden: true
         });
 
-        MakeCodeEditor.currentEditor = new MakeCodeEditor(panel);
+        MakeCodeEditor.currentEditor = new MakeCodeEditor(panel, tutorialUri);
     }
 
     public static register(context: vscode.ExtensionContext) {
@@ -81,9 +85,12 @@ export class MakeCodeEditor {
     protected folder: vscode.WorkspaceFolder | undefined;
     protected extHeaderId: string | undefined;
     protected testHeaderId: string | undefined;
+    protected tutorialUri?: vscode.Uri;
 
-    constructor(panel: vscode.WebviewPanel) {
+    constructor(panel: vscode.WebviewPanel, tutorialUri?: vscode.Uri) {
         this.panel = panel;
+
+        this.tutorialUri = tutorialUri;
 
         this.panel.webview.onDidReceiveMessage(message => {
             this.handleEditorMessage(message);
@@ -104,8 +111,13 @@ export class MakeCodeEditor {
         this.initWebviewHtmlAsync();
     }
 
-    startWatching(folder: vscode.WorkspaceFolder) {
-        if (this.running && this.folder === folder) {return;}
+    startWatching(folder: vscode.WorkspaceFolder, previewTutorial?: vscode.Uri) {
+        if (this.running && this.folder === folder && previewTutorial?.path === this.tutorialUri?.path) {
+            return;
+        }
+
+        this.tutorialUri = previewTutorial;
+
         this.stop();
 
         this.folder = folder;
@@ -133,8 +145,9 @@ export class MakeCodeEditor {
             if (/\/?((node|pxt)_modules|built|\.git)/i.test(uri.path)) {
                 return;
             }
-            // only watch for source files
-            if (!/\.(json|jres|ts|asm|cpp|c|h|hpp)$/i.test(uri.path)) {
+            // only watch for source files or active tutorial
+            if (!/\.(json|jres|ts|asm|cpp|c|h|hpp)$/i.test(uri.path)
+                    && uri.path !== this.tutorialUri?.path) {
                 return;
             }
 
@@ -176,6 +189,14 @@ export class MakeCodeEditor {
 
     async handleHostMessage(message: any) {
         if (message.action === "workspacesync") {
+            if (this.tutorialUri) {
+                message.projects = [];
+                message._fromVscode = true;
+
+                this.panel.webview.postMessage(message);
+                return;
+            }
+
             const project = await this.readProjectAsync(this.folder || activeWorkspace());
             const testProject = await this.readTestProjectAsync(this.folder || activeWorkspace());
             message.projects = [project];
@@ -193,11 +214,10 @@ export class MakeCodeEditor {
                 this.extHeaderId = project.header.id;
             }
 
-
             message._fromVscode = true;
             this.panel.webview.postMessage(message);
         }
-        else if (message.action === "workspacesave") {
+        else if (message.action === "workspacesave" && !this.tutorialUri) {
             const project = message.project as Project;
             if (project?.header.extensionUnderTest === this.extHeaderId) {
                 this.saveTestProjectAsync(this.folder || activeWorkspace(), project);
@@ -206,7 +226,14 @@ export class MakeCodeEditor {
     }
 
     async openTestProjectAsync() {
-        if (this.testHeaderId) {
+        if (this.tutorialUri) {
+            await this.sendMessageAsync({
+                type: "pxteditor",
+                action: "importtutorial",
+                markdown: await readTextFileAsync(this.tutorialUri),
+                headerId: this.extHeaderId
+            })
+        } else if (this.testHeaderId) {
             await this.sendMessageAsync({
                 type: "pxteditor",
                 action: "openheader",
@@ -240,14 +267,14 @@ export class MakeCodeEditor {
         }
 
         this.panel.webview.html = "";
-        const hash = this.testHeaderId ? "header:" + this.testHeaderId : "testproject:" + this.extHeaderId;
+        const hash = this.tutorialUri ? "" : this.testHeaderId ? "header:" + this.testHeaderId : "testproject:" + this.extHeaderId;
         const simulatorHTML = await getMakeCodeEditorHtmlAsync(this.panel.webview, hash);
         this.panel.webview.html = simulatorHTML;
     }
 
     protected async onReadyMessageReceivedAsync() {
         if (!this.running) {
-            await this.startWatching(activeWorkspace());
+            await this.startWatching(activeWorkspace(), this.tutorialUri);
         }
         else {
             this.openTestProjectAsync();
