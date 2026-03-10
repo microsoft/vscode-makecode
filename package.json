@@ -24,8 +24,7 @@
     "url": "https://github.com/microsoft/vscode-makecode"
   },
   "activationEvents": [
-    "onCommand:makecode.create",
-    "workspaceContains:./pxt.json",
+    "workspaceContains:**/pxt.json",
     "onFileSystem:mkcdfs"
   ],
   "browser": "./dist/web/extension.js",
@@ -179,27 +178,32 @@
         {
           "id": "imageExplorer",
           "name": "%makecode.imageExplorer.title%",
-          "icon": "media/logo.svg"
+          "icon": "media/logo.svg",
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "id": "animationExplorer",
           "name": "%makecode.animationExplorer.title%",
-          "icon": "media/logo.svg"
+          "icon": "media/logo.svg",
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "id": "tileExplorer",
           "name": "%makecode.tileExplorer.title%",
-          "icon": "media/logo.svg"
+          "icon": "media/logo.svg",
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "id": "tilemapExplorer",
           "name": "%makecode.tilemapExplorer.title%",
-          "icon": "media/logo.svg"
+          "icon": "media/logo.svg",
+          "when": "makecode.hasMakeCodeProjectOpen"
         },
         {
           "id": "songExplorer",
           "name": "%makecode.songExplorer.title%",
-          "icon": "media/logo.svg"
+          "icon": "media/logo.svg",
+          "when": "makecode.hasMakeCodeProjectOpen"
         }
       ]
     },
@@ -211,9 +215,9 @@
     "menus": {
       "editor/context": [
         {
-          "when": "resourceLangId == typescript && makecode.extensionActive",
+          "when": "resourceLangId == typescript && makecode.extensionActive && makecode.hasMakeCodeProjectOpen",
           "command": "makecode.simulate",
-          "group": "navigation"
+          "group": "debug"
         }
       ],
       "view/title": [
@@ -288,6 +292,38 @@
         {
           "command": "makecode.createTilemap",
           "when": "false"
+        },
+        {
+          "command": "makecode.build",
+          "when": "makecode.hasMakeCodeProjectOpen"
+        },
+        {
+          "command": "makecode.simulate",
+          "when": "makecode.hasMakeCodeProjectOpen"
+        },
+        {
+          "command": "makecode.clean",
+          "when": "makecode.hasMakeCodeProjectOpen"
+        },
+        {
+          "command": "makecode.shareProject",
+          "when": "makecode.hasMakeCodeProjectOpen"
+        },
+        {
+          "command": "makecode.addDependency",
+          "when": "makecode.hasMakeCodeProjectOpen"
+        },
+        {
+          "command": "makecode.removeDependency",
+          "when": "makecode.hasMakeCodeProjectOpen"
+        },
+        {
+          "command": "makecode.refreshAssets",
+          "when": "makecode.hasMakeCodeProjectOpen"
+        },
+        {
+          "command": "makecode.testBlocks",
+          "when": "makecode.hasMakeCodeProjectOpen"
         }
       ]
     },
