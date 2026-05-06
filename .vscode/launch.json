@@ -6,6 +6,13 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "Run in Browser with Watch",
+			"type": "node-terminal",
+			"request": "launch",
+			"command": "yarn run run-in-browser:watch",
+			"preLaunchTask": "npm: watch-web"
+		},
+		{
 			"name": "Run Web Extension ",
 			"type": "pwa-extensionHost",
 			"debugWebWorkerHost": true,
