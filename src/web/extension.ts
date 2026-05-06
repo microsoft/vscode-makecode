@@ -62,6 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.install", installCommand);
     addCmd("makecode.clean", cleanCommand);
     addCmd("makecode.shareProject", shareCommandAsync);
+    addCmd("makecode.editProjectWithAI", editProjectWithAICommandAsync);
     addCmd("makecode.createTutorial", createTutorialCommandAsync);
     addCmd("makecode.addTutorialAssets", addTutorialAssetsCommandAsync);
     addCmd("makecode.editTutorialWithAI", editTutorialWithAICommandAsync);
@@ -640,6 +641,32 @@ async function editTutorialWithAICommandAsync(uri?: vscode.Uri) {
     }
 }
 
+async function editProjectWithAICommandAsync(uri?: vscode.Uri) {
+    const document = await getMainTsDocumentAsync(uri);
+    if (!document) {
+        return;
+    }
+
+    if (document.isDirty) {
+        await document.save();
+    }
+
+    const request = await vscode.window.showInputBox({
+        prompt: vscode.l10n.t("What should AI help change in this MakeCode project?"),
+        placeHolder: vscode.l10n.t("Add a feature, fix gameplay, improve code, use assets...")
+    });
+
+    if (!request) {
+        return;
+    }
+
+    const query = buildProjectChatQuery(document, request);
+    if (!await openChatWithQueryAsync(query)) {
+        await vscode.env.clipboard.writeText(query);
+        vscode.window.showInformationMessage(vscode.l10n.t("The project editing prompt was copied to the clipboard. Paste it into Chat to continue."));
+    }
+}
+
 async function previewTutorialCommandAsync(uri?: vscode.Uri) {
     const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
@@ -745,6 +772,41 @@ async function getTutorialDocumentAsync(uri?: vscode.Uri): Promise<vscode.TextDo
     return undefined;
 }
 
+async function getMainTsDocumentAsync(uri?: vscode.Uri): Promise<vscode.TextDocument | undefined> {
+    if (uri) {
+        const document = await vscode.workspace.openTextDocument(uri);
+        if (isMainTsDocument(document)) {
+            return document;
+        }
+    }
+
+    const activeDocument = vscode.window.activeTextEditor?.document;
+    if (activeDocument && isMainTsDocument(activeDocument)) {
+        return activeDocument;
+    }
+
+    const visibleDocument = vscode.window.visibleTextEditors.map(editor => editor.document).find(isMainTsDocument);
+    if (visibleDocument) {
+        return visibleDocument;
+    }
+
+    const workspace = await chooseWorkspaceAsync("project");
+    if (workspace) {
+        const mainTsUri = vscode.Uri.joinPath(workspace.uri, "main.ts");
+        const document = await openTextDocumentIfExistsAsync(mainTsUri);
+        if (document && isMainTsDocument(document)) {
+            return document;
+        }
+    }
+
+    showError(vscode.l10n.t("Open main.ts in a MakeCode project to use this command."));
+    return undefined;
+}
+
+function isMainTsDocument(document: vscode.TextDocument) {
+    return document.languageId === "typescript" && /(^|\/)main\.ts$/i.test(document.uri.path);
+}
+
 function rememberTutorialDocument(document: vscode.TextDocument | undefined) {
     if (document && isTutorialDocument(document)) {
         lastTutorialDocumentUri = document.uri;
@@ -773,6 +835,29 @@ Use the MakeCode tutorial-authoring guidance as the base prompt:
 - Make minimal, reviewable edits to this tutorial file and explain any changes that need validation.
 
 After the edit, suggest running MakeCode: Validate Tutorial and Launch Tutorial Preview.${selectionContext}`;
+}
+
+function buildProjectChatQuery(document: vscode.TextDocument, request: string) {
+    const relativePath = vscode.workspace.asRelativePath(document.uri, false).replace(/\\/g, "/");
+    const selection = getActiveSelectionText(document);
+    const selectionContext = selection ? `\n\nFocus on this selected project code if relevant:\n\`\`\`ts\n${selection}\n\`\`\`` : "";
+
+    return `Help me update this Microsoft MakeCode Arcade project entry point: #file:${relativePath}
+
+User request: ${request}
+
+Inspect pxt.json, project files, and pxt_modules APIs when available before changing code.
+
+Use the MakeCode Static TypeScript guidance as the base prompt:
+- MakeCode uses the PXT compiler and Static TypeScript; avoid DOM APIs, Node APIs, arbitrary imports, generators, JSX, eval, and browser-only APIs.
+- Prefer APIs exposed as blocks with //% block annotations when possible.
+- Do not hallucinate functions, methods, or packages outside the current project, pxt.json dependencies, and nearest pxt_modules APIs.
+- Avoid deprecated APIs and identifiers prefixed with _ unless there is a strong reason.
+- If adding files, update pxt.json correctly.
+- When creating assets, use editable tagged templates such as assets.image\`name\`, assets.tile\`name\`, assets.tilemap\`name\`, assets.animation\`name\`, or assets.song\`name\`; do not edit generated asset files.
+- Make minimal, reviewable edits to the project and explain any follow-up validation.
+
+After the edit, suggest running MakeCode: Start MakeCode Simulator.${selectionContext}`;
 }
 
 function getActiveSelectionText(document: vscode.TextDocument) {

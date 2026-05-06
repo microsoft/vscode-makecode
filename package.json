@@ -172,6 +172,12 @@
         "category": "%makecode.category.title%"
       },
       {
+        "command": "makecode.editProjectWithAI",
+        "title": "%makecode.editProjectWithAI.title%",
+        "category": "%makecode.category.title%",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "makecode.createTutorial",
         "title": "%makecode.createTutorial.title%",
         "category": "%makecode.tutorials.category.title%"
@@ -267,6 +273,11 @@
           "group": "navigation"
         },
         {
+          "when": "resourceLangId == typescript && resourceFilename == main.ts && makecode.extensionActive",
+          "command": "makecode.editProjectWithAI",
+          "group": "navigation"
+        },
+        {
           "when": "resourceLangId == markdown && makecode.extensionActive",
           "command": "makecode.previewTutorial",
           "group": "navigation"
@@ -296,6 +307,11 @@
         {
           "when": "resourceLangId == typescript && makecode.extensionActive",
           "command": "makecode.simulate",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == typescript && resourceFilename == main.ts && makecode.extensionActive",
+          "command": "makecode.editProjectWithAI",
           "group": "navigation"
         },
         {

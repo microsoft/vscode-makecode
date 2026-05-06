@@ -33,6 +33,14 @@ const actions: ActionTreeNode[] = [
         }
     },
     {
+        label: vscode.l10n.t("Edit Project with AI"),
+        icon: new vscode.ThemeIcon("sparkle"),
+        command: {
+            title: vscode.l10n.t("Edit Project with AI"),
+            command: "makecode.editProjectWithAI"
+        }
+    },
+    {
         label: vscode.l10n.t("Create MakeCode Share Link"),
         icon: new vscode.ThemeIcon("export"),
         command: {
