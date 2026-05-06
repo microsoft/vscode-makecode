@@ -183,6 +183,12 @@
         "icon": "$(symbol-color)"
       },
       {
+        "command": "makecode.editTutorialWithAI",
+        "title": "%makecode.editTutorialWithAI.title%",
+        "category": "%makecode.tutorials.category.title%",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "makecode.previewTutorial",
         "title": "%makecode.previewTutorial.title%",
         "category": "%makecode.tutorials.category.title%",
@@ -271,6 +277,11 @@
           "group": "navigation"
         },
         {
+          "when": "makecode.isTutorialFile && makecode.extensionActive",
+          "command": "makecode.editTutorialWithAI",
+          "group": "navigation"
+        },
+        {
           "when": "resourceLangId == markdown && makecode.extensionActive",
           "command": "makecode.validateTutorial",
           "group": "navigation"
@@ -285,6 +296,11 @@
         {
           "when": "resourceLangId == typescript && makecode.extensionActive",
           "command": "makecode.simulate",
+          "group": "navigation"
+        },
+        {
+          "when": "makecode.isTutorialFile && makecode.extensionActive",
+          "command": "makecode.editTutorialWithAI",
           "group": "navigation"
         },
         {

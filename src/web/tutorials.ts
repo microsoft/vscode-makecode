@@ -72,9 +72,6 @@ Explain the next action in one or two short sentences.
 ## Step 3
 
 Congratulations, you finished the tutorial!
-
-\`\`\`package
-\`\`\`
 `;
 }
 
@@ -142,6 +139,20 @@ export function validateTutorialMarkdown(markdown: string): TutorialValidationIs
     if (/github:/i.test(markdown) && !/^```\s*package\b/im.test(markdown)) {
         issues.push(createIssue(0, 0, Math.max(1, lines[0]?.length || 1), vscode.l10n.t("Tutorials that use GitHub extensions should include a package snippet."), vscode.DiagnosticSeverity.Information));
     }
+
+    lines.forEach((line, index) => {
+        if (!/^```\s*package\b/i.test(line)) {
+            return;
+        }
+
+        const closingLine = lines.findIndex((candidate, candidateIndex) => candidateIndex > index && candidate.trim() === "```");
+        if (closingLine > index) {
+            const body = lines.slice(index + 1, closingLine).join("\n").trim();
+            if (!body) {
+                issues.push(createIssue(index, 0, line.length || 1, vscode.l10n.t("Omit package snippets when there are no dependencies; empty package snippets can break tutorial parsing."), vscode.DiagnosticSeverity.Error));
+            }
+        }
+    });
 
     return issues;
 }

@@ -105,6 +105,14 @@ function createTutorialsNode(): ActionTreeNode {
                 }
             },
             {
+                label: vscode.l10n.t("Edit Tutorial with AI"),
+                icon: new vscode.ThemeIcon("sparkle"),
+                command: {
+                    title: vscode.l10n.t("Edit Tutorial with AI"),
+                    command: "makecode.editTutorialWithAI"
+                }
+            },
+            {
                 label: vscode.l10n.t("Validate Tutorial"),
                 icon: new vscode.ThemeIcon("check"),
                 command: {

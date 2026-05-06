@@ -64,6 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.shareProject", shareCommandAsync);
     addCmd("makecode.createTutorial", createTutorialCommandAsync);
     addCmd("makecode.addTutorialAssets", addTutorialAssetsCommandAsync);
+    addCmd("makecode.editTutorialWithAI", editTutorialWithAICommandAsync);
     addCmd("makecode.previewTutorial", previewTutorialCommandAsync);
     addCmd("makecode.shareTutorial", shareTutorialCommandAsync);
     addCmd("makecode.validateTutorial", validateTutorialCommandAsync);
@@ -613,6 +614,32 @@ async function addTutorialAssetsCommandAsync(uri?: vscode.Uri) {
     await validateTutorialDocumentAsync(document);
 }
 
+async function editTutorialWithAICommandAsync(uri?: vscode.Uri) {
+    const document = await getTutorialDocumentAsync(uri);
+    if (!document) {
+        return;
+    }
+
+    if (document.isDirty) {
+        await document.save();
+    }
+
+    const request = await vscode.window.showInputBox({
+        prompt: vscode.l10n.t("What should AI help change in this tutorial?"),
+        placeHolder: vscode.l10n.t("Improve pacing, add a step, check snippets, make instructions clearer...")
+    });
+
+    if (!request) {
+        return;
+    }
+
+    const query = buildTutorialChatQuery(document, request);
+    if (!await openChatWithQueryAsync(query)) {
+        await vscode.env.clipboard.writeText(query);
+        vscode.window.showInformationMessage(vscode.l10n.t("The tutorial editing prompt was copied to the clipboard. Paste it into Chat to continue."));
+    }
+}
+
 async function previewTutorialCommandAsync(uri?: vscode.Uri) {
     const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
@@ -726,6 +753,49 @@ function rememberTutorialDocument(document: vscode.TextDocument | undefined) {
 
 function updateTutorialFileContext(document = vscode.window.activeTextEditor?.document) {
     vscode.commands.executeCommand("setContext", "makecode.isTutorialFile", !!document && isTutorialFileDocument(document));
+}
+
+function buildTutorialChatQuery(document: vscode.TextDocument, request: string) {
+    const relativePath = vscode.workspace.asRelativePath(document.uri, false).replace(/\\/g, "/");
+    const selection = getActiveSelectionText(document);
+    const selectionContext = selection ? `\n\nFocus on this selected tutorial excerpt if relevant:\n\`\`\`md\n${selection}\n\`\`\`` : "";
+
+    return `Help me update this Microsoft MakeCode tutorial Markdown file: #file:${relativePath}
+
+User request: ${request}
+
+Use the MakeCode tutorial-authoring guidance as the base prompt:
+- Keep a clear # title and sequential ## Step N headings unless this tutorial intentionally uses activity format.
+- Preserve existing code fences unless there is a clear bug.
+- Prefer MakeCode snippets such as blocks, typescript/javascript, template, package, ghost, sig, and assetjson.
+- Keep snippets compatible with MakeCode Static TypeScript and avoid DOM, Node, imports, eval, generators, JSX, or unavailable packages.
+- Preserve and update package and assetjson snippets when required; omit package snippets entirely when no dependencies are required, because empty package snippets break tutorial parsing.
+- Make minimal, reviewable edits to this tutorial file and explain any changes that need validation.
+
+After the edit, suggest running MakeCode: Validate Tutorial and Launch Tutorial Preview.${selectionContext}`;
+}
+
+function getActiveSelectionText(document: vscode.TextDocument) {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || editor.document.uri.toString() !== document.uri.toString() || editor.selection.isEmpty) {
+        return "";
+    }
+
+    const text = document.getText(editor.selection).trim();
+    return text.length > 2000 ? text.substring(0, 2000) + "\n..." : text;
+}
+
+async function openChatWithQueryAsync(query: string) {
+    try {
+        await vscode.commands.executeCommand("workbench.action.chat.open", {
+            query,
+            isPartialQuery: true
+        });
+        return true;
+    }
+    catch (e) {
+        return false;
+    }
 }
 
 async function openTextDocumentIfExistsAsync(uri: vscode.Uri): Promise<vscode.TextDocument | undefined> {

@@ -53,7 +53,13 @@ suite("Web Extension Test Suite", () => {
 		test("generated tutorial scaffold validates", () => {
 			const markdown = createTutorialMarkdown("Test Tutorial");
 			const issues = validateTutorialMarkdown(markdown);
+			assert.ok(!markdown.includes("```package"));
 			assert.deepStrictEqual(issues.filter(issue => issue.severity === vscode.DiagnosticSeverity.Error), []);
+		});
+
+		test("empty package snippet reports error", () => {
+			const issues = validateTutorialMarkdown("# Test\n\n## Step 1\n\n```package\n```\n");
+			assert.ok(issues.some(issue => issue.severity === vscode.DiagnosticSeverity.Error));
 		});
 
 		test("missing title reports error", () => {

@@ -28,10 +28,6 @@ Short instruction text.
 ## Step 3
 
 Congratulations, you finished!
-
-```package
-// dependencies if needed
-```
 ```
 
 Use sequential `## Step N` headings unless the tutorial explicitly uses activity format.
@@ -47,7 +43,7 @@ Prefer MakeCode tutorial snippet fences:
 - `ghost` for code that should be available to the compiler but not shown as a learner step.
 - `sig` for API signatures in reference-style content.
 
-When using extension APIs, include a `package` snippet with the current extension or required GitHub dependencies. Do not invent packages.
+When using extension APIs, include a `package` snippet with the current extension or required GitHub dependencies. Do not invent packages. Omit the `package` snippet entirely when there are no dependencies; empty `package` snippets break tutorial parsing.
 
 ## Static TypeScript constraints
 
@@ -76,7 +72,7 @@ When asked to draft a tutorial:
 1. Inspect the current project files and `pxt.json`.
 2. Infer the intended learning goal and audience.
 3. Create a concise tutorial with a title, sequential steps, short explanations, and runnable snippets.
-4. Include a `package` snippet when dependencies are required.
+4. Include a `package` snippet only when dependencies are required; never emit an empty `package` snippet.
 5. Avoid hallucinating unavailable APIs.
 
 When asked to improve a tutorial:
@@ -85,5 +81,17 @@ When asked to improve a tutorial:
 2. Improve pacing and learner clarity.
 3. Keep each step focused on one action.
 4. Flag missing packages, missing final step, or unsupported snippet types.
+
+## Interactive editing mode
+
+When a user asks for changes to an existing tutorial file:
+
+1. Treat the current tutorial Markdown file as the source of truth.
+2. Ask one clarifying question only when the requested learning goal or audience is ambiguous; otherwise proceed with a concise edit plan.
+3. Prefer small, reviewable edits that preserve the tutorial's existing structure, voice, snippets, and assets.
+4. Do not remove or rewrite `blocks`, `typescript`, `javascript`, `template`, `ghost`, `package`, or `assetjson` fences unless the user asked for that change or the content is clearly broken.
+5. Preserve package dependencies and asset references. Update `package` or `assetjson` snippets only when needed for the requested change, and remove empty `package` snippets.
+6. If code changes are suggested, keep them valid for MakeCode Static TypeScript and available project APIs.
+7. After editing, recommend validating and previewing the tutorial in the MakeCode extension.
 
 When asked to review a tutorial, return actionable diagnostics with file locations when possible. Check title, step ordering, code fence closure, supported snippet types, dependencies, age-appropriate wording, and Static TypeScript compatibility.
