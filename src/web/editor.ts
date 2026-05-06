@@ -82,6 +82,7 @@ export class MakeCodeEditor {
     protected extHeaderId: string | undefined;
     protected testHeaderId: string | undefined;
     protected ready = false;
+    protected editorContentLoaded = false;
     protected tutorialPreviewMode = false;
     protected pendingTutorialPreview: {
         markdown: string;
@@ -151,7 +152,7 @@ export class MakeCodeEditor {
             }
 
             debouncedBuild();
-        }
+        };
 
         fsWatcher.onDidChange(watchHandler);
         fsWatcher.onDidCreate(watchHandler);
@@ -181,6 +182,11 @@ export class MakeCodeEditor {
         switch (message.type) {
             case "pxthost":
                 this.handleHostMessage(message);
+                break;
+            case "pxteditor":
+                if (message.action === "editorcontentloaded") {
+                    this.onReadyMessageReceivedAsync(true);
+                }
                 break;
             case "ready":
                 this.onReadyMessageReceivedAsync();
@@ -217,6 +223,9 @@ export class MakeCodeEditor {
                 this.saveTestProjectAsync(this.folder || activeWorkspace(), project);
             }
         }
+        else if (message.action === "editorcontentloaded") {
+            await this.onReadyMessageReceivedAsync(true);
+        }
     }
 
     async openTestProjectAsync() {
@@ -243,7 +252,7 @@ export class MakeCodeEditor {
                 await this.prepareForTutorialPreviewAsync();
             }
 
-            if (this.ready) {
+            if (this.editorContentLoaded) {
                 await this.importPendingTutorialAsync();
             }
         }
@@ -270,6 +279,7 @@ export class MakeCodeEditor {
 
     protected async initWebviewHtmlAsync() {
         this.ready = false;
+        this.editorContentLoaded = false;
         this.pendingMessages = {};
         const testProject = await this.readTestProjectAsync(this.folder || activeWorkspace());
         if (testProject) {
@@ -298,17 +308,22 @@ export class MakeCodeEditor {
         await this.initWebviewHtmlAsync();
     }
 
-    protected async onReadyMessageReceivedAsync() {
+    protected async onReadyMessageReceivedAsync(editorContentLoaded = false) {
         this.ready = true;
+        if (editorContentLoaded) {
+            this.editorContentLoaded = true;
+        }
         const hasPendingTutorialPreview = !!this.pendingTutorialPreview;
         if (!this.running) {
             await this.startWatching(activeWorkspace(), hasPendingTutorialPreview);
         }
-        else if (!hasPendingTutorialPreview) {
+        else if (!hasPendingTutorialPreview && !this.tutorialPreviewMode) {
             this.openTestProjectAsync();
         }
 
-        await this.importPendingTutorialAsync();
+        if (this.editorContentLoaded) {
+            await this.importPendingTutorialAsync();
+        }
     }
 
     protected async importPendingTutorialAsync() {
@@ -350,7 +365,7 @@ export class MakeCodeEditor {
         return {
             text,
             header
-        }
+        };
     }
 
     protected async readTestProjectAsync(workspace: vscode.WorkspaceFolder): Promise<Project | undefined> {
@@ -400,7 +415,7 @@ async function createProjectBlobAsync(workspace: vscode.WorkspaceFolder) {
         catch (e) {
             project[file] = "";
         }
-    }
+    };
 
     for (const file of config.files) {
         await processFileAsync(file);
@@ -433,5 +448,5 @@ function createHeader(): Header {
         path: "Untitled",
         cloudCurrent: false,
         saveId: null
-    }
+    };
 }
