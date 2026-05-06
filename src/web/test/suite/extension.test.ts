@@ -2,7 +2,7 @@ import * as assert from "assert";
 
 import * as vscode from "vscode";
 import { insertGeneratedFile } from "../../assetEditor";
-import { createTutorialMarkdown, validateTutorialMarkdown } from "../../tutorials";
+import { createTutorialMarkdown, updateTutorialAssetJsonSnippet, validateTutorialMarkdown } from "../../tutorials";
 
 suite("Web Extension Test Suite", () => {
 	vscode.window.showInformationMessage("Start all tests.");
@@ -64,6 +64,27 @@ suite("Web Extension Test Suite", () => {
 		test("unsupported snippet reports warning", () => {
 			const issues = validateTutorialMarkdown("# Test\n\n## Step 1\n\n```unknown\nfoo\n```");
 			assert.ok(issues.some(issue => issue.severity === vscode.DiagnosticSeverity.Warning));
+		});
+
+		test("assetjson snippet is appended", () => {
+			const markdown = "# Test\n\n## Step 1\n\nUse an asset.";
+			const updated = updateTutorialAssetJsonSnippet(markdown, {
+				"images.g.jres": "{}",
+				"images.g.ts": "// generated"
+			});
+			assert.ok(updated.includes("```assetjson\n"));
+			assert.ok(updated.includes('"images.g.jres": "{}"'));
+			assert.ok(updated.endsWith("```\n"));
+		});
+
+		test("assetjson snippet is replaced", () => {
+			const markdown = "# Test\n\n```assetjson\n{\n  \"images.g.jres\": \"old\"\n}\n```\n\n## Step 1";
+			const updated = updateTutorialAssetJsonSnippet(markdown, {
+				"images.g.jres": "new"
+			});
+			assert.ok(updated.includes('"images.g.jres": "new"'));
+			assert.ok(!updated.includes("old"));
+			assert.deepStrictEqual(updated.match(/```assetjson/g)?.length, 1);
 		});
 	});
 });

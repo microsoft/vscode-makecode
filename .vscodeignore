@@ -1,6 +1,10 @@
 .vscode/**
 .vscode-test-web/**
 src/**
+!src/
+!src/web/
+!src/web/prompts/
+!src/web/prompts/**
 out/**
 node_modules/**
 .gitignore

@@ -97,6 +97,14 @@ function createTutorialsNode(): ActionTreeNode {
                 }
             },
             {
+                label: vscode.l10n.t("Add Assets"),
+                icon: new vscode.ThemeIcon("symbol-color"),
+                command: {
+                    title: vscode.l10n.t("Add Assets"),
+                    command: "makecode.addTutorialAssets"
+                }
+            },
+            {
                 label: vscode.l10n.t("Validate Tutorial"),
                 icon: new vscode.ThemeIcon("check"),
                 command: {

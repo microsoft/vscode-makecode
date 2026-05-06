@@ -20,7 +20,7 @@ import { VFS } from "./vfs";
 import TelemetryReporter from "@vscode/extension-telemetry";
 import { codeActionsProvider } from "./codeActionsProvider";
 import { MakeCodeEditor } from "./editor";
-import { createTutorialFileAsync, isTutorialDocument, shareTutorialAsync, validateTutorialMarkdown } from "./tutorials";
+import { createTutorialAssetJsonAsync, createTutorialFileAsync, isTutorialDocument, isTutorialFileDocument, shareTutorialAsync, updateTutorialAssetJsonSnippet, validateTutorialMarkdown } from "./tutorials";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
 let tutorialDiagnosticsCollection: vscode.DiagnosticCollection;
@@ -63,6 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.clean", cleanCommand);
     addCmd("makecode.shareProject", shareCommandAsync);
     addCmd("makecode.createTutorial", createTutorialCommandAsync);
+    addCmd("makecode.addTutorialAssets", addTutorialAssetsCommandAsync);
     addCmd("makecode.previewTutorial", previewTutorialCommandAsync);
     addCmd("makecode.shareTutorial", shareTutorialCommandAsync);
     addCmd("makecode.validateTutorial", validateTutorialCommandAsync);
@@ -131,7 +132,17 @@ export function activate(context: vscode.ExtensionContext) {
     tutorialDiagnosticsCollection = vscode.languages.createDiagnosticCollection("MakeCode Tutorials");
     context.subscriptions.push(tutorialDiagnosticsCollection);
     rememberTutorialDocument(vscode.window.activeTextEditor?.document);
-    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => rememberTutorialDocument(editor?.document)));
+    updateTutorialFileContext();
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
+        rememberTutorialDocument(editor?.document);
+        updateTutorialFileContext(editor?.document);
+    }));
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
+        if (vscode.window.activeTextEditor?.document.uri.toString() === event.document.uri.toString()) {
+            rememberTutorialDocument(event.document);
+            updateTutorialFileContext(event.document);
+        }
+    }));
     context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(document => {
         if (lastTutorialDocumentUri?.toString() === document.uri.toString()) {
             lastTutorialDocumentUri = undefined;
@@ -577,6 +588,31 @@ async function createTutorialCommandAsync() {
     await validateTutorialDocumentAsync(document);
 }
 
+async function addTutorialAssetsCommandAsync(uri?: vscode.Uri) {
+    const workspace = await chooseWorkspaceAsync("project");
+    if (!workspace) {
+        return;
+    }
+
+    const document = await getTutorialDocumentAsync(uri);
+    if (!document) {
+        return;
+    }
+
+    const assetFiles = await createTutorialAssetJsonAsync(workspace);
+    if (!Object.keys(assetFiles).length) {
+        vscode.window.showInformationMessage(vscode.l10n.t("No generated MakeCode asset files were found in this project."));
+        return;
+    }
+
+    const updatedText = updateTutorialAssetJsonSnippet(document.getText(), assetFiles);
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(document.uri, new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)), updatedText);
+    await vscode.workspace.applyEdit(edit);
+    await vscode.window.showTextDocument(document);
+    await validateTutorialDocumentAsync(document);
+}
+
 async function previewTutorialCommandAsync(uri?: vscode.Uri) {
     const workspace = await chooseWorkspaceAsync("project");
     if (!workspace) {
@@ -686,6 +722,10 @@ function rememberTutorialDocument(document: vscode.TextDocument | undefined) {
     if (document && isTutorialDocument(document)) {
         lastTutorialDocumentUri = document.uri;
     }
+}
+
+function updateTutorialFileContext(document = vscode.window.activeTextEditor?.document) {
+    vscode.commands.executeCommand("setContext", "makecode.isTutorialFile", !!document && isTutorialFileDocument(document));
 }
 
 async function openTextDocumentIfExistsAsync(uri: vscode.Uri): Promise<vscode.TextDocument | undefined> {

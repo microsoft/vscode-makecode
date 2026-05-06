@@ -30,6 +30,17 @@
   ],
   "browser": "./dist/web/extension.js",
   "contributes": {
+    "chatPromptFiles": [
+      {
+        "path": "./src/web/prompts/tutorial-authoring.prompt.md"
+      },
+      {
+        "path": "./src/web/prompts/static-typescript.prompt.md"
+      },
+      {
+        "path": "./src/web/prompts/extension-documentation.prompt.md"
+      }
+    ],
     "commands": [
       {
         "command": "makecode.build",
@@ -165,9 +176,16 @@
         "category": "%makecode.tutorials.category.title%"
       },
       {
+        "command": "makecode.addTutorialAssets",
+        "title": "%makecode.addTutorialAssets.title%",
+        "category": "%makecode.tutorials.category.title%",
+        "icon": "$(symbol-color)"
+      },
+      {
         "command": "makecode.previewTutorial",
         "title": "%makecode.previewTutorial.title%",
-        "category": "%makecode.tutorials.category.title%"
+        "category": "%makecode.tutorials.category.title%",
+        "icon": "$(play)"
       },
       {
         "command": "makecode.shareTutorial",
@@ -248,12 +266,24 @@
         },
         {
           "when": "resourceLangId == markdown && makecode.extensionActive",
+          "command": "makecode.addTutorialAssets",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == markdown && makecode.extensionActive",
           "command": "makecode.validateTutorial",
           "group": "navigation"
         },
         {
           "when": "resourceLangId == markdown && makecode.extensionActive",
           "command": "makecode.shareTutorial",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "makecode.isTutorialFile && makecode.extensionActive",
+          "command": "makecode.previewTutorial",
           "group": "navigation"
         }
       ],

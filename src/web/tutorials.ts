@@ -2,10 +2,17 @@ import * as vscode from "vscode";
 
 import { httpRequestCoreAsync } from "./host";
 import { getAppTargetAsync } from "./makecodeOperations";
-import { guidGen, writeTextFileAsync } from "./util";
+import { guidGen, readTextFileAsync, writeTextFileAsync } from "./util";
 
 const apiRoot = "https://www.makecode.com";
 const arcadeShareRoot = "https://arcade.makecode.com/";
+const tutorialAssetFiles = [
+    "assets.json",
+    "images.g.jres",
+    "images.g.ts",
+    "tilemap.g.jres",
+    "tilemap.g.ts"
+];
 
 export interface TutorialValidationIssue {
     line: number;
@@ -17,6 +24,19 @@ export interface TutorialValidationIssue {
 
 export function isTutorialDocument(document: vscode.TextDocument) {
     return document.languageId === "markdown" || /\.md$/i.test(document.uri.path);
+}
+
+export function isTutorialFileDocument(document: vscode.TextDocument) {
+    if (!isTutorialDocument(document)) {
+        return false;
+    }
+
+    if (/\/docs\/tutorials\/[^/]+\.md$/i.test(document.uri.path)) {
+        return true;
+    }
+
+    const text = document.getText();
+    return /^#\s+\S/m.test(text) && /^##\s+Step\s+\d+\b/im.test(text);
 }
 
 export async function createTutorialFileAsync(workspace: vscode.WorkspaceFolder, title: string) {
@@ -124,6 +144,32 @@ export function validateTutorialMarkdown(markdown: string): TutorialValidationIs
     }
 
     return issues;
+}
+
+export async function createTutorialAssetJsonAsync(workspace: vscode.WorkspaceFolder) {
+    const files: {[index: string]: string} = {};
+
+    for (const file of tutorialAssetFiles) {
+        const uri = vscode.Uri.joinPath(workspace.uri, file);
+        if (await fileExistsAsync(uri)) {
+            files[file] = await readTextFileAsync(uri);
+        }
+    }
+
+    return files;
+}
+
+export function updateTutorialAssetJsonSnippet(markdown: string, assetFiles: {[index: string]: string}) {
+    const snippet = `\`\`\`assetjson
+${JSON.stringify(assetFiles, null, 2)}
+\`\`\``;
+    const assetJsonRegex = /```\s*assetjson\s*\r?\n[\s\S]*?\r?\n```/i;
+
+    if (assetJsonRegex.test(markdown)) {
+        return markdown.replace(assetJsonRegex, snippet);
+    }
+
+    return markdown.replace(/\s*$/, "") + "\n\n" + snippet + "\n";
 }
 
 export async function shareTutorialAsync(workspace: vscode.WorkspaceFolder, markdown: string) {
