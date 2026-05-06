@@ -50,7 +50,8 @@
       {
         "command": "makecode.simulate",
         "title": "%makecode.simulate.title%",
-        "category": "%makecode.category.title%"
+        "category": "%makecode.category.title%",
+        "icon": "$(play)"
       },
       {
         "command": "makecode.create",
@@ -281,6 +282,11 @@
         }
       ],
       "editor/title": [
+        {
+          "when": "resourceLangId == typescript && makecode.extensionActive",
+          "command": "makecode.simulate",
+          "group": "navigation"
+        },
         {
           "when": "makecode.isTutorialFile && makecode.extensionActive",
           "command": "makecode.previewTutorial",
