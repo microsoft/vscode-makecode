@@ -20,22 +20,25 @@ import { VFS } from "./vfs";
 import TelemetryReporter from "@vscode/extension-telemetry";
 import { codeActionsProvider } from "./codeActionsProvider";
 import { MakeCodeEditor } from "./editor";
+import { createTutorialFileAsync, isTutorialDocument, shareTutorialAsync, validateTutorialMarkdown } from "./tutorials";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
+let tutorialDiagnosticsCollection: vscode.DiagnosticCollection;
 let applicationInsights: TelemetryReporter;
 let extensionContext: vscode.ExtensionContext;
+let lastTutorialDocumentUri: vscode.Uri | undefined;
 
 export function activate(context: vscode.ExtensionContext) {
     extensionContext = context;
     setHost(createVsCodeHost());
 
-    const addCmd = (id: string, fn: () => Promise<void>) => {
-        const cmd = vscode.commands.registerCommand(id, () => {
+    const addCmd = (id: string, fn: (...args: any[]) => Promise<void>) => {
+        const cmd = vscode.commands.registerCommand(id, (...args: any[]) => {
             const mkcdTickPrefix = "makecode.";
             if (id.startsWith(mkcdTickPrefix)) {
                 tickEvent(id.slice(mkcdTickPrefix.length));
             }
-            return fn().catch(err => {
+            return fn(...args).catch(err => {
                 console.error("MakeCode Ext Exception", err);
             });
         });
@@ -59,6 +62,11 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.install", installCommand);
     addCmd("makecode.clean", cleanCommand);
     addCmd("makecode.shareProject", shareCommandAsync);
+    addCmd("makecode.createTutorial", createTutorialCommandAsync);
+    addCmd("makecode.previewTutorial", previewTutorialCommandAsync);
+    addCmd("makecode.shareTutorial", shareTutorialCommandAsync);
+    addCmd("makecode.validateTutorial", validateTutorialCommandAsync);
+    addCmd("makecode.openTutorialDocs", openTutorialDocsCommandAsync);
     addCmd("makecode.addDependency", addDependencyCommandAsync);
     addCmd("makecode.removeDependency", removeDependencyCommandAsync);
 
@@ -120,6 +128,15 @@ export function activate(context: vscode.ExtensionContext) {
 
     diagnosticsCollection = vscode.languages.createDiagnosticCollection("MakeCode");
     context.subscriptions.push(diagnosticsCollection);
+    tutorialDiagnosticsCollection = vscode.languages.createDiagnosticCollection("MakeCode Tutorials");
+    context.subscriptions.push(tutorialDiagnosticsCollection);
+    rememberTutorialDocument(vscode.window.activeTextEditor?.document);
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => rememberTutorialDocument(editor?.document)));
+    context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(document => {
+        if (lastTutorialDocumentUri?.toString() === document.uri.toString()) {
+            lastTutorialDocumentUri = undefined;
+        }
+    }));
 
     maybeShowConfigNotificationAsync();
     maybeShowDependenciesNotificationAsync();
@@ -537,6 +554,166 @@ async function shareCommandAsync() {
         output.show();
         output.append(vscode.l10n.t("Congratulations! Your project is shared at {0} and has been copied into your clipboard.", link));
     }
+}
+
+async function createTutorialCommandAsync() {
+    const workspace = await chooseWorkspaceAsync("project");
+    if (!workspace) {
+        return;
+    }
+
+    const title = await vscode.window.showInputBox({
+        prompt: vscode.l10n.t("Enter a title for this tutorial"),
+        placeHolder: vscode.l10n.t("My Tutorial")
+    });
+
+    if (!title) {
+        return;
+    }
+
+    const uri = await createTutorialFileAsync(workspace, title);
+    const document = await vscode.workspace.openTextDocument(uri);
+    await vscode.window.showTextDocument(document);
+    await validateTutorialDocumentAsync(document);
+}
+
+async function previewTutorialCommandAsync(uri?: vscode.Uri) {
+    const workspace = await chooseWorkspaceAsync("project");
+    if (!workspace) {
+        return;
+    }
+
+    const document = await getTutorialDocumentAsync(uri);
+    if (!document) {
+        return;
+    }
+
+    await validateTutorialDocumentAsync(document);
+    setActiveWorkspace(workspace);
+    MakeCodeEditor.createOrShow(true);
+    try {
+        await MakeCodeEditor.currentEditor?.previewTutorialAsync(document.getText());
+    }
+    catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        showError(vscode.l10n.t("Unable to preview tutorial: {0}", message));
+    }
+}
+
+async function shareTutorialCommandAsync(uri?: vscode.Uri) {
+    const workspace = await chooseWorkspaceAsync("project");
+    if (!workspace) {
+        return;
+    }
+
+    const document = await getTutorialDocumentAsync(uri);
+    if (!document) {
+        return;
+    }
+
+    const diagnostics = await validateTutorialDocumentAsync(document);
+    if (diagnostics.some(d => d.severity === vscode.DiagnosticSeverity.Error)) {
+        showError(vscode.l10n.t("Fix tutorial validation errors before sharing."));
+        return;
+    }
+
+    const link = await shareTutorialAsync(workspace, document.getText());
+    if (link) {
+        try {
+            await vscode.env.clipboard.writeText(link);
+        } catch (e) {
+            tickEvent("clipboard.failed");
+        }
+        const output = vscode.window.createOutputChannel("MakeCode");
+        output.show();
+        output.append(vscode.l10n.t("Congratulations! Your tutorial is shared at {0} and has been copied into your clipboard.", link));
+    }
+    else {
+        showError(vscode.l10n.t("Unable to share tutorial."));
+    }
+}
+
+async function validateTutorialCommandAsync(uri?: vscode.Uri) {
+    const document = await getTutorialDocumentAsync(uri);
+    if (!document) {
+        return;
+    }
+
+    const diagnostics = await validateTutorialDocumentAsync(document);
+    if (!diagnostics.length) {
+        vscode.window.showInformationMessage(vscode.l10n.t("No tutorial validation issues found."));
+    }
+}
+
+async function openTutorialDocsCommandAsync() {
+    vscode.env.openExternal(vscode.Uri.parse("https://makecode.com/writing-docs/tutorials"));
+}
+
+async function getTutorialDocumentAsync(uri?: vscode.Uri): Promise<vscode.TextDocument | undefined> {
+    if (uri) {
+        const document = await vscode.workspace.openTextDocument(uri);
+        if (isTutorialDocument(document)) {
+            rememberTutorialDocument(document);
+            return document;
+        }
+    }
+
+    const activeDocument = vscode.window.activeTextEditor?.document;
+    if (activeDocument && isTutorialDocument(activeDocument)) {
+        rememberTutorialDocument(activeDocument);
+        return activeDocument;
+    }
+
+    const visibleDocument = vscode.window.visibleTextEditors.map(editor => editor.document).find(isTutorialDocument);
+    if (visibleDocument) {
+        rememberTutorialDocument(visibleDocument);
+        return visibleDocument;
+    }
+
+    if (lastTutorialDocumentUri) {
+        const lastDocument = vscode.workspace.textDocuments.find(document => document.uri.toString() === lastTutorialDocumentUri?.toString())
+            || await openTextDocumentIfExistsAsync(lastTutorialDocumentUri);
+        if (lastDocument && isTutorialDocument(lastDocument)) {
+            return lastDocument;
+        }
+    }
+
+    showError(vscode.l10n.t("Open a MakeCode tutorial Markdown file to use this command."));
+    return undefined;
+}
+
+function rememberTutorialDocument(document: vscode.TextDocument | undefined) {
+    if (document && isTutorialDocument(document)) {
+        lastTutorialDocumentUri = document.uri;
+    }
+}
+
+async function openTextDocumentIfExistsAsync(uri: vscode.Uri): Promise<vscode.TextDocument | undefined> {
+    try {
+        return await vscode.workspace.openTextDocument(uri);
+    }
+    catch (e) {
+        return undefined;
+    }
+}
+
+async function validateTutorialDocumentAsync(document: vscode.TextDocument) {
+    const issues = validateTutorialMarkdown(document.getText());
+    const diagnostics = issues.map(issue => {
+        const line = document.lineAt(Math.min(issue.line, document.lineCount - 1));
+        const range = new vscode.Range(
+            line.lineNumber,
+            Math.min(issue.startColumn, line.text.length),
+            line.lineNumber,
+            Math.min(issue.endColumn, line.text.length)
+        );
+        const diagnostic = new vscode.Diagnostic(range, issue.message, issue.severity);
+        diagnostic.source = "MakeCode Tutorials";
+        return diagnostic;
+    });
+
+    tutorialDiagnosticsCollection.set(document.uri, diagnostics);
+    return diagnostics;
 }
 
 export interface ExtensionInfo {

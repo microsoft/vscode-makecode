@@ -158,6 +158,32 @@
         "command": "makecode.testBlocks",
         "title": "%makecode.testBlocks.title%",
         "category": "%makecode.category.title%"
+      },
+      {
+        "command": "makecode.createTutorial",
+        "title": "%makecode.createTutorial.title%",
+        "category": "%makecode.tutorials.category.title%"
+      },
+      {
+        "command": "makecode.previewTutorial",
+        "title": "%makecode.previewTutorial.title%",
+        "category": "%makecode.tutorials.category.title%"
+      },
+      {
+        "command": "makecode.shareTutorial",
+        "title": "%makecode.shareTutorial.title%",
+        "category": "%makecode.tutorials.category.title%"
+      },
+      {
+        "command": "makecode.validateTutorial",
+        "title": "%makecode.validateTutorial.title%",
+        "category": "%makecode.tutorials.category.title%"
+      },
+      {
+        "command": "makecode.openTutorialDocs",
+        "title": "%makecode.openTutorialDocs.title%",
+        "category": "%makecode.tutorials.category.title%",
+        "icon": "$(book)"
       }
     ],
     "viewsContainers": {
@@ -213,6 +239,21 @@
         {
           "when": "resourceLangId == typescript && makecode.extensionActive",
           "command": "makecode.simulate",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == markdown && makecode.extensionActive",
+          "command": "makecode.previewTutorial",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == markdown && makecode.extensionActive",
+          "command": "makecode.validateTutorial",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == markdown && makecode.extensionActive",
+          "command": "makecode.shareTutorial",
           "group": "navigation"
         }
       ],
@@ -337,6 +378,7 @@
     "package-web": "yarn run simulator && webpack --mode production --devtool hidden-source-map",
     "lint": "eslint src --ext ts",
     "run-in-browser": "yarn run simulator && vscode-test-web --browserType=chromium --extensionDevelopmentPath=.",
+    "run-in-browser:watch": "yarn run simulator && vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --port 3001",
     "generate-l10n": "vscode-l10n-dev export --outDir ./l10n ./src",
     "generate-l10n-ploc": "vscode-l10n-dev generate-pseudo -o ./l10n ./l10n/bundle.l10n.json ./package.nls.json",
     "simulator": "cd src/sim && webpack"
@@ -348,16 +390,16 @@
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
     "@vscode/l10n-dev": "^0.0.22",
-    "@vscode/test-web": "^0.0.63",
+    "@vscode/test-web": "^0.0.80",
     "assert": "^2.0.0",
     "eslint": "^8.24.0",
     "mocha": "^10.0.0",
     "process": "^0.11.10",
     "ts-loader": "^9.4.1",
+    "tslib": "^2.5.0",
     "typescript": "^4.8.4",
     "webpack": "^5.74.0",
-    "webpack-cli": "^4.10.0",
-    "tslib": "^2.5.0"
+    "webpack-cli": "^4.10.0"
   },
   "dependencies": {
     "@types/path-browserify": "^1.0.0",

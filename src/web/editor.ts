@@ -35,7 +35,7 @@ export class MakeCodeEditor {
     public static currentEditor: MakeCodeEditor | undefined;
     public simStateTimer: any;
 
-    public static createOrShow() {
+    public static createOrShow(tutorialPreviewMode = false) {
         let column = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : vscode.ViewColumn.One;
         column = column! < 9 ? column! + 1 : column;
 
@@ -56,7 +56,7 @@ export class MakeCodeEditor {
             retainContextWhenHidden: true
         });
 
-        MakeCodeEditor.currentEditor = new MakeCodeEditor(panel);
+        MakeCodeEditor.currentEditor = new MakeCodeEditor(panel, tutorialPreviewMode);
     }
 
     public static register(context: vscode.ExtensionContext) {
@@ -81,9 +81,17 @@ export class MakeCodeEditor {
     protected folder: vscode.WorkspaceFolder | undefined;
     protected extHeaderId: string | undefined;
     protected testHeaderId: string | undefined;
+    protected ready = false;
+    protected tutorialPreviewMode = false;
+    protected pendingTutorialPreview: {
+        markdown: string;
+        resolve: () => void;
+        reject: (e: any) => void;
+    } | undefined;
 
-    constructor(panel: vscode.WebviewPanel) {
+    constructor(panel: vscode.WebviewPanel, tutorialPreviewMode = false) {
         this.panel = panel;
+        this.tutorialPreviewMode = tutorialPreviewMode;
 
         this.panel.webview.onDidReceiveMessage(message => {
             this.handleEditorMessage(message);
@@ -104,9 +112,13 @@ export class MakeCodeEditor {
         this.initWebviewHtmlAsync();
     }
 
-    startWatching(folder: vscode.WorkspaceFolder) {
+    startWatching(folder: vscode.WorkspaceFolder, skipOpenTestProject = false) {
         if (this.running && this.folder === folder) {return;}
         this.stop();
+
+        if (!skipOpenTestProject) {
+            this.tutorialPreviewMode = false;
+        }
 
         this.folder = folder;
         this.running = true;
@@ -146,7 +158,9 @@ export class MakeCodeEditor {
         fsWatcher.onDidDelete(watchHandler);
         this.watcherDisposable = fsWatcher;
         extensionContext.subscriptions.push(this.watcherDisposable);
-        this.openTestProjectAsync();
+        if (!skipOpenTestProject) {
+            this.openTestProjectAsync();
+        }
     }
 
     stop() {
@@ -215,6 +229,31 @@ export class MakeCodeEditor {
         }
     }
 
+    async previewTutorialAsync(markdown: string) {
+        const previewPromise = new Promise<void>((resolve, reject) => {
+            this.pendingTutorialPreview = {
+                markdown,
+                resolve,
+                reject
+            };
+        });
+
+        try {
+            if (!this.tutorialPreviewMode) {
+                await this.prepareForTutorialPreviewAsync();
+            }
+
+            if (this.ready) {
+                await this.importPendingTutorialAsync();
+            }
+        }
+        catch (e) {
+            this.rejectPendingTutorialPreview(e);
+        }
+
+        return previewPromise;
+    }
+
     sendMessageAsync(message: any) {
         message._fromVscode = true;
         message.id = this.nextId++;
@@ -230,6 +269,8 @@ export class MakeCodeEditor {
     }
 
     protected async initWebviewHtmlAsync() {
+        this.ready = false;
+        this.pendingMessages = {};
         const testProject = await this.readTestProjectAsync(this.folder || activeWorkspace());
         if (testProject) {
             this.testHeaderId = testProject.header.id;
@@ -240,17 +281,66 @@ export class MakeCodeEditor {
         }
 
         this.panel.webview.html = "";
-        const hash = this.testHeaderId ? "header:" + this.testHeaderId : "testproject:" + this.extHeaderId;
+        let hash: string | undefined;
+        if (!this.tutorialPreviewMode) {
+            hash = this.testHeaderId ? "header:" + this.testHeaderId : "testproject:" + this.extHeaderId;
+        }
         const simulatorHTML = await getMakeCodeEditorHtmlAsync(this.panel.webview, hash);
         this.panel.webview.html = simulatorHTML;
     }
 
-    protected async onReadyMessageReceivedAsync() {
-        if (!this.running) {
-            await this.startWatching(activeWorkspace());
+    protected async prepareForTutorialPreviewAsync() {
+        if (this.tutorialPreviewMode) {
+            return;
         }
-        else {
+
+        this.tutorialPreviewMode = true;
+        await this.initWebviewHtmlAsync();
+    }
+
+    protected async onReadyMessageReceivedAsync() {
+        this.ready = true;
+        const hasPendingTutorialPreview = !!this.pendingTutorialPreview;
+        if (!this.running) {
+            await this.startWatching(activeWorkspace(), hasPendingTutorialPreview);
+        }
+        else if (!hasPendingTutorialPreview) {
             this.openTestProjectAsync();
+        }
+
+        await this.importPendingTutorialAsync();
+    }
+
+    protected async importPendingTutorialAsync() {
+        const pending = this.pendingTutorialPreview;
+        if (!pending) {
+            return;
+        }
+
+        this.pendingTutorialPreview = undefined;
+        try {
+            const response = await this.sendMessageAsync({
+                type: "pxteditor",
+                action: "importtutorial",
+                markdown: pending.markdown,
+                response: true
+            });
+            const errorMessage = response?.error || response?.resp?.error || response?.resp?.message;
+            if (errorMessage) {
+                throw new Error(errorMessage);
+            }
+            pending.resolve();
+        }
+        catch (e) {
+            pending.reject(e);
+        }
+    }
+
+    protected rejectPendingTutorialPreview(e: any) {
+        const pending = this.pendingTutorialPreview;
+        this.pendingTutorialPreview = undefined;
+        if (pending) {
+            pending.reject(e);
         }
     }
 
@@ -284,16 +374,18 @@ export class MakeCodeEditorSerializer implements vscode.WebviewPanelSerializer {
 }
 
 
-async function getMakeCodeEditorHtmlAsync(webview: vscode.Webview, hash: string) {
+async function getMakeCodeEditorHtmlAsync(webview: vscode.Webview, hash?: string) {
     const uri = vscode.Uri.joinPath(extensionContext.extensionUri, "resources", "editorframe.html");
     const contents = await readTextFileAsync(uri);
 
     const pathURL = (s: string) =>
         webview.asWebviewUri(vscode.Uri.joinPath(extensionContext.extensionUri, "resources", s)).toString();
 
+    const url = hash ? editorUrl + "#" + hash : editorUrl;
+
     return contents
         .replace(/@RES@\/([\w\-\.]+)/g, (f, fn) => pathURL(fn))
-        .replace("@EDITORURL@", editorUrl + "#" + hash);
+        .replace("@EDITORURL@", url);
 }
 
 async function createProjectBlobAsync(workspace: vscode.WorkspaceFolder) {

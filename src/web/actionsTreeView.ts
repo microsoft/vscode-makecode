@@ -3,7 +3,8 @@ import * as vscode from "vscode";
 interface ActionTreeNode {
     label: string;
     icon: vscode.ThemeIcon;
-    command: vscode.Command;
+    command?: vscode.Command;
+    children?: ActionTreeNode[];
 }
 
 const actions: ActionTreeNode[] = [
@@ -70,8 +71,58 @@ const actions: ActionTreeNode[] = [
             title: vscode.l10n.t("Open Arcade Docs"),
             command: "makecode.openHelpDocs"
         }
-    }
-]
+    },
+    createTutorialsNode()
+];
+
+function createTutorialsNode(): ActionTreeNode {
+    return {
+        label: vscode.l10n.t("Tutorials"),
+        icon: new vscode.ThemeIcon("book"),
+        children: [
+            {
+                label: vscode.l10n.t("Create Tutorial"),
+                icon: new vscode.ThemeIcon("new-file"),
+                command: {
+                    title: vscode.l10n.t("Create Tutorial"),
+                    command: "makecode.createTutorial"
+                }
+            },
+            {
+                label: vscode.l10n.t("Preview Tutorial"),
+                icon: new vscode.ThemeIcon("preview"),
+                command: {
+                    title: vscode.l10n.t("Preview Tutorial"),
+                    command: "makecode.previewTutorial"
+                }
+            },
+            {
+                label: vscode.l10n.t("Validate Tutorial"),
+                icon: new vscode.ThemeIcon("check"),
+                command: {
+                    title: vscode.l10n.t("Validate Tutorial"),
+                    command: "makecode.validateTutorial"
+                }
+            },
+            {
+                label: vscode.l10n.t("Create Tutorial Share Link"),
+                icon: new vscode.ThemeIcon("export"),
+                command: {
+                    title: vscode.l10n.t("Create Tutorial Share Link"),
+                    command: "makecode.shareTutorial"
+                }
+            },
+            {
+                label: vscode.l10n.t("Open Tutorial Docs"),
+                icon: new vscode.ThemeIcon("book"),
+                command: {
+                    title: vscode.l10n.t("Open Tutorial Docs"),
+                    command: "makecode.openTutorialDocs"
+                }
+            }
+        ]
+    };
+}
 
 export class ActionsTreeViewProvider implements vscode.TreeDataProvider<ActionTreeNode> {
     onDidChangeTreeData?: vscode.Event<void | ActionTreeNode | ActionTreeNode[] | null | undefined> | undefined;
@@ -81,12 +132,14 @@ export class ActionsTreeViewProvider implements vscode.TreeDataProvider<ActionTr
             label: element.label,
             iconPath: element.icon,
             command: element.command,
-            collapsibleState: vscode.TreeItemCollapsibleState.None
+            collapsibleState: element.children ? vscode.TreeItemCollapsibleState.Expanded : vscode.TreeItemCollapsibleState.None
         };
     }
 
     getChildren(element?: ActionTreeNode | undefined): vscode.ProviderResult<ActionTreeNode[]> {
-        if (!element) return actions;
-        return [];
+        if (!element) {
+            return actions;
+        }
+        return element.children || [];
     }
 }
