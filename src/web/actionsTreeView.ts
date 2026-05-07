@@ -121,6 +121,14 @@ function createTutorialsNode(): ActionTreeNode {
                 }
             },
             {
+                label: vscode.l10n.t("Edit Skillmap with AI"),
+                icon: new vscode.ThemeIcon("sparkle"),
+                command: {
+                    title: vscode.l10n.t("Edit Skillmap with AI"),
+                    command: "makecode.editSkillmapWithAI"
+                }
+            },
+            {
                 label: vscode.l10n.t("Validate Tutorial"),
                 icon: new vscode.ThemeIcon("check"),
                 command: {

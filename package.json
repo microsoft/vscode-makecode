@@ -5,7 +5,7 @@
   "description": "Make games and learn code. Create retro arcade style video games, art, and music inside VS Code.",
   "version": "1.0.10",
   "engines": {
-    "vscode": "^1.75.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
     "Education"
@@ -24,9 +24,9 @@
     "url": "https://github.com/microsoft/vscode-makecode"
   },
   "activationEvents": [
-    "onCommand:makecode.create",
     "workspaceContains:./pxt.json",
-    "onFileSystem:mkcdfs"
+    "onFileSystem:mkcdfs",
+    "onChatParticipant:ms-edu.makecode"
   ],
   "browser": "./dist/web/extension.js",
   "contributes": {
@@ -35,10 +35,36 @@
         "path": "./src/web/prompts/tutorial-authoring.prompt.md"
       },
       {
+        "path": "./src/web/prompts/skillmap-authoring.prompt.md"
+      },
+      {
         "path": "./src/web/prompts/static-typescript.prompt.md"
       },
       {
         "path": "./src/web/prompts/extension-documentation.prompt.md"
+      }
+    ],
+    "chatParticipants": [
+      {
+        "id": "ms-edu.makecode",
+        "name": "makecode",
+        "fullName": "MakeCode",
+        "description": "Author and update MakeCode projects, tutorials, and skillmaps.",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "project",
+            "description": "Update the active MakeCode project using Static TypeScript guidance."
+          },
+          {
+            "name": "tutorial",
+            "description": "Author or update the active MakeCode tutorial."
+          },
+          {
+            "name": "skillmap",
+            "description": "Author or update the active MakeCode skillmap."
+          }
+        ]
       }
     ],
     "commands": [
@@ -195,6 +221,12 @@
         "icon": "$(sparkle)"
       },
       {
+        "command": "makecode.editSkillmapWithAI",
+        "title": "%makecode.editSkillmapWithAI.title%",
+        "category": "%makecode.tutorials.category.title%",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "makecode.previewTutorial",
         "title": "%makecode.previewTutorial.title%",
         "category": "%makecode.tutorials.category.title%",
@@ -293,6 +325,11 @@
           "group": "navigation"
         },
         {
+          "when": "makecode.isSkillmapFile && makecode.extensionActive",
+          "command": "makecode.editSkillmapWithAI",
+          "group": "navigation"
+        },
+        {
           "when": "resourceLangId == markdown && makecode.extensionActive",
           "command": "makecode.validateTutorial",
           "group": "navigation"
@@ -317,6 +354,11 @@
         {
           "when": "makecode.isTutorialFile && makecode.extensionActive",
           "command": "makecode.editTutorialWithAI",
+          "group": "navigation"
+        },
+        {
+          "when": "makecode.isSkillmapFile && makecode.extensionActive",
+          "command": "makecode.editSkillmapWithAI",
           "group": "navigation"
         },
         {
@@ -453,7 +495,7 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.0",
-    "@types/vscode": "^1.74.0",
+    "@types/vscode": "1.90.0",
     "@types/webpack-env": "^1.18.0",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",

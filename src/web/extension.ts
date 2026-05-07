@@ -15,20 +15,38 @@ import { ActionsTreeViewProvider } from "./actionsTreeView";
 import { BuildOptions } from "makecode-core/built/commands";
 import { getHardwareVariantsAsync, getProjectTemplatesAsync } from "./makecodeGallery";
 import { shareProjectAsync } from "./shareLink";
-import { getPxtJson, readTextFileAsync, setPxtJson, showQuickPickAsync, writeTextFileAsync } from "./util";
+import { getPxtJson, setPxtJson, showQuickPickAsync, writeTextFileAsync } from "./util";
 import { VFS } from "./vfs";
 import TelemetryReporter from "@vscode/extension-telemetry";
 import { codeActionsProvider } from "./codeActionsProvider";
 import { MakeCodeEditor } from "./editor";
 import { createTutorialAssetJsonAsync, createTutorialFileAsync, isTutorialDocument, isTutorialFileDocument, shareTutorialAsync, updateTutorialAssetJsonSnippet, validateTutorialMarkdown } from "./tutorials";
+import { MakeCodeAgentKind, buildProjectAgentQueryAsync, buildSkillmapAgentQueryAsync, buildTutorialAgentQueryAsync } from "./aiPrompts";
 
 let diagnosticsCollection: vscode.DiagnosticCollection;
 let tutorialDiagnosticsCollection: vscode.DiagnosticCollection;
 let applicationInsights: TelemetryReporter;
 let extensionContext: vscode.ExtensionContext;
 let lastTutorialDocumentUri: vscode.Uri | undefined;
+let lastSkillmapDocumentUri: vscode.Uri | undefined;
+let makeCodeChatDebugOutput: vscode.OutputChannel | undefined;
+const MAKECODE_CHAT_PARTICIPANT_ID = "ms-edu.makecode";
+
+function logMakeCodeChatDebug(message: string, data?: Record<string, unknown>) {
+    const line = data ? `${message} ${JSON.stringify(data)}` : message;
+    console.warn(line);
+    if (!makeCodeChatDebugOutput) {
+        makeCodeChatDebugOutput = vscode.window.createOutputChannel("MakeCode Chat Debug");
+    }
+    makeCodeChatDebugOutput.appendLine(line);
+}
 
 export function activate(context: vscode.ExtensionContext) {
+    logMakeCodeChatDebug("MAKECODE_EXTENSION_ACTIVATE_CALLED", {
+        extensionId: context.extension.id,
+        vscodeVersion: vscode.version
+    });
+
     extensionContext = context;
     setHost(createVsCodeHost());
 
@@ -52,6 +70,7 @@ export function activate(context: vscode.ExtensionContext) {
     AssetEditor.register(context);
     BuildWatcher.register(context);
     MakeCodeEditor.register(context);
+    registerMakeCodeChatParticipant(context);
 
     const vfs = new VFS(context);
     context.subscriptions.push(vscode.workspace.registerFileSystemProvider("mkcdfs", vfs, { isCaseSensitive: true }));
@@ -66,6 +85,7 @@ export function activate(context: vscode.ExtensionContext) {
     addCmd("makecode.createTutorial", createTutorialCommandAsync);
     addCmd("makecode.addTutorialAssets", addTutorialAssetsCommandAsync);
     addCmd("makecode.editTutorialWithAI", editTutorialWithAICommandAsync);
+    addCmd("makecode.editSkillmapWithAI", editSkillmapWithAICommandAsync);
     addCmd("makecode.previewTutorial", previewTutorialCommandAsync);
     addCmd("makecode.shareTutorial", shareTutorialCommandAsync);
     addCmd("makecode.validateTutorial", validateTutorialCommandAsync);
@@ -133,21 +153,24 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(diagnosticsCollection);
     tutorialDiagnosticsCollection = vscode.languages.createDiagnosticCollection("MakeCode Tutorials");
     context.subscriptions.push(tutorialDiagnosticsCollection);
-    rememberTutorialDocument(vscode.window.activeTextEditor?.document);
-    updateTutorialFileContext();
+    rememberAuthoringDocuments(vscode.window.activeTextEditor?.document);
+    updateAuthoringFileContext();
     context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(editor => {
-        rememberTutorialDocument(editor?.document);
-        updateTutorialFileContext(editor?.document);
+        rememberAuthoringDocuments(editor?.document);
+        updateAuthoringFileContext(editor?.document);
     }));
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(event => {
         if (vscode.window.activeTextEditor?.document.uri.toString() === event.document.uri.toString()) {
-            rememberTutorialDocument(event.document);
-            updateTutorialFileContext(event.document);
+            rememberAuthoringDocuments(event.document);
+            updateAuthoringFileContext(event.document);
         }
     }));
     context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(document => {
         if (lastTutorialDocumentUri?.toString() === document.uri.toString()) {
             lastTutorialDocumentUri = undefined;
+        }
+        if (lastSkillmapDocumentUri?.toString() === document.uri.toString()) {
+            lastSkillmapDocumentUri = undefined;
         }
     }));
 
@@ -634,10 +657,9 @@ async function editTutorialWithAICommandAsync(uri?: vscode.Uri) {
         return;
     }
 
-    const query = buildTutorialChatQuery(document, request);
-    if (!await openChatWithQueryAsync(query)) {
-        await vscode.env.clipboard.writeText(query);
-        vscode.window.showInformationMessage(vscode.l10n.t("The tutorial editing prompt was copied to the clipboard. Paste it into Chat to continue."));
+    if (!await openMakeCodeChatAsync("tutorial", document, request)) {
+        await vscode.env.clipboard.writeText(buildAgentInvocationQuery("tutorial", document, request));
+        vscode.window.showInformationMessage(vscode.l10n.t("The tutorial agent prompt was copied to the clipboard. Paste it into Chat to continue."));
     }
 }
 
@@ -660,10 +682,34 @@ async function editProjectWithAICommandAsync(uri?: vscode.Uri) {
         return;
     }
 
-    const query = buildProjectChatQuery(document, request);
-    if (!await openChatWithQueryAsync(query)) {
-        await vscode.env.clipboard.writeText(query);
-        vscode.window.showInformationMessage(vscode.l10n.t("The project editing prompt was copied to the clipboard. Paste it into Chat to continue."));
+    if (!await openMakeCodeChatAsync("project", document, request)) {
+        await vscode.env.clipboard.writeText(buildAgentInvocationQuery("project", document, request));
+        vscode.window.showInformationMessage(vscode.l10n.t("The project agent prompt was copied to the clipboard. Paste it into Chat to continue."));
+    }
+}
+
+async function editSkillmapWithAICommandAsync(uri?: vscode.Uri) {
+    const document = await getSkillmapDocumentAsync(uri);
+    if (!document) {
+        return;
+    }
+
+    if (document.isDirty) {
+        await document.save();
+    }
+
+    const request = await vscode.window.showInputBox({
+        prompt: vscode.l10n.t("What should AI help change in this skillmap?"),
+        placeHolder: vscode.l10n.t("Add a node, fix graph metadata, review tutorial links...")
+    });
+
+    if (!request) {
+        return;
+    }
+
+    if (!await openMakeCodeChatAsync("skillmap", document, request)) {
+        await vscode.env.clipboard.writeText(buildAgentInvocationQuery("skillmap", document, request));
+        vscode.window.showInformationMessage(vscode.l10n.t("The skillmap agent prompt was copied to the clipboard. Paste it into Chat to continue."));
     }
 }
 
@@ -743,20 +789,20 @@ async function getTutorialDocumentAsync(uri?: vscode.Uri): Promise<vscode.TextDo
     if (uri) {
         const document = await vscode.workspace.openTextDocument(uri);
         if (isTutorialDocument(document)) {
-            rememberTutorialDocument(document);
+            rememberAuthoringDocuments(document);
             return document;
         }
     }
 
     const activeDocument = vscode.window.activeTextEditor?.document;
     if (activeDocument && isTutorialDocument(activeDocument)) {
-        rememberTutorialDocument(activeDocument);
+        rememberAuthoringDocuments(activeDocument);
         return activeDocument;
     }
 
     const visibleDocument = vscode.window.visibleTextEditors.map(editor => editor.document).find(isTutorialDocument);
     if (visibleDocument) {
-        rememberTutorialDocument(visibleDocument);
+        rememberAuthoringDocuments(visibleDocument);
         return visibleDocument;
     }
 
@@ -807,57 +853,338 @@ function isMainTsDocument(document: vscode.TextDocument) {
     return document.languageId === "typescript" && /(^|\/)main\.ts$/i.test(document.uri.path);
 }
 
+async function getSkillmapDocumentAsync(uri?: vscode.Uri): Promise<vscode.TextDocument | undefined> {
+    if (uri) {
+        const document = await vscode.workspace.openTextDocument(uri);
+        if (isSkillmapFileDocument(document)) {
+            rememberAuthoringDocuments(document);
+            return document;
+        }
+    }
+
+    const activeDocument = vscode.window.activeTextEditor?.document;
+    if (activeDocument && isSkillmapFileDocument(activeDocument)) {
+        rememberAuthoringDocuments(activeDocument);
+        return activeDocument;
+    }
+
+    const visibleDocument = vscode.window.visibleTextEditors.map(editor => editor.document).find(isSkillmapFileDocument);
+    if (visibleDocument) {
+        rememberAuthoringDocuments(visibleDocument);
+        return visibleDocument;
+    }
+
+    if (lastSkillmapDocumentUri) {
+        const lastDocument = vscode.workspace.textDocuments.find(document => document.uri.toString() === lastSkillmapDocumentUri?.toString())
+            || await openTextDocumentIfExistsAsync(lastSkillmapDocumentUri);
+        if (lastDocument && isSkillmapFileDocument(lastDocument)) {
+            return lastDocument;
+        }
+    }
+
+    showError(vscode.l10n.t("Open a MakeCode skillmap Markdown file to use this command."));
+    return undefined;
+}
+
+function isSkillmapFileDocument(document: vscode.TextDocument) {
+    if (!isTutorialDocument(document)) {
+        return false;
+    }
+
+    if (/\/docs\/skillmap\/[^/]+\.md$/i.test(document.uri.path)) {
+        return true;
+    }
+
+    const text = document.getText();
+    return /^#\s+\S/m.test(text)
+        && /^##\s+\S/m.test(text)
+        && /^###\s+\S/m.test(text)
+        && /^\*\s+(type:\s*tutorial|layout:\s*|allowcodecarryover:|primarycolor:)/im.test(text);
+}
+
+function rememberAuthoringDocuments(document: vscode.TextDocument | undefined) {
+    rememberTutorialDocument(document);
+    rememberSkillmapDocument(document);
+}
+
 function rememberTutorialDocument(document: vscode.TextDocument | undefined) {
     if (document && isTutorialDocument(document)) {
         lastTutorialDocumentUri = document.uri;
     }
 }
 
-function updateTutorialFileContext(document = vscode.window.activeTextEditor?.document) {
+function rememberSkillmapDocument(document: vscode.TextDocument | undefined) {
+    if (document && isSkillmapFileDocument(document)) {
+        lastSkillmapDocumentUri = document.uri;
+    }
+}
+
+function updateAuthoringFileContext(document = vscode.window.activeTextEditor?.document) {
     vscode.commands.executeCommand("setContext", "makecode.isTutorialFile", !!document && isTutorialFileDocument(document));
+    vscode.commands.executeCommand("setContext", "makecode.isSkillmapFile", !!document && isSkillmapFileDocument(document));
 }
 
-function buildTutorialChatQuery(document: vscode.TextDocument, request: string) {
-    const relativePath = vscode.workspace.asRelativePath(document.uri, false).replace(/\\/g, "/");
-    const selection = getActiveSelectionText(document);
-    const selectionContext = selection ? `\n\nFocus on this selected tutorial excerpt if relevant:\n\`\`\`md\n${selection}\n\`\`\`` : "";
 
-    return `Help me update this Microsoft MakeCode tutorial Markdown file: #file:${relativePath}
+function registerMakeCodeChatParticipant(context: vscode.ExtensionContext) {
+    logMakeCodeChatDebug("MAKECODE_CHAT_PARTICIPANT_REGISTERING", {
+        participantId: MAKECODE_CHAT_PARTICIPANT_ID,
+        hasChatApi: !!vscode.chat,
+        hasCreateChatParticipant: typeof vscode.chat?.createChatParticipant === "function"
+    });
 
-User request: ${request}
+    const handler: vscode.ChatRequestHandler = async (request, chatContext, stream, token) => {
+        logMakeCodeChatDebug("MAKECODE_CHAT_HANDLER_CALLED", {
+            command: request.command,
+            promptLength: request.prompt?.length ?? 0,
+            referenceCount: request.references?.length ?? 0,
+            historyLength: chatContext.history?.length ?? 0,
+            cancelled: token.isCancellationRequested
+        });
 
-Use the MakeCode tutorial-authoring guidance as the base prompt:
-- Keep a clear # title and sequential ## Step N headings unless this tutorial intentionally uses activity format.
-- Preserve existing code fences unless there is a clear bug.
-- Prefer MakeCode snippets such as blocks, typescript/javascript, template, package, ghost, sig, and assetjson.
-- Keep snippets compatible with MakeCode Static TypeScript and avoid DOM, Node, imports, eval, generators, JSX, or unavailable packages.
-- Preserve and update package and assetjson snippets when required; omit package snippets entirely when no dependencies are required, because empty package snippets break tutorial parsing.
-- Make minimal, reviewable edits to this tutorial file and explain any changes that need validation.
+        try {
+            if (token.isCancellationRequested) {
+                return;
+            }
 
-After the edit, suggest running MakeCode: Validate Tutorial and Launch Tutorial Preview.${selectionContext}`;
+            const agentKind = getAgentKindForChatRequest(request.command);
+            stream.progress(`Resolving MakeCode ${agentKind} context...`);
+
+            const document = await withTimeout(getAgentDocumentAsync(agentKind, request), 5000, "Timed out resolving MakeCode file context.");
+            if (!document) {
+                stream.markdown(getMissingAgentDocumentMessage(agentKind));
+                return;
+            }
+
+            stream.reference(document.uri);
+            stream.progress("Building MakeCode prompt...");
+
+            const prompt = await withTimeout(buildAgentPromptAsync(agentKind, document, request.prompt), 10000, "Timed out building the MakeCode prompt.");
+
+            const MAX_HISTORY_TURNS = 6;
+            const MAX_HISTORY_CHARS = 12000;
+            const messages: vscode.LanguageModelChatMessage[] = [];
+            const recentHistory = (chatContext.history ?? []).slice(-MAX_HISTORY_TURNS);
+            let historyCharBudget = MAX_HISTORY_CHARS;
+            for (const turn of recentHistory) {
+                if (historyCharBudget <= 0) {
+                    break;
+                }
+                if (turn instanceof vscode.ChatResponseTurn) {
+                    let response = turn.response
+                        .map(part => part instanceof vscode.ChatResponseMarkdownPart ? part.value.value : "")
+                        .join("");
+                    if (!response) {
+                        continue;
+                    }
+                    if (response.length > historyCharBudget) {
+                        response = response.slice(0, historyCharBudget);
+                    }
+                    historyCharBudget -= response.length;
+                    messages.push(vscode.LanguageModelChatMessage.Assistant(response));
+                }
+            }
+
+            stream.progress("Selecting language model...");
+
+            const model: vscode.LanguageModelChat | undefined = (request as any).model;
+            if (!model) {
+                stream.markdown("Pick a language model in the chat input (the model picker next to the send button), then try `@makecode` again.");
+                return;
+            }
+
+            messages.push(vscode.LanguageModelChatMessage.User(constrainPromptToModel(prompt, model)));
+
+            stream.progress("Asking MakeCode agent...");
+
+            if (token.isCancellationRequested) {
+                return;
+            }
+
+            const response = await withTimeout(model.sendRequest(messages, {}, token), 20000, "Timed out starting the language model request.");
+            let receivedResponse = false;
+            for await (const fragment of response.text) {
+                if (token.isCancellationRequested) {
+                    break;
+                }
+                receivedResponse = true;
+                stream.markdown(fragment);
+            }
+
+            if (!receivedResponse) {
+                stream.markdown("The language model completed without returning text. Try a shorter request or choose another model.");
+            }
+        }
+        catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            stream.markdown(`The MakeCode agent could not complete the request: ${message}`);
+        }
+    };
+
+    const participant = vscode.chat.createChatParticipant(MAKECODE_CHAT_PARTICIPANT_ID, handler);
+    participant.iconPath = vscode.Uri.joinPath(context.extensionUri, "media", "logo.svg");
+    context.subscriptions.push(participant);
+    logMakeCodeChatDebug("MAKECODE_CHAT_PARTICIPANT_REGISTERED", {
+        participantId: participant.id
+    });
 }
 
-function buildProjectChatQuery(document: vscode.TextDocument, request: string) {
+function getAgentKindForChatRequest(command: string | undefined): MakeCodeAgentKind {
+    switch (command) {
+        case "tutorial":
+        case "project":
+        case "skillmap":
+            return command;
+        default:
+            return inferAgentKindFromActiveDocument();
+    }
+}
+
+function inferAgentKindFromActiveDocument(): MakeCodeAgentKind {
+    const document = vscode.window.activeTextEditor?.document;
+    if (document) {
+        if (isSkillmapFileDocument(document)) {
+            return "skillmap";
+        }
+        if (isTutorialFileDocument(document)) {
+            return "tutorial";
+        }
+        if (isMainTsDocument(document)) {
+            return "project";
+        }
+    }
+
+    return "project";
+}
+
+async function getAgentDocumentAsync(agentKind: MakeCodeAgentKind, request?: vscode.ChatRequest) {
+    const referencedDocument = await getReferencedAgentDocumentAsync(agentKind, request);
+    if (referencedDocument) {
+        return referencedDocument;
+    }
+
+    return findAgentDocumentWithoutPrompting(agentKind);
+}
+
+function findAgentDocumentWithoutPrompting(agentKind: MakeCodeAgentKind) {
+    const matcher = getAgentDocumentMatcher(agentKind);
+    const lastUri = agentKind === "tutorial" ? lastTutorialDocumentUri
+        : agentKind === "skillmap" ? lastSkillmapDocumentUri
+            : undefined;
+
+    const active = vscode.window.activeTextEditor?.document;
+    if (active && matcher(active)) {
+        return active;
+    }
+
+    const visible = vscode.window.visibleTextEditors.map(editor => editor.document).find(matcher);
+    if (visible) {
+        return visible;
+    }
+
+    if (lastUri) {
+        const cached = vscode.workspace.textDocuments.find(document => document.uri.toString() === lastUri.toString());
+        if (cached && matcher(cached)) {
+            return cached;
+        }
+    }
+
+    return undefined;
+}
+
+function getAgentDocumentMatcher(agentKind: MakeCodeAgentKind): (document: vscode.TextDocument) => boolean {
+    switch (agentKind) {
+        case "tutorial":
+            return isTutorialDocument;
+        case "skillmap":
+            return isSkillmapFileDocument;
+        case "project":
+        default:
+            return isMainTsDocument;
+    }
+}
+
+async function getReferencedAgentDocumentAsync(agentKind: MakeCodeAgentKind, request?: vscode.ChatRequest) {
+    for (const reference of request?.references ?? []) {
+        const uri = getUriFromChatReference(reference);
+        if (!uri) {
+            continue;
+        }
+
+        const document = await openTextDocumentIfExistsAsync(uri);
+        if (!document) {
+            continue;
+        }
+
+        if ((agentKind === "tutorial" && isTutorialDocument(document))
+            || (agentKind === "skillmap" && isSkillmapFileDocument(document))
+            || (agentKind === "project" && isMainTsDocument(document))) {
+            rememberAuthoringDocuments(document);
+            return document;
+        }
+    }
+
+    return undefined;
+}
+
+function getUriFromChatReference(reference: vscode.ChatPromptReference) {
+    if (reference.value instanceof vscode.Uri) {
+        return reference.value;
+    }
+
+    if (reference.value instanceof vscode.Location) {
+        return reference.value.uri;
+    }
+
+    return undefined;
+}
+
+async function buildAgentPromptAsync(agentKind: MakeCodeAgentKind, document: vscode.TextDocument, request: string) {
+    const options = {
+        extensionUri: extensionContext.extensionUri,
+        document,
+        request,
+        selection: getActiveSelectionText(document)
+    };
+
+    switch (agentKind) {
+        case "tutorial":
+            return buildTutorialAgentQueryAsync(options);
+        case "skillmap":
+            return buildSkillmapAgentQueryAsync(options);
+        case "project":
+        default:
+            return buildProjectAgentQueryAsync(options);
+    }
+}
+
+function buildAgentInvocationQuery(agentKind: MakeCodeAgentKind, document: vscode.TextDocument, request: string) {
     const relativePath = vscode.workspace.asRelativePath(document.uri, false).replace(/\\/g, "/");
-    const selection = getActiveSelectionText(document);
-    const selectionContext = selection ? `\n\nFocus on this selected project code if relevant:\n\`\`\`ts\n${selection}\n\`\`\`` : "";
+    return `@makecode /${agentKind} ${request}\n\nUse #file:${relativePath} as the primary file context.`;
+}
 
-    return `Help me update this Microsoft MakeCode Arcade project entry point: #file:${relativePath}
+function getMissingAgentDocumentMessage(agentKind: MakeCodeAgentKind) {
+    switch (agentKind) {
+        case "tutorial":
+            return vscode.l10n.t("Open a MakeCode tutorial Markdown file, then ask @makecode /tutorial again.");
+        case "skillmap":
+            return vscode.l10n.t("Open a MakeCode skillmap Markdown file, then ask @makecode /skillmap again.");
+        case "project":
+        default:
+            return vscode.l10n.t("Open main.ts in a MakeCode project, then ask @makecode /project again.");
+    }
+}
 
-User request: ${request}
+function constrainPromptToModel(prompt: string, model: vscode.LanguageModelChat) {
+    const maxPromptChars = Math.max(4000, Math.min(32000, Math.floor(model.maxInputTokens * 3)));
+    if (prompt.length <= maxPromptChars) {
+        return prompt;
+    }
 
-Inspect pxt.json, project files, and pxt_modules APIs when available before changing code.
-
-Use the MakeCode Static TypeScript guidance as the base prompt:
-- MakeCode uses the PXT compiler and Static TypeScript; avoid DOM APIs, Node APIs, arbitrary imports, generators, JSX, eval, and browser-only APIs.
-- Prefer APIs exposed as blocks with //% block annotations when possible.
-- Do not hallucinate functions, methods, or packages outside the current project, pxt.json dependencies, and nearest pxt_modules APIs.
-- Avoid deprecated APIs and identifiers prefixed with _ unless there is a strong reason.
-- If adding files, update pxt.json correctly.
-- When creating assets, use editable tagged templates such as assets.image\`name\`, assets.tile\`name\`, assets.tilemap\`name\`, assets.animation\`name\`, or assets.song\`name\`; do not edit generated asset files.
-- Make minimal, reviewable edits to the project and explain any follow-up validation.
-
-After the edit, suggest running MakeCode: Start MakeCode Simulator.${selectionContext}`;
+    const headLength = Math.floor(maxPromptChars * 0.7);
+    const tailLength = maxPromptChars - headLength;
+    return prompt.substring(0, headLength)
+        + "\n\n---\nThe bundled prompt was shortened to fit the selected model context. Preserve the instructions above and the active file request below.\n---\n\n"
+        + prompt.substring(prompt.length - tailLength);
 }
 
 function getActiveSelectionText(document: vscode.TextDocument) {
@@ -870,17 +1197,35 @@ function getActiveSelectionText(document: vscode.TextDocument) {
     return text.length > 2000 ? text.substring(0, 2000) + "\n..." : text;
 }
 
-async function openChatWithQueryAsync(query: string) {
+async function openMakeCodeChatAsync(agentKind: MakeCodeAgentKind, document: vscode.TextDocument, request: string) {
+    const query = buildAgentChatQuery(document, request);
+    logMakeCodeChatDebug("MAKECODE_CHAT_OPEN_REQUEST", {
+        participantId: MAKECODE_CHAT_PARTICIPANT_ID,
+        slashCommand: agentKind,
+        queryLength: query.length
+    });
+
     try {
         await vscode.commands.executeCommand("workbench.action.chat.open", {
             query,
-            isPartialQuery: true
+            isPartialQuery: false,
+            mode: "ask",
+            agentId: MAKECODE_CHAT_PARTICIPANT_ID,
+            slashCommand: agentKind
         });
         return true;
     }
     catch (e) {
+        logMakeCodeChatDebug("MAKECODE_CHAT_OPEN_FAILED", {
+            message: e instanceof Error ? e.message : String(e)
+        });
         return false;
     }
+}
+
+function buildAgentChatQuery(document: vscode.TextDocument, request: string) {
+    const relativePath = vscode.workspace.asRelativePath(document.uri, false).replace(/\\/g, "/");
+    return `${request}\n\nUse #file:${relativePath} as the primary file context.`;
 }
 
 async function openTextDocumentIfExistsAsync(uri: vscode.Uri): Promise<vscode.TextDocument | undefined> {
@@ -1149,4 +1494,20 @@ export function tickEvent(
         },
         measurements
     );
+}
+
+function withTimeout<T>(promise: Thenable<T>, timeoutMs: number, message: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error(message)), timeoutMs);
+        promise.then(
+            value => {
+                clearTimeout(timeout);
+                resolve(value);
+            },
+            error => {
+                clearTimeout(timeout);
+                reject(error);
+            }
+        );
+    });
 }
