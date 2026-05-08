@@ -28,6 +28,7 @@
     "onFileSystem:mkcdfs",
     "onChatParticipant:ms-edu.makecode"
   ],
+  "main": "./dist/node/extension.js",
   "browser": "./dist/web/extension.js",
   "contributes": {
     "chatPromptFiles": [
@@ -487,8 +488,9 @@
     "watch-web": "yarn run simulator && webpack --watch",
     "package-web": "yarn run simulator && webpack --mode production --devtool hidden-source-map",
     "lint": "eslint src --ext ts",
-    "run-in-browser": "yarn run simulator && vscode-test-web --browserType=chromium --extensionDevelopmentPath=.",
-    "run-in-browser:watch": "yarn run simulator && vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --port 3001",
+    "prepare-web-extension-test-workspace": "node -e \"require('fs').mkdirSync('.vscode-test-web/workspace', { recursive: true })\"",
+    "run-in-browser": "yarn run simulator && yarn run prepare-web-extension-test-workspace && vscode-test-web --browserType=chromium --extensionDevelopmentPath=. .vscode-test-web/workspace",
+    "run-in-browser:watch": "yarn run simulator && yarn run prepare-web-extension-test-workspace && vscode-test-web --browserType=chromium --extensionDevelopmentPath=. --port 3001 .vscode-test-web/workspace",
     "generate-l10n": "vscode-l10n-dev export --outDir ./l10n ./src",
     "generate-l10n-ploc": "vscode-l10n-dev generate-pseudo -o ./l10n ./l10n/bundle.l10n.json ./package.nls.json",
     "simulator": "cd src/sim && webpack"

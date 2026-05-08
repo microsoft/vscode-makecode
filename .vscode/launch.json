@@ -22,10 +22,24 @@
 				"--extensionDevelopmentKind=web",
 				"--user-data-dir=${workspaceFolder}/.vscode-test/user-data",
 				"--extensions-dir=${workspaceFolder}/.vscode-test/extensions",
-				"${workspaceFolder}"
+				"${workspaceFolder}/.vscode-test-web/workspace"
 			],
 			"outFiles": [
 				"${workspaceFolder}/dist/web/**/*.js"
+			],
+			"preLaunchTask": "npm: watch-web"
+		},
+		{
+			"name": "Run Desktop Extension",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"--extensionDevelopmentKind=workspace",
+				"${workspaceFolder}/.vscode-test-web/workspace"
+			],
+			"outFiles": [
+				"${workspaceFolder}/dist/node/**/*.js"
 			],
 			"preLaunchTask": "npm: watch-web"
 		},

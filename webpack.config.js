@@ -12,14 +12,23 @@
 const path = require("path");
 const webpack = require("webpack");
 
+/** @type {Record<string, string>} */
+const webExtensionEntry = {
+	extension: "./src/web/extension.ts"
+};
+webExtensionEntry["test/suite/index"] = "./src/web/test/suite/index.ts";
+
+/** @type {Record<string, string>} */
+const nodeExtensionExternals = {
+	vscode: "commonjs vscode"
+};
+nodeExtensionExternals["@vscode/extension-telemetry"] = "commonjs @vscode/extension-telemetry";
+
 /** @type WebpackConfig */
 const webExtensionConfig = {
 	mode: "none", // this leaves the source code as close as possible to the original (when packaging we set this to "production")
 	target: "webworker", // extensions run in a webworker context
-	entry: {
-		"extension": "./src/web/extension.ts",
-		"test/suite/index": "./src/web/test/suite/index.ts"
-	},
+	entry: webExtensionEntry,
 	output: {
 		filename: "[name].js",
 		path: path.join(__dirname, "./dist/web"),
@@ -77,4 +86,24 @@ const webExtensionConfig = {
 	},
 };
 
-module.exports = [ webExtensionConfig ];
+/** @type WebpackConfig */
+const nodeExtensionConfig = {
+	...webExtensionConfig,
+	target: "node",
+	entry: {
+		"extension": "./src/web/extension.ts"
+	},
+	output: {
+		filename: "[name].js",
+		path: path.join(__dirname, "./dist/node"),
+		libraryTarget: "commonjs2",
+		devtoolModuleFilenameTemplate: "../../[resource-path]"
+	},
+	resolve: {
+		...webExtensionConfig.resolve,
+		mainFields: ["module", "main"]
+	},
+	externals: nodeExtensionExternals
+};
+
+module.exports = [ webExtensionConfig, nodeExtensionConfig ];

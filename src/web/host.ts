@@ -228,6 +228,15 @@ export async function findFilesAsync(extension: string, root: vscode.Uri, matchW
 }
 
 function base64EncodeBufferAsync(buffer: Uint8Array | ArrayBuffer): Promise<string> {
+    if (typeof FileReader === "undefined") {
+        const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i += 0x8000) {
+            binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+        }
+        return Promise.resolve(btoa(binary));
+    }
+
     return new Promise<string>(resolve => {
         const reader = new FileReader();
         reader.onload = () => {

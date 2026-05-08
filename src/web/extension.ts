@@ -954,11 +954,16 @@ function registerMakeCodeChatParticipant(context: vscode.ExtensionContext) {
                 stream.markdown(getMissingAgentDocumentMessage(agentKind));
                 return;
             }
+            const documentVersion = document.version;
 
             stream.reference(document.uri);
             stream.progress("Building MakeCode prompt...");
 
-            const prompt = await withTimeout(buildAgentPromptAsync(agentKind, document, request.prompt), 10000, "Timed out building the MakeCode prompt.");
+            const prompt = buildAgentEditPrompt(
+                await withTimeout(buildAgentPromptAsync(agentKind, document, request.prompt), 10000, "Timed out building the MakeCode prompt."),
+                agentKind,
+                document
+            );
 
             const MAX_HISTORY_TURNS = 6;
             const MAX_HISTORY_CHARS = 12000;
@@ -1002,17 +1007,46 @@ function registerMakeCodeChatParticipant(context: vscode.ExtensionContext) {
 
             const response = await withTimeout(model.sendRequest(messages, {}, token), 20000, "Timed out starting the language model request.");
             let receivedResponse = false;
+            let responseText = "";
             for await (const fragment of response.text) {
                 if (token.isCancellationRequested) {
                     break;
                 }
                 receivedResponse = true;
-                stream.markdown(fragment);
+                responseText += fragment;
             }
 
             if (!receivedResponse) {
                 stream.markdown("The language model completed without returning text. Try a shorter request or choose another model.");
+                return;
             }
+
+            const parsedResponse = parseAgentEditResponse(responseText);
+            if (!parsedResponse.updatedText) {
+                stream.markdown(parsedResponse.message || "The MakeCode agent did not return file edits. Try asking for a concrete change to the active file.");
+                return;
+            }
+
+            if (document.version !== documentVersion) {
+                stream.markdown("The file changed while the MakeCode agent was working. Review the chat response and try again so I do not overwrite newer edits.");
+                return;
+            }
+
+            if (parsedResponse.updatedText === document.getText()) {
+                stream.markdown("The MakeCode agent did not make any changes to the file.");
+                return;
+            }
+
+            stream.progress("Applying MakeCode edits...");
+            await applyWholeDocumentEditAsync(document, parsedResponse.updatedText);
+            await vscode.window.showTextDocument(document);
+            await saveDocumentIfDirtyAsync(document);
+
+            if (agentKind === "tutorial") {
+                await validateTutorialDocumentAsync(document);
+            }
+
+            await runAgentPreviewAsync(agentKind, document, stream, context);
         }
         catch (e) {
             const message = e instanceof Error ? e.message : String(e);
@@ -1157,6 +1191,80 @@ async function buildAgentPromptAsync(agentKind: MakeCodeAgentKind, document: vsc
     }
 }
 
+function buildAgentEditPrompt(basePrompt: string, agentKind: MakeCodeAgentKind, document: vscode.TextDocument) {
+    const relativePath = vscode.workspace.asRelativePath(document.uri, false).replace(/\\/g, "/");
+    const language = agentKind === "project" ? "typescript" : "markdown";
+
+    return `${basePrompt}
+
+You are editing exactly this file: ${relativePath}
+
+Return the complete updated contents of that file between <makecode-file> and </makecode-file> tags. Do not return a diff. Do not include explanations outside the tags. If you cannot safely edit the file, return a short explanation between <makecode-message> and </makecode-message> tags instead.
+
+Current ${language} file contents:
+<makecode-current-file>
+${document.getText()}
+</makecode-current-file>`;
+}
+
+function parseAgentEditResponse(responseText: string): { updatedText?: string; message?: string } {
+    const fileMatch = /<makecode-file>([\s\S]*?)<\/makecode-file>/i.exec(responseText);
+    if (fileMatch) {
+        return { updatedText: normalizeAgentFileText(fileMatch[1]) };
+    }
+
+    const messageMatch = /<makecode-message>([\s\S]*?)<\/makecode-message>/i.exec(responseText);
+    if (messageMatch) {
+        return { message: messageMatch[1].trim() };
+    }
+
+    const fencedFileMatch = /```(?:makecode-file|typescript|ts)\s*\r?\n([\s\S]*?)\r?\n```/i.exec(responseText);
+    if (fencedFileMatch) {
+        return { updatedText: normalizeAgentFileText(fencedFileMatch[1]) };
+    }
+
+    return {};
+}
+
+function normalizeAgentFileText(text: string) {
+    return text.replace(/^\r?\n/, "").replace(/\r?\n$/, "");
+}
+
+async function applyWholeDocumentEditAsync(document: vscode.TextDocument, updatedText: string) {
+    const edit = new vscode.WorkspaceEdit();
+    edit.replace(document.uri, new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length)), updatedText);
+    const applied = await vscode.workspace.applyEdit(edit);
+    if (!applied) {
+        throw new Error("VS Code rejected the file edit.");
+    }
+}
+
+async function saveDocumentIfDirtyAsync(document: vscode.TextDocument) {
+    if (document.isDirty) {
+        await document.save();
+    }
+}
+
+async function runAgentPreviewAsync(agentKind: MakeCodeAgentKind, document: vscode.TextDocument, stream: vscode.ChatResponseStream, context: vscode.ExtensionContext) {
+    const relativePath = vscode.workspace.asRelativePath(document.uri, false);
+
+    switch (agentKind) {
+        case "tutorial":
+            stream.progress("Opening tutorial preview...");
+            await previewTutorialCommandAsync(document.uri);
+            stream.markdown(`Applied edits to ${relativePath} and opened the tutorial preview.`);
+            return;
+        case "project":
+            stream.progress("Starting MakeCode simulator...");
+            await simulateCommand(context);
+            stream.markdown(`Applied edits to ${relativePath} and started the MakeCode simulator.`);
+            return;
+        case "skillmap":
+            stream.markdown(`Applied edits to ${relativePath}.`);
+            return;
+    }
+}
+
 function buildAgentInvocationQuery(agentKind: MakeCodeAgentKind, document: vscode.TextDocument, request: string) {
     const relativePath = vscode.workspace.asRelativePath(document.uri, false).replace(/\\/g, "/");
     return `@makecode /${agentKind} ${request}\n\nUse #file:${relativePath} as the primary file context.`;
@@ -1198,7 +1306,7 @@ function getActiveSelectionText(document: vscode.TextDocument) {
 }
 
 async function openMakeCodeChatAsync(agentKind: MakeCodeAgentKind, document: vscode.TextDocument, request: string) {
-    const query = buildAgentChatQuery(document, request);
+    const query = buildAgentInvocationQuery(agentKind, document, request);
     logMakeCodeChatDebug("MAKECODE_CHAT_OPEN_REQUEST", {
         participantId: MAKECODE_CHAT_PARTICIPANT_ID,
         slashCommand: agentKind,
@@ -1209,9 +1317,7 @@ async function openMakeCodeChatAsync(agentKind: MakeCodeAgentKind, document: vsc
         await vscode.commands.executeCommand("workbench.action.chat.open", {
             query,
             isPartialQuery: false,
-            mode: "ask",
-            agentId: MAKECODE_CHAT_PARTICIPANT_ID,
-            slashCommand: agentKind
+            mode: "ask"
         });
         return true;
     }
@@ -1221,11 +1327,6 @@ async function openMakeCodeChatAsync(agentKind: MakeCodeAgentKind, document: vsc
         });
         return false;
     }
-}
-
-function buildAgentChatQuery(document: vscode.TextDocument, request: string) {
-    const relativePath = vscode.workspace.asRelativePath(document.uri, false).replace(/\\/g, "/");
-    return `${request}\n\nUse #file:${relativePath} as the primary file context.`;
 }
 
 async function openTextDocumentIfExistsAsync(uri: vscode.Uri): Promise<vscode.TextDocument | undefined> {

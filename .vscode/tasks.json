@@ -5,6 +5,11 @@
 	"tasks": [
 		{
 			"type": "npm",
+			"script": "prepare-web-extension-test-workspace",
+			"problemMatcher": []
+		},
+		{
+			"type": "npm",
 			"script": "compile-web",
 			"group": {
 				"kind": "build",
@@ -19,6 +24,8 @@
 			"type": "npm",
 			"script": "watch-web",
 			"group": "build",
+			"dependsOn": "npm: prepare-web-extension-test-workspace",
+			"dependsOrder": "sequence",
 			"isBackground": true,
 			"problemMatcher": [
 				"$ts-webpack-watch",
