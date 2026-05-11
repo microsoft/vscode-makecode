@@ -22,7 +22,7 @@ When a MakeCode project is loaded, API information is available from the local p
 ### @explicitHints true
 ### @preferredEditor blocks
 
-## 1. Short imperative title
+## Step 1
 
 Short instruction text. Use ``||category:Block name||`` pills to reference toolbox blocks.
 
@@ -33,11 +33,12 @@ Short instruction text. Use ``||category:Block name||`` pills to reference toolb
 #### ~ tutorialhint
 
 ```blocks
-// cumulative snapshot of the program after this step,
-// with // @highlight on the new line
+// cumulative snapshot of the program after this step
+// @highlight
+let player = sprites.create(img`1`, SpriteKind.Player)
 ```
 
-## 2. Next step
+## Step 2
 ...
 
 ## Finale
@@ -45,7 +46,7 @@ Short instruction text. Use ``||category:Block name||`` pills to reference toolb
 Congratulations, you finished!
 ````
 
-Use sequential numbered headings (`## 1. Title`, `## 2. Title`, ...) for new tutorials. Plain `## Step N` and the older curly-brace `## {Step N}` form are still supported by the parser; preserve whichever form an existing file already uses.
+Use sequential `## Step N` headings for new tutorials, for example `## Step 1`, `## Step 2`, and `## Step 3`. Do not create numbered-title headings like `## 2 Make a bright paddle`. Older forms such as `## 1. Title` and `## {Step N}` may appear in existing upstream tutorials; preserve them only when the user explicitly asks to keep the existing style.
 
 ## Tutorial-level metadata
 
@@ -61,7 +62,7 @@ The full list lives upstream in `microsoft/pxt` (`docs/writing-docs/tutorials/co
 
 ## Step modifiers
 
-Append modifiers after the step heading (or inside the braces): `## 1. Welcome @showdialog`.
+Append modifiers after the step heading: `## Step 1 @showdialog`.
 
 - `@showdialog` — open the step as a modal dialog. Replaces the deprecated `@unplugged`.
 - `@showhint` — open the step's hint full-screen. Replaces the deprecated `@fullscreen`.
@@ -135,7 +136,7 @@ Tutorial fences are parsed by a few different code paths in upstream `microsoft/
 
 **Inline markers** inside any code snippet:
 
-- `// @highlight` — highlight the line in the rendered hint (use `#` for Python/spy).
+- `// @highlight` — highlight the next line in the rendered hint (use `# @highlight` for Python/spy). Put the marker on its own line immediately before the code line it highlights. Do not put `// @highlight` or `# @highlight` at the end of a code line, and never leave it as the final non-empty line in a snippet because it renders as a visible comment.
 - `// @validate-exists` — pair with `validation.*` to require this line in the learner's program.
 - `// @hide` — hide the line from the rendered hint but keep it for the compiler.
 - `// @collapsed` — collapse the line by default in the rendered hint.
@@ -144,7 +145,7 @@ Tutorial fences are parsed by a few different code paths in upstream `microsoft/
 
 Three complementary patterns — pick whichever fits the step; mix freely.
 
-1. **Inline cumulative snippet** — at the bottom of a step, place a fenced ` ```blocks ` snippet showing the full program state after the step with `// @highlight` (or `# @highlight` for python/spy) marking the new line. This is common across modern Arcade skillmap tutorials such as `microsoft/pxt-arcade` `docs/skillmap/shark/shark1-simple.md`.
+1. **Inline cumulative snippet** — at the bottom of a step, place a fenced ` ```blocks ` snippet showing the full program state after the step with `// @highlight` (or `# @highlight` for python/spy) on the line immediately before each newly added code line. This is common across modern Arcade skillmap tutorials such as `microsoft/pxt-arcade` `docs/skillmap/shark/shark1-simple.md`.
 
 2. **`#### ~ tutorialhint` snapshot** — a heading followed by a `blocks` snippet, used in tutorials that want the snapshot rendered specifically as the step's hint UI rather than as inline reference code (for example, Arcade `chase-the-pizza.md` and `bubbles.md`). This syntax is only special when the tutorial has explicit hints enabled (`### @explicitHints true`, `### @explicitHints 1`, or target theme defaults); otherwise the parser treats everything after the first image or code fence as the hint.
 
@@ -191,7 +192,7 @@ When the open project is one of these targets, prefer the matching style.
 
 ### Arcade (`pxt-arcade`)
 
-- Modern step heading is **either** `## N. Short Title` (e.g. shark1-simple.md) **or** `## {N. Short Title}` (e.g. valentine.md, bubbles.md). Both forms are equivalent; preserve the form an existing file uses. The bare-text fallback `## Short Title` (no number) is also valid for intros and finales.
+- For this extension's generated tutorials, use `## Step N` headings. Some upstream Arcade tutorials use `## N. Short Title`, `## {N. Short Title}`, or bare-text intro/finale headings; preserve those forms only when editing an existing file that already uses them and the user asks to keep that style.
 - `### @explicitHints true` near the top is common but optional.
 - ``||category:block||`` pills with `(noclick)` for already-placed containers, `[var]` and `[ ]` for inputs, and `<br/>` line breaks in bullets.
 - `:icon-name:` prefixes on bullets, plus `💡 _tip_` italic asides and `---` `---` dividers between sub-sections.
@@ -208,7 +209,7 @@ When the open project is one of these targets, prefer the matching style.
 - V2-only APIs (sound expressions, `music.playSoundEffect`, `input.onLogoEvent`, datalogger) belong in tutorials whose filename starts with `v2-`. Register V2 tutorials in `tutorials-v2.md`.
 - Action callouts often use the `■` glyph and emoji affordances (💡, 🔊, ✋🛑) with `**bold**` UI element names.
 - Pills are usually plain ``||category:block||`` without subcategory or `(noclick)` modifiers.
-- `// @highlight` per added line is the norm in newer files; the `template` snippet is common.
+- A standalone `// @highlight` line immediately before each added line is the norm in newer files; the `template` snippet is common.
 - `package` (e.g. `neopixel`, `datalogger`) is common; `validation.global` with `BlocksExistValidator` appears in newer files (for example, upstream `microsoft/pxt-microbit` `docs/projects/dice.md`).
 - For build projects, split into sibling `make.md` / `code.md` / `connect.md`.
 - Modern upstream exemplars: `microsoft/pxt-microbit` `docs/projects/v2-pet-hamster.md`, `docs/projects/v2-cat-napping.md`, `docs/projects/dice.md`, plus newer `docs/projects/carnival/*.md` files.
@@ -217,7 +218,7 @@ When the open project is one of these targets, prefer the matching style.
 
 - Open with `## Introduction @unplugged` (no curly braces) plus a banner image; subsequent steps are plain `## Section Heading` with no numbering.
 - Trigger pattern is usually `player.onChat("rl", ...)` or `mobs.onMobKilled` rather than buttons or gestures.
-- `// @highlight` (or `# @highlight` in Python) marks changed lines.
+- A standalone `// @highlight` line (or `# @highlight` in Python) immediately before a code line marks that changed line.
 - Standard top-level Minecraft tutorials are intentionally lean: usually no `### @explicitHints`, no `~hint` accordions, no `#### ~ tutorialhint` snapshots, and no `:icon:` bullet prefixes. Use prose, ``||category:block||`` pills, and a `blocks` snippet per step.
 - Minecraft activity/course-style tutorials (for example CodeQuest and some China tutorials) use `### @activities 1`, `### @explicitHints 1`, nested `## Activity` / `### Step` headings, and `#### ~ tutorialhint`. Match that structure when editing those families.
 - Mirror each tutorial into `tutorials/python/<name>.md` (snake_case API) and `tutorials/spy/<name>.md` (Static-Python TS port). The python/spy variants do typically add `### @explicitHints true`.
@@ -234,7 +235,7 @@ When asked to **draft a tutorial**:
 3. Produce a concise tutorial: title, optional metadata directives, sequential focused steps, and runnable snippets.
 4. Use modern conventions for the matching target (see above).
 5. Include a `package` snippet only when dependencies are required; never emit an empty one. Same rule for `assetjson`.
-6. Keep step headings consistent with the target style. If the file uses numbered headings, number them sequentially. Avoid hallucinating APIs or extensions.
+6. Use sequential `## Step N` headings for new tutorials. Avoid hallucinating APIs or extensions.
 
 When asked to **improve or review a tutorial**, flag (but only rewrite when the user asks):
 
@@ -244,7 +245,7 @@ When asked to **improve or review a tutorial**, flag (but only rewrite when the 
 4. Unsupported fence tags. Remember that render/body snippets, package fences, blockconfig fences, and validation fences are parsed by different upstream code paths.
 5. Empty ` ```package ` or ` ```assetjson ` blocks — both break tutorial parsing.
 6. Deprecated step modifiers (`@unplugged`, `@fullscreen`) — only swap to `@showdialog`/`@showhint` on explicit request.
-7. Missing finale or success step; missing `// @highlight` on the line(s) the step actually adds.
+7. Missing finale or success step; missing standalone `// @highlight` on the line before code the step actually adds.
 8. Pacing: more than one new block per step, or step prose that runs longer than a sentence or two before the first snippet.
 
 When asked to **edit interactively**:

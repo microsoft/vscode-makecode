@@ -84,12 +84,14 @@ export function validateTutorialMarkdown(markdown: string): TutorialValidationIs
         issues.push(createIssue(0, 0, Math.max(1, lines[0]?.length || 1), vscode.l10n.t("Tutorials should start with a top-level '# Title' heading."), vscode.DiagnosticSeverity.Error));
     }
 
-    const stepHeadings: { line: number; text: string }[] = [];
+    const secondLevelHeadings: { line: number; text: string }[] = [];
     lines.forEach((line, index) => {
         if (/^##\s+/.test(line)) {
-            stepHeadings.push({ line: index, text: line });
+            secondLevelHeadings.push({ line: index, text: line });
         }
     });
+
+    const stepHeadings = secondLevelHeadings.filter(heading => isLikelyStepHeading(heading.text));
 
     if (!stepHeadings.length) {
         issues.push(createIssue(titleLine >= 0 ? titleLine : 0, 0, Math.max(1, lines[titleLine]?.length || 1), vscode.l10n.t("Tutorials need at least one '## Step' heading."), vscode.DiagnosticSeverity.Error));
@@ -97,7 +99,7 @@ export function validateTutorialMarkdown(markdown: string): TutorialValidationIs
 
     stepHeadings.forEach((heading, index) => {
         const expected = index + 1;
-        const match = /^##\s+Step\s+(\d+)\b/i.exec(heading.text);
+        const match = /^##\s+Step\s+(\d+)\s*(?:@\w[\w-]*(?:\s+@\w[\w-]*)*)?\s*$/i.exec(heading.text);
         if (!match) {
             issues.push(createIssue(heading.line, 0, heading.text.length, vscode.l10n.t("Tutorial step headings should use the form '## Step {0}'.", expected), vscode.DiagnosticSeverity.Warning));
         }
@@ -105,7 +107,7 @@ export function validateTutorialMarkdown(markdown: string): TutorialValidationIs
             issues.push(createIssue(heading.line, 0, heading.text.length, vscode.l10n.t("Expected this heading to be '## Step {0}'.", expected), vscode.DiagnosticSeverity.Warning));
         }
 
-        const nextHeadingLine = stepHeadings[index + 1]?.line ?? lines.length;
+        const nextHeadingLine = secondLevelHeadings.find(candidate => candidate.line > heading.line)?.line ?? lines.length;
         const body = lines.slice(heading.line + 1, nextHeadingLine).join("\n").trim();
         if (!body) {
             issues.push(createIssue(heading.line, 0, heading.text.length, vscode.l10n.t("Tutorial steps should include instructions or a code snippet."), vscode.DiagnosticSeverity.Warning));
@@ -154,7 +156,62 @@ export function validateTutorialMarkdown(markdown: string): TutorialValidationIs
         }
     });
 
+    validateHighlightMarkers(lines, issues);
+
     return issues;
+}
+
+function isLikelyStepHeading(text: string) {
+    return /^##\s+Step\s+\d+\b/i.test(text)
+        || /^##\s+\d+[.)]?\s+\S/.test(text)
+        || /^##\s+\{\s*(?:Step\s+)?\d+\b/i.test(text);
+}
+
+function validateHighlightMarkers(lines: string[], issues: TutorialValidationIssue[]) {
+    let currentFence: { language: string; body: { line: number; text: string }[] } | undefined;
+
+    lines.forEach((line, index) => {
+        const fenceMatch = /^```\s*([^\s`]*)/.exec(line);
+        if (fenceMatch) {
+            if (currentFence && line.trim() === "```") {
+                validateFenceHighlightMarkers(currentFence, issues);
+                currentFence = undefined;
+            }
+            else if (!currentFence) {
+                currentFence = { language: fenceMatch[1], body: [] };
+            }
+            return;
+        }
+
+        if (currentFence) {
+            currentFence.body.push({ line: index, text: line });
+        }
+    });
+}
+
+function validateFenceHighlightMarkers(fence: { language: string; body: { line: number; text: string }[] }, issues: TutorialValidationIssue[]) {
+    const language = fence.language.toLowerCase();
+    const usesHashHighlight = language === "python" || language === "spy";
+    const standaloneMarker = usesHashHighlight ? /^#\s*@highlight\s*$/i : /^\/\/\s*@highlight\s*$/i;
+    const anyMarker = usesHashHighlight ? /#\s*@highlight\b/i : /\/\/\s*@highlight\b/i;
+
+    fence.body.forEach((bodyLine, index) => {
+        const trimmed = bodyLine.text.trim();
+        if (!anyMarker.test(trimmed)) {
+            return;
+        }
+
+        if (!standaloneMarker.test(trimmed)) {
+            const startColumn = bodyLine.text.search(anyMarker);
+            issues.push(createIssue(bodyLine.line, Math.max(0, startColumn), bodyLine.text.length || 1, vscode.l10n.t("Put highlight markers on their own line immediately before the code line they highlight."), vscode.DiagnosticSeverity.Warning));
+            return;
+        }
+
+        const nextLine = fence.body[index + 1];
+        if (!nextLine?.text.trim() || standaloneMarker.test(nextLine.text.trim())) {
+            issues.push(createIssue(bodyLine.line, 0, bodyLine.text.length || 1, vscode.l10n.t("A highlight marker must be immediately followed by the code line it highlights."), vscode.DiagnosticSeverity.Warning));
+        }
+    });
 }
 
 export async function createTutorialAssetJsonAsync(workspace: vscode.WorkspaceFolder) {

@@ -1,7 +1,7 @@
 import { Host, HttpRequestOptions, HttpResponse } from "makecode-core/built/host";
 import { BrowserLanguageService } from "makecode-browser/built/languageService";
 import * as vscode from "vscode";
-import * as path from "path-browserify"
+import * as path from "path-browserify";
 
 let _activeWorkspace: vscode.WorkspaceFolder;
 
@@ -87,9 +87,10 @@ function getFolderName() {
 
 function rmFolderPrefix(p: string) {
     const cwd = getFolderName();
-    p = p.replace(/^[\/]+/, "")
-    if (p.startsWith(cwd))
+    p = p.replace(/^[\/]+/, "");
+    if (p.startsWith(cwd)) {
         return p.slice(cwd.length);
+    }
     return p;
 }
 
@@ -99,7 +100,7 @@ async function listFilesAsync(directory: string, filename: string) {
 
     return files.map(uri => {
         if (uri.fsPath.startsWith(root.fsPath)) {
-            return uri.fsPath.replace(root.fsPath, "").replace(/\\/g, "/")
+            return uri.fsPath.replace(root.fsPath, "").replace(/\\/g, "/");
         }
         return uri.fsPath;
     });
@@ -108,13 +109,15 @@ async function listFilesAsync(directory: string, filename: string) {
 export async function httpRequestCoreAsync(options: HttpRequestOptions) {
     const headers = options.headers || {};
     const data = options.data;
-    const method = options.method || (data == null ? "GET" : "POST");
+    const method = options.method || (data === null || data === undefined ? "GET" : "POST");
 
-    let buf: null | Uint8Array | string;
+    let buf: null | ArrayBuffer | string;
 
-    if (data == null) {
+    if (data === null || data === undefined) {
         buf = null;
     } else if (data instanceof Uint8Array) {
+        buf = toArrayBuffer(data);
+    } else if (data instanceof ArrayBuffer) {
         buf = data;
     } else if (typeof data === "object") {
         buf = JSON.stringify(data);
@@ -194,7 +197,9 @@ export function activeWorkspace() {
 }
 
 export async function findFilesAsync(extension: string, root: vscode.Uri, matchWholeName: boolean, maxDepth = 5) {
-    if (maxDepth === 0) return [];
+    if (maxDepth === 0) {
+        return [];
+    }
 
     const files = await vscode.workspace.fs.readDirectory(root);
     const result: vscode.Uri[] = [];
@@ -205,7 +210,7 @@ export async function findFilesAsync(extension: string, root: vscode.Uri, matchW
         const uri = vscode.Uri.joinPath(root, fileName);
 
         if (type === vscode.FileType.Directory) {
-            recursivePromises.push(findFilesAsync(extension, uri, matchWholeName, maxDepth - 1))
+            recursivePromises.push(findFilesAsync(extension, uri, matchWholeName, maxDepth - 1));
         }
         else if (type === vscode.FileType.File) {
             if (matchWholeName) {
@@ -243,6 +248,16 @@ function base64EncodeBufferAsync(buffer: Uint8Array | ArrayBuffer): Promise<stri
             const url = reader.result as string;
             resolve(url.slice(url.indexOf(',') + 1));
         };
-        reader.readAsDataURL(new Blob([buffer]));
+        reader.readAsDataURL(new Blob([toArrayBuffer(buffer)]));
     });
+}
+
+function toArrayBuffer(buffer: Uint8Array | ArrayBuffer): ArrayBuffer {
+    if (buffer instanceof ArrayBuffer) {
+        return buffer;
+    }
+
+    const copy = new ArrayBuffer(buffer.byteLength);
+    new Uint8Array(copy).set(buffer);
+    return copy;
 }

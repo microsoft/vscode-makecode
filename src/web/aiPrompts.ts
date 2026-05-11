@@ -18,8 +18,11 @@ export async function buildTutorialAgentQueryAsync(options: AgentQueryOptions) {
         options.extensionUri,
         "tutorial-authoring.prompt.md",
         `Use the MakeCode tutorial-authoring guidance as the base prompt:
-- Keep a clear # title and sequential ## Step N headings unless this tutorial intentionally uses activity format.
+    - Keep a clear # title and sequential ## Step N headings, for example ## Step 2. Do not use numbered-title headings like ## 2 Make a bright paddle unless preserving an existing file style the user asked to keep.
+    - Unless the user asks for an advanced or complex tutorial, default to a simple beginner-friendly tutorial with small steps. Introduce one concept per step and avoid putting more than 2 or 3 new blocks or code actions in a single step.
+    - For newly-created tutorials, start with a short scaffold of about 3 to 5 steps. Do not front-load gameplay, scoring, enemies, assets, and polish into the first step unless the user explicitly asks for that complexity.
 - Preserve existing code fences unless there is a clear bug.
+    - Put // @highlight on its own line immediately before the code line it highlights; use # @highlight for Python/spy. Do not put highlight markers at the end of code lines or leave them as the last line of a snippet.
 - Prefer MakeCode snippets such as blocks, typescript/javascript, template, package, ghost, sig, and assetjson.
 - In learner prose, wrap every MakeCode block pill in Markdown inline-code backticks, e.g. \`\`||sprites:Sprite||\`\`; raw ||sprites:Sprite|| breaks rendering.
 - Use local project API context when code changes are involved: read pxt.json, project files, and pxt_modules packages when available. The project may be a normal folder or an imported mkcdfs-backed folder; pxt_modules contains target base libraries and extension dependencies after MakeCode: Install Project Dependencies.
@@ -35,8 +38,7 @@ Help me update this Microsoft MakeCode tutorial Markdown file: #file:${relativeP
 User request: ${options.request}
 
 ${basePrompt}
-
-After the edit, suggest running MakeCode: Validate Tutorial and Launch Tutorial Preview.${selectionContext}`;
+${selectionContext}`;
 }
 
 export async function buildProjectAgentQueryAsync(options: AgentQueryOptions) {
