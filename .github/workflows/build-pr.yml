@@ -9,13 +9,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@f1f314fca9dfce2769ece7d933488f076716723e # v1.4.6
         with:
           node-version: '16.x'
       - name: yarn install
-        uses: bahmutov/npm-install@v1
+        uses: bahmutov/npm-install@20216767ca67f0f7b4d095dc5859c5700a6581cb # v1.12.1
         with:
           install-command: yarn install
       - name: Linting
