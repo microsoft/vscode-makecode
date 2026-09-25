@@ -29,5 +29,6 @@
   "makecode.configuration.simWatcherDebounceDescription": "Controls the timeout in milliseconds between a file being saved and the simulator being rebuilt.",
   "makecode.viewsWelcome.welcomeMessage": "You need to open a folder to use the MakeCode Arcade extension!\n[Open Arcade Docs](command:makecode.openHelpDocs)",
   "makecode.openHelpDocs.title": "Open Arcade Docs",
-  "makecode.testBlocks.title": "Test extension in blocks editor"
+  "makecode.testBlocks.title": "Test Extension in Blocks Editor",
+  "makecode.testTutorial.title": "Preview Tutorial in Blocks Editor"
 }

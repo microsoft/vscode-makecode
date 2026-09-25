@@ -158,6 +158,11 @@
         "command": "makecode.testBlocks",
         "title": "%makecode.testBlocks.title%",
         "category": "%makecode.category.title%"
+      },
+      {
+        "command": "makecode.testTutorial",
+        "title": "%makecode.testTutorial.title%",
+        "category": "%makecode.category.title%"
       }
     ],
     "viewsContainers": {
