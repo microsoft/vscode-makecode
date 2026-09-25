@@ -27,6 +27,7 @@
   "makecode.songExplorer.title": "Songs",
   "makecode.configuration.showCompileDescription": "Show a notification after compiling a MakeCode project.",
   "makecode.configuration.simWatcherDebounceDescription": "Controls the timeout in milliseconds between a file being saved and the simulator being rebuilt.",
+  "makecode.configuration.showExplorerWelcomeMessage": "Shows a link to the MakeCode Arcade docs in the explorer when no project is open.",
   "makecode.viewsWelcome.welcomeMessage": "You need to open a folder to use the MakeCode Arcade extension!\n[Open Arcade Docs](command:makecode.openHelpDocs)",
   "makecode.openHelpDocs.title": "Open Arcade Docs",
   "makecode.testBlocks.title": "Test extension in blocks editor"

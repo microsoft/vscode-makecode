@@ -318,13 +318,19 @@
           "type": "number",
           "default": 1500,
           "description": "%makecode.configuration.simWatcherDebounceDescription%"
+        },
+        "makecode.showExplorerWelcomeMessage": {
+          "type": "boolean",
+          "default": true,
+          "description": "%makecode.configuration.showExplorerWelcomeMessage%"
         }
       }
     },
     "viewsWelcome": [
       {
         "view": "workbench.explorer.emptyView",
-        "contents": "%makecode.viewsWelcome.welcomeMessage%"
+        "contents": "%makecode.viewsWelcome.welcomeMessage%",
+        "when": "makecode.showExplorerWelcomeMessage"
       }
     ]
   },
