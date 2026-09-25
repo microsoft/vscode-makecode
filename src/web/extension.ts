@@ -110,6 +110,11 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.window.registerTreeDataProvider("songExplorer", new JResTreeProvider("song"))
     );
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeWorkspaceFolders(e => {
+            maybeSetInMakeCodeProjectAsync();
+        })
+    )
 
     // This key is not sensitive, and is publicly available in client side apps logging to AI
     const appInsightsKey = "0c6ae279ed8443289764825290e4f9e2-1a736e7c-1324-4338-be46-fc2a58ae4d14-7255";
@@ -126,28 +131,42 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Set a context key to indicate that we have activated, so context menu commands can show
     vscode.commands.executeCommand('setContext', 'makecode.extensionActive', true);
+    maybeSetInMakeCodeProjectAsync();
 }
 
-async function chooseWorkspaceAsync(kind: "empty" | "project" | "any", silent = false): Promise<vscode.WorkspaceFolder | undefined> {
+async function maybeSetInMakeCodeProjectAsync() {
+    const hasProjectFolder = await findOpenFolders("project");
+    if (!!hasProjectFolder.length) {
+        setInMakeCodeProject();
+    }
+}
+
+export function setInMakeCodeProject() {
+    vscode.commands.executeCommand("setContext", "makecode.hasMakeCodeProjectOpen", true);
+}
+
+async function findOpenFolders(kind: "empty" | "project" | "any") {
     const folders = [];
-    let hasWorkspaceOpen = false;
 
-    if (vscode.workspace.workspaceFolders) {
-        hasWorkspaceOpen = !!vscode.workspace.workspaceFolders.length;
-        for (const folder of vscode.workspace.workspaceFolders) {
-            if (kind === "any") {
+    for (const folder of (vscode.workspace.workspaceFolders || [])) {
+        if (kind === "any") {
+            folders.push(folder);
+        }
+        else {
+            const pxtJSONExists = await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt.json"));
+
+            if ((kind === "project" && pxtJSONExists) || (kind === "empty" && !pxtJSONExists)) {
                 folders.push(folder);
-            }
-            else {
-                const pxtJSONExists = await fileExistsAsync(vscode.Uri.joinPath(folder.uri, "pxt.json"));
-
-                if ((kind === "project" && pxtJSONExists) || (kind === "empty" && !pxtJSONExists)) {
-                    folders.push(folder);
-                }
             }
         }
     }
 
+    return folders;
+}
+
+async function chooseWorkspaceAsync(kind: "empty" | "project" | "any", silent = false): Promise<vscode.WorkspaceFolder | undefined> {
+    const folders = await findOpenFolders(kind);
+    const hasWorkspaceOpen = !!vscode.workspace.workspaceFolders?.length;
 
     if (folders.length === 0) {
         if (!silent) {
@@ -244,6 +263,7 @@ export async function installCommand() {
 
         await vscode.commands.executeCommand("makecode.refreshAssets");
         await vscode.commands.executeCommand("workbench.files.action.refreshFilesExplorer");
+        setInMakeCodeProject();
     });
 }
 
@@ -304,6 +324,7 @@ export async function importUrlCommand(url?: string, useWorkspace?: vscode.Works
     }, async progress => {
         try {
             await downloadSharedProjectAsync(workspace!, toOpen!);
+            setInMakeCodeProject()
         }
         catch (e) {
             showError(vscode.l10n.t("Unable to download project"));
@@ -504,6 +525,7 @@ async function createCommand()  {
         });
     }
 
+    setInMakeCodeProject();
     await renameProjectAsync(workspace, projectName);
 }
 

@@ -1,6 +1,6 @@
 import * as path from "path-browserify"
 import * as vscode from "vscode"
-import { importUrlCommand } from "./extension";
+import { importUrlCommand, setInMakeCodeProject } from "./extension";
 
 export class VFS implements vscode.FileSystemProvider {
     private initializedDirs: {[index: string]: boolean} = {}
@@ -119,6 +119,7 @@ export class VFS implements vscode.FileSystemProvider {
         if (!(await this.existsAsync(pxtJSON))) {
             await importUrlCommand(shareId, { name: shareId, uri: projectDir, index: 0 })
         }
+        setInMakeCodeProject();
         this.initializedDirs[shareId] = true;
     }
 
